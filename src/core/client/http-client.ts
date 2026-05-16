@@ -1,6 +1,9 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios'
 import { Either } from '@/core/either/either'
 import { setupInterceptors } from '@/core/client/interceptors'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
+
 export class HttpClient {
   private static instance: HttpClient
   private readonly axiosInstance: AxiosInstance
@@ -15,7 +18,7 @@ export class HttpClient {
 
   static getInstance(): HttpClient {
     if (!HttpClient.instance) {
-      HttpClient.instance = new HttpClient(import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/v1')
+      HttpClient.instance = new HttpClient(API_BASE_URL)
     }
     return HttpClient.instance
   }
