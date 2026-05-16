@@ -1,4 +1,4 @@
-import type { IAuthRepository } from '@/modules/auth/domain/interfaces/auth-repository.interface'
+import type { IAuthRepository } from '@/modules/auth/domain/interfaces/i-auth-repository.interface'
 import { Either } from '@/core/either/either'
 import type { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
 import type { AuthToken } from '@/modules/auth/domain/models/auth-token.model'
@@ -11,7 +11,9 @@ export class LoginUseCase {
     this.authRepository = authRepository
   }
 
-  async execute(dto: LoginDto): Promise<Either<Error, { token: AuthToken; user: AuthUser }>> {
+  async execute(
+    dto: LoginDto,
+  ): Promise<Either<Error, { token: AuthToken; user: AuthUser }>> {
     return this.authRepository.login(dto)
   }
 }
