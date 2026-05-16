@@ -109,10 +109,6 @@ defineEmits<Emits>()
 </script>
 
 <style scoped>
-.ui-input {
-  @apply ui-transition;
-}
-
 /* Animação de tremida ao errar */
 .shake-error {
   animation: shake-error 0.4s ease-in-out;
@@ -136,10 +132,5 @@ defineEmits<Emits>()
   80% {
     transform: translateX(4px);
   }
-}
-
-/* Efeito de anel de foco com brilho sutil */
-.ui-input:focus {
-  @apply shadow-sm;
 }
 </style>

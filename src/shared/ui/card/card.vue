@@ -21,7 +21,7 @@
     </div>
 
     <!-- Slot de conteúdo principal -->
-    <div :class="['ui-card-content', $slots.header && 'pt-0']">
+    <div :class="['ui-card-content', $slots.header && 'pt-0', paddingClasses]">
       <slot />
     </div>
 
@@ -108,18 +108,8 @@ const paddingClasses = computed(() => {
 
 <style scoped>
 .ui-card {
-  @apply flex flex-col;
   /* Animação de entrada - desliza para cima sutilmente */
   animation: entrance-slide-up 300ms ease-out;
-}
-
-.ui-card-content {
-  @apply p-6 flex-1;
-}
-
-/* Transição suave para efeitos de hover */
-.ui-card {
-  @apply ui-transition;
 }
 
 /**

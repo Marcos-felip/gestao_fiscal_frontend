@@ -6,8 +6,8 @@
       'ui-button',
       // Estilos base
       'font-medium rounded-lg transition-all duration-300',
-      'focus:ui-focus-ring active:scale-95',
-      'disabled:ui-disabled',
+      'focus:outline-none focus:ring-2 focus:ring-primary/20',
+      'disabled:opacity-50 disabled:cursor-not-allowed',
       // Classes de tamanho
       sizeClasses,
       // Classes de variante
@@ -41,7 +41,7 @@
     </span>
 
     <!-- Slot de ícone (opcional, antes do texto) -->
-    <span v-if="$slots.icon" class="inline-flex items-center">
+    <span v-if="$slots.icon" class="inline-flex items-center mr-2">
       <slot name="icon" />
     </span>
 
@@ -127,16 +127,6 @@ const variantClasses = computed(() => {
 </script>
 
 <style scoped>
-/* Espaçamento do ícone */
-:deep(.ui-button [class*='icon']) {
-  @apply mr-2;
-}
-
-/* Animação de hover (levantamento sutil) */
-.ui-button:not(:disabled) {
-  @apply hover:shadow-md hover:scale-[1.02];
-}
-
 /* Animação do estado de carregamento */
 .ui-spinner {
   animation: spin 2s linear infinite;
