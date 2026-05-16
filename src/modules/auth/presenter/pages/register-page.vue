@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import AuthLayout from '@/shared/layouts/auth-layout.vue'
 import RegisterForm from '@/modules/auth/presenter/components/register-form.vue'
 import { AuthController } from '@/modules/auth/presenter/controllers/auth-controller'
 import type { RegisterFormData } from '@/modules/auth/presenter/schemas/register-schema'
+import { routeNames } from '@/router/route-names'
 
-const router = useRouter()
 const controller = new AuthController()
 
 async function handleRegister(data: RegisterFormData): Promise<void> {
@@ -16,7 +15,7 @@ async function handleRegister(data: RegisterFormData): Promise<void> {
 }
 
 function goToLogin(): void {
-  router.push('/login')
+  controller.router.push({ name: routeNames.LOGIN })
 }
 </script>
 

@@ -2,6 +2,7 @@ import type { IAuthRepository } from '@/modules/auth/domain/interfaces/auth-repo
 import { Either } from '@/core/either/either'
 import type { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
 import type { AuthToken } from '@/modules/auth/domain/models/auth-token.model'
+import type { RefreshTokenDto } from '@/modules/auth/domain/dto/auth-dto'
 
 export class RefreshTokenUseCase {
   private readonly authRepository: IAuthRepository
@@ -10,7 +11,7 @@ export class RefreshTokenUseCase {
     this.authRepository = authRepository
   }
 
-  async execute(refreshToken: string): Promise<Either<Error, { token: AuthToken; user: AuthUser }>> {
-    return this.authRepository.refreshToken(refreshToken)
+  async execute(dto: RefreshTokenDto): Promise<Either<Error, { token: AuthToken; user: AuthUser }>> {
+    return this.authRepository.refreshToken(dto)
   }
 }

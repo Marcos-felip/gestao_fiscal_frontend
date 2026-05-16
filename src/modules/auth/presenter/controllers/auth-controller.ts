@@ -1,10 +1,13 @@
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { BaseController } from './base-controller'
+import { BaseController } from '@/core/controllers/base-controller'
 import { AuthRepository } from '@/modules/auth/data/auth-repository'
 import { LoginUseCase } from '@/modules/auth/application/use-cases/login.use-case'
 import { RegisterUseCase } from '@/modules/auth/application/use-cases/register.use-case'
+import { LoginDto } from '@/modules/auth/domain/dto/auth-dto'
+import { RegisterDto } from '@/modules/auth/domain/dto/auth-dto'
 import { useAuthStore } from '@/modules/auth/presenter/stores/auth-store'
+import { routeNames } from '@/router/route-names'
+
 export class AuthController extends BaseController {
   private readonly authRepository = new AuthRepository()
   private readonly loginUseCase = new LoginUseCase(this.authRepository)
@@ -15,29 +18,30 @@ export class AuthController extends BaseController {
   readonly name = ref('')
 
   private readonly authStore = useAuthStore()
-  private readonly router = useRouter()
 
   async login(): Promise<void> {
     this.setLoading(true)
-    const result = await this.loginUseCase.execute(this.email.value, this.password.value)
-    this.handleEither(result, ({ token, user }) => {
+    const dto = new LoginDto(this.email.value, this.password.value)
+    const result = await this.loginUseCase.execute(dto)
+    this.handleResult(result, ({ token, user }) => {
       this.authStore.setToken(token)
       this.authStore.setUser(user)
-      this.router.push('/')
+      this.router.push({ name: routeNames.DASHBOARD })
     })
     this.setLoading(false)
   }
 
   async register(): Promise<void> {
     this.setLoading(true)
-    const result = await this.registerUseCase.execute(this.name.value, this.email.value, this.password.value)
-    this.handleEither(result, ({ token, user }) => {
+    const dto = new RegisterDto(this.name.value, this.email.value, this.password.value)
+    const result = await this.registerUseCase.execute(dto)
+    this.handleResult(result, ({ token, user }) => {
       this.authStore.setToken(token)
       this.authStore.setUser(user)
       if (user.forcePasswordChange) {
         this.router.push('/change-password')
       } else {
-        this.router.push('/')
+        this.router.push({ name: routeNames.DASHBOARD })
       }
     })
     this.setLoading(false)
@@ -46,9 +50,9 @@ export class AuthController extends BaseController {
   async logout(): Promise<void> {
     this.setLoading(true)
     const result = await this.authRepository.logout()
-    this.handleEither(result, () => {
+    this.handleResult(result, () => {
       this.authStore.clear()
-      this.router.push('/login')
+      this.router.push({ name: routeNames.LOGIN })
     })
     this.setLoading(false)
   }

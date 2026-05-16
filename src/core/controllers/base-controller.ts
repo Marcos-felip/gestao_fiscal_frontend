@@ -1,9 +1,11 @@
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { Either } from '@/core/either/either'
 
 export abstract class BaseController {
   protected readonly loading = ref(false)
   protected readonly error = ref<string | null>(null)
+  readonly router = useRouter()
 
   protected setLoading(value: boolean): void {
     this.loading.value = value
@@ -17,7 +19,7 @@ export abstract class BaseController {
     this.error.value = null
   }
 
-  protected handleEither<L, R>(
+  protected handleResult<L, R>(
     either: Either<L, R>,
     onSuccess: (value: R) => void,
     onError?: (error: L) => void,

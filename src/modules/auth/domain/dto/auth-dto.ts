@@ -1,0 +1,42 @@
+export class LoginDto {
+  email: string
+  password: string
+
+  constructor(email: string, password: string) {
+    this.email = email
+    this.password = password
+  }
+}
+
+export class RegisterDto {
+  name: string
+  email: string
+  password: string
+
+  constructor(name: string, email: string, password: string) {
+    this.name = name
+    this.email = email
+    this.password = password
+  }
+}
+
+export class RefreshTokenDto {
+  refreshToken: string
+
+  constructor(refreshToken: string) {
+    this.refreshToken = refreshToken
+  }
+}
+
+export class AuthResultDto {
+  token: { accessToken: string; refreshToken: string }
+  user: { id: string; name: string; email: string; companyActiveId: string | null; role: string | null; forcePasswordChange: boolean }
+
+  constructor(
+    token: { accessToken: string; refreshToken: string },
+    user: { id: string; name: string; email: string; companyActiveId: string | null; role: string | null; forcePasswordChange: boolean },
+  ) {
+    this.token = token
+    this.user = user
+  }
+}
