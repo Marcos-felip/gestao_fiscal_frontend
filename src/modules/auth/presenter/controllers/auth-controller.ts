@@ -54,7 +54,9 @@ export class AuthController extends BaseController {
 
   async logout(): Promise<void> {
     this.setLoading(true)
+
     const result = await this.authRepository.logout()
+
     this.handleResult(result, () => {
       this.authStore.clear()
       this.router.push({ name: routeNames.LOGIN })
