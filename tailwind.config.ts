@@ -7,21 +7,30 @@ export default {
     extend: {
       colors: {
         // Tema claro (padrão)
-        'primary': 'hsl(211 100% 50%)',
+        'primary': '#2563eb', // Blue
+        'primary-hover': '#1d4ed8',
+        'primary-active': '#1e40af',
         'primary-foreground': '#ffffff',
-        'secondary': 'hsl(184 100% 50%)',
+        'secondary': '#06b6d4', // Cyan
+        'secondary-hover': '#0891b2',
+        'secondary-active': '#0e7490',
         'secondary-foreground': '#ffffff',
-        'destructive': 'hsl(0 84% 60%)',
+        'destructive': '#ef4444', // Red
+        'destructive-hover': '#dc2626',
+        'destructive-active': '#b91c1c',
         'destructive-foreground': '#ffffff',
         'ghost': 'transparent',
-        'ghost-foreground': 'hsl(0 0% 20%)',
-        'foreground': 'hsl(0 0% 20%)',
-        'background': 'hsl(0 0% 100%)',
-        'card': 'hsl(0 0% 100%)',
-        'card-line': 'hsl(0 0% 90%)',
-        'muted-foreground': 'hsl(0 0% 50%)',
-        'muted-foreground-1': 'hsl(0 0% 60%)',
-        'border': 'hsl(0 0% 90%)',
+        'ghost-foreground': '#1f2937',
+        'foreground': '#1f2937',
+        'background': '#ffffff',
+        'card': '#ffffff',
+        'card-line': '#e5e7eb',
+        'muted': '#f3f4f6',
+        'muted-active': '#e5e7eb',
+        'muted-foreground': '#6b7280',
+        'muted-foreground-1': '#9ca3af',
+        'border': '#e5e7eb',
+        'line-2': '#d1d5db',
       },
       fontFamily: {
         'sans': ['Inter', ...defaultTheme.fontFamily.sans],
