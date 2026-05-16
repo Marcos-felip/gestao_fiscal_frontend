@@ -21,8 +21,10 @@ export class AuthController extends BaseController {
 
   async login(): Promise<void> {
     this.setLoading(true)
+
     const dto = new LoginDto(this.email.value, this.password.value)
     const result = await this.loginUseCase.execute(dto)
+
     this.handleResult(result, ({ token, user }) => {
       this.authStore.setToken(token)
       this.authStore.setUser(user)
@@ -33,11 +35,14 @@ export class AuthController extends BaseController {
 
   async register(): Promise<void> {
     this.setLoading(true)
+  
     const dto = new RegisterDto(this.name.value, this.email.value, this.password.value)
     const result = await this.registerUseCase.execute(dto)
+  
     this.handleResult(result, ({ token, user }) => {
       this.authStore.setToken(token)
       this.authStore.setUser(user)
+  
       if (user.forcePasswordChange) {
         this.router.push('/change-password')
       } else {
