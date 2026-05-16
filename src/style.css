@@ -1,5 +1,48 @@
-@import './theme.css';
 @import 'tailwindcss';
+
+/* Tema de cores para Preline + Tailwind v4 */
+@theme inline {
+  /* Cores de fundo */
+  --color-background: #ffffff;
+  --color-background-1: #f9fafb;
+  --color-background-2: #f3f4f6;
+  
+  /* Cores de texto */
+  --color-foreground: #1f2937;
+  --color-foreground-inverse: #ffffff;
+  
+  /* Linhas/Bordas */
+  --color-border: #e5e7eb;
+  --color-line-2: #e5e7eb;
+  
+  /* Cor primária (Azul) */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+  --color-primary: #2563eb;
+  
+  /* Cor secundária (Cyan) */
+  --color-secondary-50: #ecf9ff;
+  --color-secondary-100: #d1f1ff;
+  --color-secondary-200: #a5e6ff;
+  --color-secondary-300: #74d4ff;
+  --color-secondary-400: #41bafd;
+  --color-secondary-500: #06b6d4;
+  --color-secondary-600: #0891b2;
+  --color-secondary-700: #0e7490;
+  --color-secondary-800: #155e75;
+  --color-secondary-900: #164e63;
+  --color-secondary-950: #082f49;
+  --color-secondary: #06b6d4;
+}
 
 /* Design System Animations & Custom Utilities */
 @layer components {
