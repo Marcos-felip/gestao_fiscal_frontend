@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './modules/auth/presentation/stores/auth-store'
 import './style.css'
+// Importar Preline CSS na ordem correta: theme customizado ANTES do tema do Preline
 import '../node_modules/preline/css/themes/theme.css'
 
 const app = createApp(App)
