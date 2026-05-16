@@ -22,8 +22,12 @@ function goToRegister(): void {
   <AuthLayout>
     <div class="space-y-6">
       <div class="text-center">
-        <h2 class="text-xl font-semibold text-foreground">Entrar na sua conta</h2>
-        <p class="mt-1 text-sm text-muted-foreground-1">Insira suas credenciais para acessar o sistema</p>
+        <h2 class="text-xl font-semibold text-foreground">
+          Entrar na sua conta
+        </h2>
+        <p class="mt-1 text-sm text-muted-foreground-1">
+          Insira suas credenciais para acessar o sistema
+        </p>
       </div>
 
       <div
@@ -33,10 +37,7 @@ function goToRegister(): void {
         {{ controller.errorMessage }}
       </div>
 
-      <LoginForm
-        :loading="controller.isLoading"
-        @submit="handleLogin"
-      />
+      <LoginForm :loading="controller.isLoading" @submit="handleLogin" />
 
       <p class="text-center text-sm text-muted-foreground-1">
         Não tem uma conta?

@@ -2,7 +2,8 @@ import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios'
 import { Either } from '@/core/either/either'
 import { setupInterceptors } from '@/core/client/interceptors'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
 
 export class HttpClient {
   private static instance: HttpClient
@@ -23,39 +24,61 @@ export class HttpClient {
     return HttpClient.instance
   }
 
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<Either<Error, T>> {
+  async get<T>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<Either<Error, T>> {
     try {
       const response = await this.axiosInstance.get<T>(url, config)
       return Either.right(response.data)
     } catch (error) {
-      return Either.left(error instanceof Error ? error : new Error(String(error)))
+      return Either.left(
+        error instanceof Error ? error : new Error(String(error)),
+      )
     }
   }
 
-  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<Either<Error, T>> {
+  async post<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<Either<Error, T>> {
     try {
       const response = await this.axiosInstance.post<T>(url, data, config)
       return Either.right(response.data)
     } catch (error) {
-      return Either.left(error instanceof Error ? error : new Error(String(error)))
+      return Either.left(
+        error instanceof Error ? error : new Error(String(error)),
+      )
     }
   }
 
-  async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<Either<Error, T>> {
+  async patch<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<Either<Error, T>> {
     try {
       const response = await this.axiosInstance.patch<T>(url, data, config)
       return Either.right(response.data)
     } catch (error) {
-      return Either.left(error instanceof Error ? error : new Error(String(error)))
+      return Either.left(
+        error instanceof Error ? error : new Error(String(error)),
+      )
     }
   }
 
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<Either<Error, T>> {
+  async delete<T>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ): Promise<Either<Error, T>> {
     try {
       const response = await this.axiosInstance.delete<T>(url, config)
       return Either.right(response.data)
     } catch (error) {
-      return Either.left(error instanceof Error ? error : new Error(String(error)))
+      return Either.left(
+        error instanceof Error ? error : new Error(String(error)),
+      )
     }
   }
 

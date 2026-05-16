@@ -45,7 +45,10 @@ onMounted(() => {
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        :class="[typeClasses(toast.type), 'flex items-center gap-3 rounded-lg px-4 py-3 shadow-lg min-w-[300px] max-w-[400px]']"
+        :class="[
+          typeClasses(toast.type),
+          'flex items-center gap-3 rounded-lg px-4 py-3 shadow-lg min-w-[300px] max-w-[400px]',
+        ]"
       >
         <span class="flex-1 text-sm font-medium">{{ toast.message }}</span>
         <button

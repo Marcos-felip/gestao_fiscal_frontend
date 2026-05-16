@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { User, Mail, Lock, UserPlus } from 'lucide-vue-next'
-import { registerSchema, type RegisterFormData } from '@/modules/auth/presenter/schemas/register-schema'
+import {
+  registerSchema,
+  type RegisterFormData,
+} from '@/modules/auth/presenter/schemas/register-schema'
 
 const emit = defineEmits<{
   submit: [data: RegisterFormData]
@@ -18,7 +21,11 @@ const password = ref('')
 const errors = ref<Partial<Record<keyof RegisterFormData, string>>>({})
 
 function handleSubmit(): void {
-  const result = registerSchema.safeParse({ name: name.value, email: email.value, password: password.value })
+  const result = registerSchema.safeParse({
+    name: name.value,
+    email: email.value,
+    password: password.value,
+  })
 
   if (!result.success) {
     errors.value = {}
@@ -32,16 +39,20 @@ function handleSubmit(): void {
   errors.value = {}
   emit('submit', result.data)
 }
-
-
 </script>
 
 <template>
   <form class="space-y-5" @submit.prevent="handleSubmit">
     <div class="space-y-1">
-      <label for="register-name" class="block text-sm font-medium text-foreground">Nome</label>
+      <label
+        for="register-name"
+        class="block text-sm font-medium text-foreground"
+        >Nome</label
+      >
       <div class="relative">
-        <User class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground-2" />
+        <User
+          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground-2"
+        />
         <input
           id="register-name"
           v-model="name"
@@ -50,17 +61,25 @@ function handleSubmit(): void {
           autocomplete="name"
           :class="[
             'w-full rounded-lg border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
-            errors.name ? 'border-destructive' : 'border-line-2'
+            errors.name ? 'border-destructive' : 'border-line-2',
           ]"
         />
       </div>
-      <p v-if="errors.name" class="text-xs text-destructive">{{ errors.name }}</p>
+      <p v-if="errors.name" class="text-xs text-destructive">
+        {{ errors.name }}
+      </p>
     </div>
 
     <div class="space-y-1">
-      <label for="register-email" class="block text-sm font-medium text-foreground">E-mail</label>
+      <label
+        for="register-email"
+        class="block text-sm font-medium text-foreground"
+        >E-mail</label
+      >
       <div class="relative">
-        <Mail class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground-2" />
+        <Mail
+          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground-2"
+        />
         <input
           id="register-email"
           v-model="email"
@@ -69,17 +88,25 @@ function handleSubmit(): void {
           autocomplete="email"
           :class="[
             'w-full rounded-lg border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
-            errors.email ? 'border-destructive' : 'border-line-2'
+            errors.email ? 'border-destructive' : 'border-line-2',
           ]"
         />
       </div>
-      <p v-if="errors.email" class="text-xs text-destructive">{{ errors.email }}</p>
+      <p v-if="errors.email" class="text-xs text-destructive">
+        {{ errors.email }}
+      </p>
     </div>
 
     <div class="space-y-1">
-      <label for="register-password" class="block text-sm font-medium text-foreground">Senha</label>
+      <label
+        for="register-password"
+        class="block text-sm font-medium text-foreground"
+        >Senha</label
+      >
       <div class="relative">
-        <Lock class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground-2" />
+        <Lock
+          class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground-2"
+        />
         <input
           id="register-password"
           v-model="password"
@@ -88,11 +115,13 @@ function handleSubmit(): void {
           autocomplete="new-password"
           :class="[
             'w-full rounded-lg border bg-background py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
-            errors.password ? 'border-destructive' : 'border-line-2'
+            errors.password ? 'border-destructive' : 'border-line-2',
           ]"
         />
       </div>
-      <p v-if="errors.password" class="text-xs text-destructive">{{ errors.password }}</p>
+      <p v-if="errors.password" class="text-xs text-destructive">
+        {{ errors.password }}
+      </p>
     </div>
 
     <button

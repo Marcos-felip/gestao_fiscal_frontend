@@ -4,4 +4,5 @@ export const MembershipRole = {
   MEMBER: 'MEMBER',
 } as const
 
-export type MembershipRole = (typeof MembershipRole)[keyof typeof MembershipRole]
+export type MembershipRole =
+  (typeof MembershipRole)[keyof typeof MembershipRole]

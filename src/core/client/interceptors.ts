@@ -1,4 +1,7 @@
-import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
+import axios, {
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 import { StorageService } from '@/core/utils/storage'
 
 let isRefreshing = false
@@ -65,7 +68,8 @@ export function setupInterceptors(axiosInstance: AxiosInstance): void {
             { refreshToken },
           )
 
-          const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data
+          const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+            response.data
           StorageService.setToken(newAccessToken)
           StorageService.setRefreshToken(newRefreshToken)
 

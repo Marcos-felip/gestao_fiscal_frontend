@@ -5,9 +5,7 @@ import { authRoutes } from '@/modules/auth/presenter/routes/auth-routes'
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: [
-    ...authRoutes,
-  ],
+  routes: [...authRoutes],
 })
 
 authGuard(router)

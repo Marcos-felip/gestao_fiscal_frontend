@@ -24,7 +24,9 @@ function goToLogin(): void {
     <div class="space-y-6">
       <div class="text-center">
         <h2 class="text-xl font-semibold text-foreground">Criar sua conta</h2>
-        <p class="mt-1 text-sm text-muted-foreground-1">Preencha os dados para se registrar</p>
+        <p class="mt-1 text-sm text-muted-foreground-1">
+          Preencha os dados para se registrar
+        </p>
       </div>
 
       <div
@@ -34,10 +36,7 @@ function goToLogin(): void {
         {{ controller.errorMessage }}
       </div>
 
-      <RegisterForm
-        :loading="controller.isLoading"
-        @submit="handleRegister"
-      />
+      <RegisterForm :loading="controller.isLoading" @submit="handleRegister" />
 
       <p class="text-center text-sm text-muted-foreground-1">
         Já tem uma conta?
