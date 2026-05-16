@@ -1,5 +1,22 @@
 @import 'tailwindcss';
 
+/* Variáveis de tema para Preline + Tailwind */
+@layer base {
+  :root,
+  [data-theme='theme-default'] {
+    color-scheme: light;
+  }
+
+  [data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: hsl(0 0% 100%);
+    color: hsl(0 0% 20%);
+  }
+}
+
 /* Design System Animations & Custom Utilities */
 @layer components {
   /* Smooth transitions for interactive elements */

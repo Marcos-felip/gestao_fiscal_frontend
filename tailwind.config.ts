@@ -1,10 +1,31 @@
 import type { Config } from 'tailwindcss'
+import defaultTheme from 'tailwindcss/defaultTheme'
 
 export default {
-  // Inherit all Preline defaults - no need to redefine colors/tokens
   content: ['./index.html', './src/**/*.{vue,ts,jsx,tsx}'],
   theme: {
     extend: {
+      colors: {
+        // Tema claro (padrão)
+        'primary': 'hsl(211 100% 50%)',
+        'primary-foreground': '#ffffff',
+        'secondary': 'hsl(184 100% 50%)',
+        'secondary-foreground': '#ffffff',
+        'destructive': 'hsl(0 84% 60%)',
+        'destructive-foreground': '#ffffff',
+        'ghost': 'transparent',
+        'ghost-foreground': 'hsl(0 0% 20%)',
+        'foreground': 'hsl(0 0% 20%)',
+        'background': 'hsl(0 0% 100%)',
+        'card': 'hsl(0 0% 100%)',
+        'card-line': 'hsl(0 0% 90%)',
+        'muted-foreground': 'hsl(0 0% 50%)',
+        'muted-foreground-1': 'hsl(0 0% 60%)',
+        'border': 'hsl(0 0% 90%)',
+      },
+      fontFamily: {
+        'sans': ['Inter', ...defaultTheme.fontFamily.sans],
+      },
       // Animation timing & easing (custom for Design System)
       animation: {
         // UI feedback animations
@@ -59,4 +80,6 @@ export default {
     },
   },
   plugins: [],
+  // Suporte a dark mode com data-theme attribute (Preline)
+  darkMode: ['selector', '[data-theme="dark"]'],
 } satisfies Config
