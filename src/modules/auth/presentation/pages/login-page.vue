@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import AuthLayout from '@/shared/layouts/auth-layout.vue'
-import LoginForm from '@/modules/auth/presenter/components/login-form.vue'
-import { AuthController } from '@/modules/auth/presenter/controllers/auth-controller'
-import type { LoginFormData } from '@/modules/auth/presenter/schemas/login-schema'
+import AuthLayout from '@/shared/components/layouts/auth-layout.vue'
+import LoginForm from '@/modules/auth/presentation/components/login-form.vue'
+import { AuthController } from '@/modules/auth/presentation/controllers/auth-controller'
+import type { LoginFormData } from '@/modules/auth/presentation/schemas/login-schema'
 import { routeNames } from '@/router/route-names'
 
 const controller = new AuthController()

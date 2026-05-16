@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { authGuard } from './guards/auth-guard'
 import { guestGuard } from './guards/guest-guard'
-import { authRoutes } from '@/modules/auth/presenter/routes/auth-routes'
+import { authRoutes } from '@/modules/auth/presentation/routes/auth-routes'
 
 const router = createRouter({
   history: createWebHistory(),

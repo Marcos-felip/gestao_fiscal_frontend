@@ -27,7 +27,7 @@ Frontend: Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS 4 + Preline UI + Luci
 TODOS os módulos DEVEM seguir este fluxo de dados. Nunca pule camadas.
 
 ```
-PRESENTER                 APPLICATION               DATA                    DOMAIN
+PRESENTATION              APPLICATION               DATA                    DOMAIN
 (pages, components,       (use cases)               (repositories)          (entities, models,
  controllers, stores)                                                        interfaces, DTOs)
 
@@ -78,8 +78,14 @@ src/
 │   └── ...                         # UM ARQUIVO POR ENUM
 │
 ├── shared/                         # UI compartilhada entre módulos
-│   ├── components/                  # toast-notification.vue, etc.
-│   └── layouts/                     # auth-layout.vue, app-layout.vue
+│   ├── ui/                          # Componentes primitivos (Button, Input, Card)
+│   │   └── README.md                # Documentação Design System
+│   ├── components/                  # Componentes inteligentes (Toast, Layouts)
+│   │   ├── toast/
+│   │   │   └── toast-notification.vue
+│   │   ├── layouts/
+│   │   │   └── auth-layout.vue
+│   │   └── README.md                # Documentação componentes smart
 │
 ├── modules/                         # MÓDULOS DE FEATURE (1 módulo = 1 domínio)
 │   └── <feature>/                   # ex: auth, companies, products, partners, purchases, stock
@@ -97,10 +103,9 @@ src/
 │       │   └── <name>-repository.ts  # Implementa I<Name>Repository, usa HttpClient, transforma JSON
 │       │
 │       ├── application/            # ORQUESTRAÇÃO
-│       │   └── use-cases/
-│       │       └── <action>.use-case.ts  # Recebe DTO, delega para Repository, retorna Either
+       │       └── <action>.use-case.ts  # Recebe DTO, delega para Repository, retorna Either
 │       │
-│       └── presenter/              # CAMADA VUE (O QUE O USUÁRIO VÊ)
+│       └── presentation/            # CAMADA VUE (O QUE O USUÁRIO VÊ)
 │           ├── controllers/
 │           │   └── <name>-controller.ts    # Estende BaseController, orquestra UC + Store + Router
 │           ├── stores/
@@ -147,7 +152,7 @@ src/
 |---------|-----------|---------------|
 | **Use Case** (`<action>.use-case.ts`) | Orquestra chamadas ao repository. Recebe DTO, retorna `Either<Error, T>`. Pode chamar múltiplos repositories se necessário. | Não sabe sobre Vue, Router ou Pinia. Não faz chamadas HTTP diretamente. |
 
-### Presenter — `presenter/`
+### Presentation — `presentation/`
 
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
@@ -157,6 +162,48 @@ src/
 | **Page** (`<name>-page.vue`) | Instancia Controller. Conecta formulário ao Controller. Mostra loading/error feedback. | Não chama Use Cases diretamente. Não faz chamadas HTTP. |
 | **Component** (`<name>-form.vue`) | Formulário com Zod validation. Emite evento `submit` com dados tipados. | Não chama Controller. Não sabe sobre Use Cases. |
 | **Routes** (`<name>-routes.ts`) | Define `RouteRecordRaw[]`. Imports no topo do arquivo (NÃO inline). Usa `routeNames`. | Não tem lógica de negócio. |
+
+---
+
+## UI vs Components — Distinção Crítica
+
+### `@/shared/ui/` — Componentes Primitivos
+
+- **O que são:** Wrappers leves do Preline (Button, Input, Card)
+- **Objetivo:** Reutilização extrema, customização, manutenção centralizada
+- **Dependências:** Apenas Preline, Tailwind, Vue
+- **Lógica:** ZERO — apenas apresentação
+- **Quando usar:** Em formulários, listas, cards, headers
+- **Exemplo:** `import { ButtonUi, InputUi, CardUi } from '@/shared/ui'`
+
+### `@/shared/components/` — Componentes Inteligentes
+
+- **O que são:** Componentes com comportamento/contexto (Toast, Layouts, Filtros)
+- **Objetivo:** Reutilização em múltiplos módulos com responsabilidades específicas
+- **Dependências:** Pode depender de stores, services, composables
+- **Lógica:** Apresentação + comportamento específico
+- **Quando usar:** Em múltiplas páginas, layouts, notificações
+- **Exemplo:** `import Toast from '@/shared/components/toast/toast-notification.vue'`
+
+### Decisão: UI vs Component
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pergunta
+    Pergunta --> Primitivo?{É um primitivo\nPreline?}
+    Primitivo? -->|Sim| UI{Reutilizável?}
+    UI -->|Sim| UI_Folder["src/shared/ui/<nome>/"] 
+    UI -->|Não| Module_UI["modules/<feature>/"] 
+    Primitivo? -->|Não| Inteligente{Comportamento?}
+    Inteligente -->|Sim| Inteligente_Reutilizavel{Múltiplos\nmódulos?}
+    Inteligente_Reutilizavel -->|Sim| Component_Folder["src/shared/components/<tipo>/<nome>/"]
+    Inteligente_Reutilizavel -->|Não| Module_Component["modules/<feature>/presentation/components/"]
+    Inteligente -->|Não| [*]
+    UI_Folder --> [*]
+    Module_UI --> [*]
+    Module_Component --> [*]
+    Component_Folder --> [*]
+```
 
 ---
 
@@ -202,7 +249,9 @@ src/
 - **NUNCA** usar `try/catch` em controllers para erros de API — `handleResult()` já cuida.
 - **NUNCA** `throw` erros de negócio — sempre `Either.left()`.
 
-### Exemplo completo (referência: módulo auth)
+#---
+
+## Exemplo completo (referência: módulo auth)
 
 ```typescript
 // 1. DTO — dado de transporte
@@ -280,7 +329,7 @@ export class LoginUseCase {
   }
 }
 
-// 7. Controller — presenter
+// 7. Controller — presentation
 export class AuthController extends BaseController {
   private readonly authRepository = new AuthRepository()
   private readonly loginUseCase = new LoginUseCase(this.authRepository)
@@ -315,12 +364,12 @@ Ao criar qualquer novo módulo (companies, products, partners, etc.), siga ESTA 
 4. **`domain/interfaces/`** — Criar Interface com assinaturas usando DTOs e Either
 5. **`data/`** — Criar Repository implementando a Interface, usando HttpClient
 6. **`application/use-cases/`** — Criar Use Cases que recebem DTO e chamam Repository
-7. **`presenter/schemas/`** — Criar Zod schemas para validação de formulário
-8. **`presenter/controllers/`** — Criar Controller estendendo BaseController
-9. **`presenter/stores/`** — Criar Pinia store se necessário (estado reativo global)
-10. **`presenter/components/`** — Criar componentes de formulário com Zod
-11. **`presenter/pages/`** — Criar páginas que conectam tudo
-12. **`presenter/routes/`** — Criar rotas com imports no topo
+7. **`presentation/schemas/`** — Criar Zod schemas para validação de formulário
+8. **`presentation/controllers/`** — Criar Controller estendendo BaseController
+9. **`presentation/stores/`** — Criar Pinia store se necessário (estado reativo global)
+10. **`presentation/components/`** — Criar componentes de formulário com Zod
+11. **`presentation/pages/`** — Criar páginas que conectam tudo
+12. **`presentation/routes/`** — Criar rotas com imports no topo
 13. **`enums/`** — Criar enums em arquivos separados no diretório raiz `src/enums/`
 14. **`router/route-names.ts`** — Adicionar nome da rota como const
 15. **`router/index.ts`** — Importar e adicionar rotas do módulo

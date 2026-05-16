@@ -5,7 +5,7 @@ import { LoginUseCase } from '@/modules/auth/application/use-cases/login.use-cas
 import { RegisterUseCase } from '@/modules/auth/application/use-cases/register.use-case'
 import { LoginDto } from '@/modules/auth/domain/dto/auth-dto'
 import { RegisterDto } from '@/modules/auth/domain/dto/auth-dto'
-import { useAuthStore } from '@/modules/auth/presenter/stores/auth-store'
+import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
 import { routeNames } from '@/router/route-names'
 
 export class AuthController extends BaseController {

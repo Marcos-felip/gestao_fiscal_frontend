@@ -4,7 +4,7 @@ import { User, Mail, Lock, UserPlus } from 'lucide-vue-next'
 import {
   registerSchema,
   type RegisterFormData,
-} from '@/modules/auth/presenter/schemas/register-schema'
+} from '@/modules/auth/presentation/schemas/register-schema'
 
 const emit = defineEmits<{
   submit: [data: RegisterFormData]

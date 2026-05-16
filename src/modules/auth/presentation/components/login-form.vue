@@ -4,7 +4,7 @@ import { Mail, Lock, LogIn } from 'lucide-vue-next'
 import {
   loginSchema,
   type LoginFormData,
-} from '@/modules/auth/presenter/schemas/login-schema'
+} from '@/modules/auth/presentation/schemas/login-schema'
 
 const emit = defineEmits<{
   submit: [data: LoginFormData]
