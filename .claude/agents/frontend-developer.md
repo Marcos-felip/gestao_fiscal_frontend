@@ -71,20 +71,78 @@ Ao criar um novo modulo, siga ESTA ORDEM:
 - Pode ter getters de comportamento (`get hasActiveCompany()`).
 - NAO importa Vue, Pinia, Router, HttpClient.
 
+```typescript
+export class Product {
+  constructor(
+    public readonly id: string,
+    public readonly name: string,
+    public readonly sku: string | null,
+    public readonly currentStock: number,
+    public readonly companyId: string,
+  ) {}
+
+  static fromJson(json: Record<string, unknown>): Product {
+    return new Product(
+      json.id as string,
+      json.name as string,
+      json.sku as string | null,
+      json.currentStock as number,
+      json.companyId as string,
+    )
+  }
+
+  get hasSku(): boolean {
+    return this.sku !== null
+  }
+}
+```
+
 ### Model (`domain/models/<name>.model.ts`)
 - Classe de valor composto SEM identidade propria.
 - `static fromJson()` factory.
 - Agrupa dados que andam juntos (AuthToken, PaginatedData, etc.).
+
+```typescript
+export class AuthToken {
+  constructor(
+    public readonly accessToken: string,
+    public readonly refreshToken: string,
+  ) {}
+
+  static fromJson(json: Record<string, unknown>): AuthToken {
+    return new AuthToken(json.accessToken as string, json.refreshToken as string)
+  }
+}
+```
 
 ### DTO (`domain/dto/<name>-dto.ts`)
 - Dado de transporte entre camadas. Temporario.
 - Classe simples com propriedades. NAO tem `fromJson()`.
 - NAO tem metodos. NAO importa Vue.
 
+```typescript
+export class LoginDto {
+  constructor(
+    public readonly email: string,
+    public readonly password: string,
+  ) {}
+}
+```
+
 ### Interface (`domain/interfaces/i-<name>-repository.interface.ts`)
 - Contrato que o Repository implementa.
 - Usa DTOs, Entities, Models e Either nas assinaturas.
 - Importa SOMENTE de domain e core.
+
+```typescript
+export interface IProductRepository {
+  findAll(dto: FindAllProductsDto): Promise<Either<Error, PaginatedResponse<Product>>>
+  findById(id: string): Promise<Either<Error, Product>>
+  create(dto: CreateProductDto): Promise<Either<Error, Product>>
+  update(id: string, dto: UpdateProductDto): Promise<Either<Error, Product>>
+  remove(id: string): Promise<Either<Error, void>>
+}
+```
 
 ### Repository (`data/<name>-repository.ts`)
 - Implementa `I<Name>Repository`.
@@ -92,11 +150,36 @@ Ao criar um novo modulo, siga ESTA ORDEM:
 - Transforma resposta JSON em Entity/Model com `fromJson()`.
 - Retorna `Either<Error, T>` (httpClient ja retorna Either).
 
+```typescript
+export class ProductRepository implements IProductRepository {
+  async findAll(dto: FindAllProductsDto): Promise<Either<Error, PaginatedResponse<Product>>> {
+    const params: Record<string, string> = { page: String(dto.page), limit: String(dto.limit) }
+    if (dto.search) params.search = dto.search
+    const result = await httpClient.get<Record<string, unknown>>('/products', { params })
+    return result.map((data) => ({
+      data: (data.data as Record<string, unknown>[]).map((item) => Product.fromJson(item)),
+      total: data.total as number,
+      page: data.page as number,
+      limit: data.limit as number,
+    }))
+  }
+}
+```
+
 ### Use Case (`application/use-cases/<action>.use-case.ts`)
 - Recebe DTO como parametro.
 - Delega para Repository.
 - Retorna `Either<Error, T>`.
 - NAO sabe sobre Vue, Router ou Pinia.
+
+```typescript
+export class FindAllProductsUseCase {
+  constructor(private readonly productRepository: IProductRepository) {}
+  async execute(dto: FindAllProductsDto): Promise<Either<Error, PaginatedResponse<Product>>> {
+    return this.productRepository.findAll(dto)
+  }
+}
+```
 
 ### Controller (`presenter/controllers/<name>-controller.ts`)
 - Estende `BaseController` de `@/core/controllers/base-controller`.
@@ -105,9 +188,43 @@ Ao criar um novo modulo, siga ESTA ORDEM:
 - Usa `this.handleResult(result, onSuccess, onError)`.
 - Interage com Pinia Store e Router.
 
+```typescript
+export class ProductController extends BaseController {
+  private readonly productRepository = new ProductRepository()
+  private readonly findAllProductsUseCase = new FindAllProductsUseCase(this.productRepository)
+
+  readonly search = ref('')
+  readonly page = ref(1)
+
+  async loadProducts(): Promise<void> {
+    this.setLoading(true)
+
+    const dto = new FindAllProductsDto(this.page.value, 20, this.search.value)
+    const result = await this.findAllProductsUseCase.execute(dto)
+
+    this.handleResult(result, (response) => {
+      // atualizar store ou refs com response
+    })
+    this.setLoading(false)
+  }
+}
+```
+
 ### Zod Schema (`presenter/schemas/<name>-schema.ts`)
 - Define `z.object()` com validacoes em PT-BR.
 - Exporta schema e tipo inferido.
+
+```typescript
+import { z } from 'zod'
+
+export const productSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
+  sku: z.string().optional(),
+  unitPrice: z.number().min(0, 'Preço deve ser positivo').optional(),
+})
+
+export type ProductFormData = z.infer<typeof productSchema>
+```
 
 ### Pinia Store (`presenter/stores/<name>-store.ts`)
 - `defineStore('nome', () => { ... })` com Composition API.
@@ -129,9 +246,23 @@ Ao criar um novo modulo, siga ESTA ORDEM:
 - `RouteRecordRaw[]` com imports NO TOPO do arquivo (NUNCA inline).
 - Usa `routeNames` para nome e path.
 
+```typescript
+import type { RouteRecordRaw } from 'vue-router'
+import ProductListPage from '../pages/product-list-page.vue'
+import { routeNames } from '@/router/route-names'
+
+export const productRoutes: RouteRecordRaw[] = [
+  {
+    path: '/products',
+    name: routeNames.PRODUCTS,
+    component: ProductListPage,
+  },
+]
+```
+
 ---
 
-## CONVENCOES GERAIS
+## CONVENCoes GERAIS
 
 - **Kebab-case** em nomes de arquivo.
 - **Sem `index.ts`** barrel files — cada arquivo e importado diretamente.
