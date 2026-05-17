@@ -20,21 +20,18 @@ function goToRegister(): void {
 
 <template>
   <AuthLayout>
-    <!-- Título da página usando slot do layout -->
     <template #title>
-      <h2 class="text-2xl font-bold text-foreground">
+      <h2 class="text-xl font-bold text-foreground text-center">
         Bem-vindo de volta
       </h2>
     </template>
 
-    <!-- Subtítulo da página usando slot do layout -->
     <template #subtitle>
-      <p class="text-sm text-muted-foreground-1">
+      <p class="text-sm text-foreground/70 text-center mt-1.5">
         Insira suas credenciais para acessar o sistema
       </p>
     </template>
 
-    <!-- Mensagem de erro -->
     <div
       v-if="controller.hasError"
       class="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive mb-4"
@@ -42,14 +39,12 @@ function goToRegister(): void {
       {{ controller.errorMessage }}
     </div>
 
-    <!-- Formulário de Login -->
     <LoginForm :loading="controller.isLoading" @submit="handleLogin" />
 
-    <!-- Link para Registro -->
-    <p class="text-center text-sm text-muted-foreground-1 mt-6">
+    <p class="text-center text-sm text-foreground/70 mt-6">
       Não tem uma conta?
       <button
-        class="text-primary font-medium hover:underline transition-colors"
+        class="text-primary font-medium hover:underline transition-colors cursor-pointer"
         @click="goToRegister"
       >
         Criar conta

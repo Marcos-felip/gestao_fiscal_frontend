@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { UserPlus, Eye, EyeOff } from 'lucide-vue-next'
-import { ButtonUi, InputUi } from '@/shared/ui'
+import { Eye, EyeOff } from 'lucide-vue-next'
+import { Button, Input } from '@/shared/ui'
 import {
   registerSchema,
   type RegisterFormData,
@@ -48,98 +48,97 @@ function togglePasswordVisibility(): void {
 </script>
 
 <template>
-  <form class="space-y-5" @submit.prevent="handleSubmit">
-    <!-- Name Input usando InputUi -->
-    <InputUi
-      v-model="name"
-      type="text"
-      placeholder="Seu nome completo"
-      autocomplete="name"
-      :error="errors.name"
-    >
-      <template #label>Nome</template>
-    </InputUi>
+  <form class="space-y-4" @submit.prevent="handleSubmit">
+    <div class="space-y-4">
+      <Input
+        id="register-name"
+        v-model="name"
+        type="text"
+        placeholder="Seu nome completo"
+        autocomplete="name"
+        :error="errors.name"
+      >
+        <template #label>Nome</template>
+      </Input>
 
-    <!-- Email Input usando InputUi -->
-    <InputUi
-      v-model="email"
-      type="email"
-      placeholder="seu@email.com"
-      autocomplete="email"
-      :error="errors.email"
-    >
-      <template #label>E-mail</template>
-    </InputUi>
+      <Input
+        id="register-email"
+        v-model="email"
+        type="email"
+        placeholder="seu@email.com"
+        autocomplete="email"
+        :error="errors.email"
+      >
+        <template #label>E-mail</template>
+      </Input>
 
-    <!-- Password Input com toggle visibility -->
-    <div class="ui-input-wrapper">
-      <label class="block text-sm font-medium text-foreground mb-2">
-        Senha
-      </label>
-      <div class="ui-input-container relative">
-        <input
-          v-model="password"
-          :type="showPassword ? 'text' : 'password'"
-          placeholder="Mínimo 6 caracteres"
-          autocomplete="new-password"
-          :class="[
-            'w-full px-4 py-2.5 rounded-lg',
-            'bg-background text-foreground',
-            'border-2 border-line-2 transition-all duration-300',
-            'focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none',
-            errors.password && 'border-destructive focus:border-destructive focus:ring-destructive/20',
-            'placeholder:text-muted-foreground',
-          ]"
-        />
-        <!-- Toggle password visibility button -->
-        <button
-          type="button"
-          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground-2 hover:text-foreground transition-colors"
-          @click="togglePasswordVisibility"
-        >
-          <Eye v-if="!showPassword" class="h-4 w-4" />
-          <EyeOff v-else class="h-4 w-4" />
-        </button>
-      </div>
-      <p v-if="errors.password" class="text-sm text-destructive font-medium mt-2">
-        {{ errors.password }}
-      </p>
+      <Input
+        id="register-password"
+        v-model="password"
+        :type="showPassword ? 'text' : 'password'"
+        placeholder="Mínimo 6 caracteres"
+        autocomplete="new-password"
+        :error="errors.password"
+        input-class="pr-10"
+      >
+        <template #label>Senha</template>
+        <template #suffix>
+          <button
+            type="button"
+            class="text-foreground/50 hover:text-foreground/70 transition-colors"
+            @click="togglePasswordVisibility"
+          >
+            <Eye v-if="!showPassword" class="h-4 w-4" />
+            <EyeOff v-else class="h-4 w-4" />
+          </button>
+        </template>
+      </Input>
+
+      <Button
+        type="submit"
+        variant="primary"
+        :full-width="true"
+        text-class="text-white"
+        :loading="props.loading"
+        :disabled="props.loading"
+      >
+        Criar conta
+      </Button>
     </div>
 
-    <!-- Submit Button usando ButtonUi -->
-    <ButtonUi
-      type="submit"
-      variant="primary"
-      :loading="props.loading"
-      :disabled="props.loading"
-      class="w-full"
-    >
-      <template #icon>
-        <UserPlus class="h-4 w-4" />
-      </template>
-      Criar Conta
-    </ButtonUi>
-
-    <!-- Divider com "Ou" -->
-    <div class="flex items-center gap-4 my-6">
-      <div class="flex-1 border-t border-line-2"></div>
-      <span class="text-xs font-medium text-muted-foreground-1">Ou</span>
-      <div class="flex-1 border-t border-line-2"></div>
+    <div class="my-5 flex items-center gap-3">
+      <div class="h-px flex-1 bg-line-2"></div>
+      <span class="text-xs font-medium text-foreground/50 uppercase tracking-wider">Ou</span>
+      <div class="h-px flex-1 bg-line-2"></div>
     </div>
 
-    <!-- Google Button usando ButtonUi -->
-    <ButtonUi
+    <Button
       type="button"
       variant="ghost"
-      class="w-full"
+      :full-width="true"
     >
-      <svg class="h-4 w-4" viewBox="0 0 24 24">
-        <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-        <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      <svg class="shb27" width="16" height="16" viewBox="0 0 33 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g clip-path="url(#clip0_4132_5805)">
+          <path
+            d="M32.2566 16.36C32.2566 15.04 32.1567 14.08 31.9171 13.08H16.9166V19.02H25.7251C25.5454 20.5 24.5866 22.72 22.4494 24.22L22.4294 24.42L27.1633 28.1L27.4828 28.14C30.5189 25.34 32.2566 21.22 32.2566 16.36Z"
+            fill="#4285F4"></path>
+          <path
+            d="M16.9166 32C21.231 32 24.8463 30.58 27.5028 28.12L22.4694 24.2C21.1111 25.14 19.3135 25.8 16.9366 25.8C12.7021 25.8 9.12677 23 7.84844 19.16L7.66867 19.18L2.71513 23L2.65521 23.18C5.2718 28.4 10.6648 32 16.9166 32Z"
+            fill="#34A853"></path>
+          <path
+            d="M7.82845 19.16C7.48889 18.16 7.28915 17.1 7.28915 16C7.28915 14.9 7.48889 13.84 7.80848 12.84V12.62L2.81499 8.73999L2.6552 8.81999C1.55663 10.98 0.937439 13.42 0.937439 16C0.937439 18.58 1.55663 21.02 2.63522 23.18L7.82845 19.16Z"
+            fill="#FBBC05"></path>
+          <path
+            d="M16.9166 6.18C19.9127 6.18 21.9501 7.48 23.0886 8.56L27.6027 4.16C24.8263 1.58 21.231 0 16.9166 0C10.6648 0 5.27181 3.6 2.63525 8.82L7.80851 12.84C9.10681 8.98 12.6821 6.18 16.9166 6.18Z"
+            fill="#EB4335"></path>
+        </g>
+        <defs>
+          <clipPath id="clip0_4132_5805">
+            <rect width="32" height="32" fill="white" transform="translate(0.937439)"></rect>
+          </clipPath>
+        </defs>
       </svg>
-      Google
-    </ButtonUi>
+      Continuar com Google
+    </Button>
   </form>
 </template>
