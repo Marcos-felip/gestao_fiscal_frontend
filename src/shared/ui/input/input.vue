@@ -6,42 +6,95 @@
     </label>
 
     <!-- Container do input com animação de erro -->
-    <div :class="['ui-input-container', error && 'shake-error']">
+    <div :class="['ui-input-container relative', error && 'shake-error']">
       <input
         :type="type"
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
+        :aria-invalid="Boolean(error)"
+        :aria-describedby="helperId"
         :class="[
           'ui-input',
           // Estilos base do Preline
-          'w-full px-4 py-2.5 rounded-lg',
-          'bg-background text-foreground',
-          'border-2 border-line-2 transition-all duration-300',
+          'py-2.5 sm:py-3 px-4 block w-full rounded-lg sm:text-sm',
+          'bg-background-1 text-foreground',
+          'border border-line-2 transition-colors duration-200',
           // Estado de foco com anel primário
-          'focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none',
+          'focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none',
           // Estado de erro - borda vermelha
-          error && 'border-destructive focus:border-destructive focus:ring-destructive/20',
+          error && '!border-error-500 focus:!border-error-500 focus:!ring-error-500',
+          success && '!border-success-500 focus:!border-success-500 focus:!ring-success-500',
           // Estado desabilitado
-          disabled && 'opacity-50 cursor-not-allowed bg-muted',
+          disabled && 'opacity-50 cursor-not-allowed bg-background-2',
           // Estilo do placeholder
-          'placeholder:text-muted-foreground',
+          'placeholder:text-foreground/70',
+          (error || success || $slots.suffix) && 'pe-10',
+          inputClass,
         ]"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         @blur="$emit('blur')"
         @focus="$emit('focus')"
       />
+
+      <div
+        v-if="error || success"
+        class="absolute inset-y-0 right-0 flex items-center pointer-events-none pe-3"
+      >
+        <svg
+          v-if="error"
+          class="shrink-0 size-4 text-error-500"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <svg
+          v-else
+          class="shrink-0 size-4 text-success-500"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+
+      <div
+        v-if="$slots.suffix && !error && !success"
+        class="absolute right-0 top-1/2 -translate-y-1/2 pe-3"
+      >
+        <slot name="suffix" />
+      </div>
     </div>
 
     <!-- Mensagem de dica ou erro (após input) -->
-    <div v-if="hint || error" class="mt-2">
+    <div v-if="hint || error || success" class="mt-2">
       <p
         :class="[
           'text-sm transition-colors duration-300',
-          error ? 'text-destructive font-medium' : 'text-muted-foreground-1',
+          error
+            ? 'text-error-500 font-medium'
+            : success
+              ? 'text-success-500 font-medium'
+              : 'text-foreground/70',
         ]"
+        :id="helperId"
       >
-        {{ error || hint }}
+        {{ error || success || hint }}
       </p>
     </div>
   </div>
@@ -49,7 +102,7 @@
 
 <script setup lang="ts">
 /**
- * Componente InputUi
+ * Componente Input
  *
  * Wrapper ao redor do input HTML com estilização do Preline, estados de validação
  * e funcionalidades de acessibilidade.
@@ -71,7 +124,7 @@
  * - focus: quando o input recebe o foco
  *
  * Exemplo:
- * <InputUi
+ * <Input
  *   v-model="email"
  *   type="email"
  *   placeholder="voce@exemplo.com"
@@ -79,7 +132,7 @@
  *   @blur="validateEmail"
  * >
  *   <template #label>Endereço de E-mail</template>
- * </InputUi>
+ * </Input>
  */
 
 interface Props {
@@ -88,7 +141,9 @@ interface Props {
   placeholder?: string
   disabled?: boolean
   error?: string
+  success?: string
   hint?: string
+  inputClass?: string
 }
 
 interface Emits {
@@ -102,10 +157,14 @@ withDefaults(defineProps<Props>(), {
   placeholder: '',
   disabled: false,
   error: '',
+  success: '',
   hint: '',
+  inputClass: '',
 })
 
 defineEmits<Emits>()
+
+const helperId = `input-helper-${Math.random().toString(36).slice(2, 9)}`
 </script>
 
 <style scoped>

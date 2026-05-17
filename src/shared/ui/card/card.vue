@@ -3,13 +3,13 @@
     :class="[
       'ui-card',
       // Estilos base do Preline
-      'bg-card rounded-lg border transition-all duration-300',
+      'bg-background rounded-xl border border-line-2',
       // Estilos de variante
       variantClasses,
       // Padding customizado
       paddingClasses,
       // Efeito de hover para variante elevated
-      variant === 'elevated' && 'hover:shadow-lg hover:shadow-primary/10',
+      variant === 'elevated' && '',
     ]"
   >
     <!-- Slot de header (opcional) -->
@@ -39,7 +39,7 @@
 import { computed } from 'vue'
 
 /**
- * Componente CardUi
+ * Componente Card
  *
  * Wrapper ao redor do componente de card do Preline com múltiplas variantes,
  * slots flexíveis de layout e animações suaves.
@@ -55,7 +55,7 @@ import { computed } from 'vue'
  * - footer: seção de footer opcional (abaixo do divisor)
  *
  * Exemplo:
- * <CardUi variant="elevated" padding="md">
+ * <Card variant="elevated" padding="md">
  *   <template #header>
  *     <h3 class="text-lg font-semibold">Título do Card</h3>
  *   </template>
@@ -65,7 +65,7 @@ import { computed } from 'vue'
  *   <template #footer>
  *     <button>Ação</button>
  *   </template>
- * </CardUi>
+ * </Card>
  */
 
 interface Props {
@@ -85,8 +85,8 @@ const props = withDefaults(defineProps<Props>(), {
  */
 const variantClasses = computed(() => {
   const variants = {
-    default: `border-card-line ${props.border ? '' : 'border-transparent'}`,
-    elevated: `border-card-line shadow-md hover:shadow-xl ${
+    default: `${props.border ? '' : 'border-transparent'}`,
+    elevated: `${
       props.border ? '' : 'border-transparent'
     }`,
   }
@@ -98,7 +98,7 @@ const variantClasses = computed(() => {
  */
 const paddingClasses = computed(() => {
   const paddings = {
-    sm: 'p-3',
+    sm: 'p-4',
     md: 'p-6',
     lg: 'p-8',
   }

@@ -5,48 +5,48 @@ Este diretório contém **wrappers customizados** dos componentes Preline com an
 ## 🎯 Princípios
 
 ### 1. Wrapper Leve
-- Cada componente é um **wrapper fino** ao redor do Preline
+### 1️⃣ **Button**
 - Não duplica markup — apenas estende com props, slots e animações
 - **Atualizações do Preline**: aplicadas automaticamente sem quebrar nossos wrappers
 
-### 2. Semântica Preline
-- Usa **tokens Preline** (`bg-primary`, `text-foreground`, `border-line-2`, etc.)
-- Respeita o theme default (light/dark mode automático)
-- Estende com animações e utilities customizadas
-
-### 3. Extensibilidade via Slots
+  <Button
+  </Button>
+  <Button variant="destructive">
+  </Button>
+  <Button variant="ghost">
+  </Button>
 - Todos os componentes usam **slots** para máxima flexibilidade
 - Props para variantes e states comuns
-- Internals podem ser customizados sem modificar o wrapper
+import { Button } from '@/shared/ui'
 
----
+### 2️⃣ **Input**
 
 ## 📦 Componentes
 
-### 1️⃣ **ButtonUi**
-
-Botão com múltiplas variantes, tamanhos, loading state e animações.
-
-#### Props
-```typescript
+    <Input
+    </Input>
+    <Input
+    </Input>
+    <Button type="submit" variant="primary" class="mt-6">
+    </Button>
 variant?: 'primary' | 'secondary' | 'destructive' | 'ghost'  // default: 'primary'
 size?: 'sm' | 'md' | 'lg'                                     // default: 'md'
-disabled?: boolean                                            // default: false
+import { Input, Button } from '@/shared/ui'
 loading?: boolean                                             // default: false
-type?: 'button' | 'submit' | 'reset'                         // default: 'button'
+### 3️⃣ **Card**
 ```
 
 #### Slots
-```typescript
-default: string  // Conteúdo/texto do botão
-icon?: VNode     // Ícone antes do texto (opcional)
-```
-
-#### Emits
-```typescript
+  <Card>
+  </Card>
+      <Button variant="ghost" size="sm">
+      </Button>
+  </Card>
+  <Card variant="elevated" padding="lg">
+  </Card>
 @click: MouseEvent
 ```
-
+import { Card, Button } from '@/shared/ui'
 #### Exemplo
 ```vue
 <template>

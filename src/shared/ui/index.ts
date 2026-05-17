@@ -5,9 +5,10 @@
  * animações e opções de customização.
  *
  * Uso:
- * import { ButtonUi, InputUi, CardUi } from '@/shared/components/ui'
+ * import { Button, Input, Card } from '@/shared/ui'
  */
 
-export { default as ButtonUi } from './button/button.vue'
-export { default as InputUi } from './input/input.vue'
-export { default as CardUi } from './card/card.vue'
+export { default as Button } from './button/button.vue'
+export { default as Input } from './input/input.vue'
+export { default as Card } from './card/card.vue'
+export { default as Spinner } from './spinner/spinner.vue'

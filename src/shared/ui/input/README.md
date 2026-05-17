@@ -1,4 +1,4 @@
-# InputUi Component
+# Input Component
 
 Input com validação, mensagens de erro/dica e animações de estado.
 
@@ -35,7 +35,7 @@ Input com validação, mensagens de erro/dica e animações de estado.
 
 ```vue
 <template>
-  <InputUi
+  <Input
     v-model="email"
     type="email"
     placeholder="voce@exemplo.com"
@@ -43,12 +43,12 @@ Input com validação, mensagens de erro/dica e animações de estado.
     @blur="validateEmail"
   >
     <template #label>Endereço de E-mail</template>
-  </InputUi>
+  </Input>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { InputUi } from '@/shared/components/ui'
+import { Input } from '@/shared/ui'
 
 const email = ref('')
 const emailError = ref('')
@@ -66,44 +66,44 @@ const validateEmail = () => {
 ### Input de Senha com Dica
 
 ```vue
-<InputUi
+<Input
   v-model="password"
   type="password"
   placeholder="Digite sua senha"
   hint="Mínimo 8 caracteres"
 >
   <template #label>Senha</template>
-</InputUi>
+</Input>
 ```
 
 ### Input Desabilitado
 
 ```vue
-<InputUi
+<Input
   v-model="value"
   disabled
 >
   <template #label>Campo Desabilitado</template>
-</InputUi>
+</Input>
 ```
 
 ### Input com Erro em Tempo Real
 
 ```vue
 <template>
-  <InputUi
+  <Input
     v-model="username"
     placeholder="Nome de usuário"
     :error="usernameError"
     @blur="checkUsername"
   >
     <template #label>Nome de Usuário</template>
-  </InputUi>
+  </Input>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { InputUi } from '@/shared/components/ui'
+import { Input } from '@/shared/ui'
 
 const username = ref('')
 const usernameError = ref('')
@@ -127,13 +127,13 @@ const checkUsername = async () => {
 ### Input de Texto Simples
 
 ```vue
-<InputUi
+<Input
   v-model="name"
   type="text"
   placeholder="Digite seu nome completo"
 >
   <template #label>Nome Completo</template>
-</InputUi>
+</Input>
 ```
 
 ## Estados

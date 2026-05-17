@@ -1,4 +1,4 @@
-# ButtonUi Component
+# Button Component
 
 Botão com múltiplas variantes, tamanhos, estado de carregamento e animações.
 
@@ -34,7 +34,7 @@ Botão com múltiplas variantes, tamanhos, estado de carregamento e animações.
 
 ```vue
 <template>
-  <ButtonUi
+  <Button
     variant="primary"
     size="md"
     :loading="isLoading"
@@ -44,12 +44,12 @@ Botão com múltiplas variantes, tamanhos, estado de carregamento e animações.
       <LogIn class="h-4 w-4" />
     </template>
     Entrar
-  </ButtonUi>
+  </Button>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ButtonUi } from '@/shared/components/ui'
+import { Button } from '@/shared/ui'
 import { LogIn } from 'lucide-vue-next'
 
 const isLoading = ref(false)
@@ -68,33 +68,33 @@ const handleLogin = async () => {
 ### Botão Destrutivo
 
 ```vue
-<ButtonUi variant="destructive">
+<Button variant="destructive">
   Deletar
-</ButtonUi>
+</Button>
 ```
 
 ### Botão Ghost (Transparente)
 
 ```vue
-<ButtonUi variant="ghost">
+<Button variant="ghost">
   Cancelar
-</ButtonUi>
+</Button>
 ```
 
 ### Botão Secundário
 
 ```vue
-<ButtonUi variant="secondary" size="lg">
+<Button variant="secondary" size="lg">
   Ação Secundária
-</ButtonUi>
+</Button>
 ```
 
 ### Botão Pequeno Desabilitado
 
 ```vue
-<ButtonUi size="sm" disabled>
+<Button size="sm" disabled>
   Desabilitado
-</ButtonUi>
+</Button>
 ```
 
 ## Variantes

@@ -1,4 +1,4 @@
-# CardUi Component
+# Card Component
 
 Card com múltiplas variantes, slots flexíveis de layout e animações de entrada suave.
 
@@ -43,16 +43,16 @@ Card com múltiplas variantes, slots flexíveis de layout e animações de entra
 
 ```vue
 <template>
-  <CardUi>
+  <Card>
     <h3 class="text-lg font-semibold mb-2">Título</h3>
     <p class="text-muted-foreground">
       Conteúdo do card aqui.
     </p>
-  </CardUi>
+  </Card>
 </template>
 
 <script setup lang="ts">
-import { CardUi } from '@/shared/components/ui'
+import { Card } from '@/shared/ui'
 </script>
 ```
 
@@ -60,7 +60,7 @@ import { CardUi } from '@/shared/components/ui'
 
 ```vue
 <template>
-  <CardUi variant="elevated" padding="md">
+  <Card variant="elevated" padding="md">
     <template #header>
       <div class="flex justify-between items-center">
         <h3 class="text-lg font-semibold">Título do Card</h3>
@@ -76,15 +76,15 @@ import { CardUi } from '@/shared/components/ui'
 
     <template #footer>
       <div class="flex gap-2 justify-end">
-        <ButtonUi variant="ghost">Cancelar</ButtonUi>
-        <ButtonUi variant="primary">Salvar</ButtonUi>
+        <Button variant="ghost">Cancelar</Button>
+        <Button variant="primary">Salvar</Button>
       </div>
     </template>
-  </CardUi>
+  </Card>
 </template>
 
 <script setup lang="ts">
-import { CardUi, ButtonUi } from '@/shared/components/ui'
+import { Card, Button } from '@/shared/ui'
 import { MoreVertical } from 'lucide-vue-next'
 </script>
 ```
@@ -92,31 +92,31 @@ import { MoreVertical } from 'lucide-vue-next'
 ### Card Compacto (sm)
 
 ```vue
-<CardUi padding="sm">
+<Card padding="sm">
   <p class="text-sm">
     Informação rápida ou placeholder.
   </p>
-</CardUi>
+</Card>
 ```
 
 ### Card Espaçoso (lg)
 
 ```vue
-<CardUi variant="elevated" padding="lg">
+<Card variant="elevated" padding="lg">
   <h2 class="text-2xl font-bold mb-4">Destaque</h2>
   <p class="text-lg text-muted-foreground mb-4">
     Este é um card importante com mais espaço.
   </p>
-  <ButtonUi variant="primary">Ação Principal</ButtonUi>
-</CardUi>
+  <Button variant="primary">Ação Principal</Button>
+</Card>
 ```
 
 ### Card Sem Borda
 
 ```vue
-<CardUi :border="false" variant="elevated">
+<Card :border="false" variant="elevated">
   <p>Card sem borda visual</p>
-</CardUi>
+</Card>
 ```
 
 ### Listagem de Cards
@@ -124,7 +124,7 @@ import { MoreVertical } from 'lucide-vue-next'
 ```vue
 <template>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <CardUi
+    <Card
       v-for="item in items"
       :key="item.id"
       variant="default"
@@ -136,17 +136,17 @@ import { MoreVertical } from 'lucide-vue-next'
       <p class="text-muted-foreground">{{ item.description }}</p>
       
       <template #footer>
-        <ButtonUi variant="ghost" size="sm">
+        <Button variant="ghost" size="sm">
           Detalhes
-        </ButtonUi>
+        </Button>
       </template>
-    </CardUi>
+    </Card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { CardUi, ButtonUi } from '@/shared/components/ui'
+import { Card, Button } from '@/shared/ui'
 
 const items = ref([
   { id: 1, title: 'Item 1', description: 'Descrição aqui' },
@@ -190,4 +190,4 @@ const items = ref([
 - A animação de entrada (entrance-slide-up) aplica-se a todos os cards ao montar
 - Divisores entre header/content/footer são renderizados apenas se os slots estão preenchidos
 - O footer fica fixo no topo se houver espaço (flex-1 no content)
-- Suporta nesting de componentes dentro (ButtonUi, InputUi, etc.)
+- Suporta nesting de componentes dentro (Button, Input, etc.)
