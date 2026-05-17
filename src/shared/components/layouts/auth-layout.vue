@@ -27,7 +27,7 @@ import { Card } from '@/shared/ui'
           <circle cx="16" cy="16" r="5" fill="currentColor" />
           <path d="M16 2a14 14 0 0 1 0 28" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
         </svg>
-        <span class="text-xl font-bold text-primary">preline</span>
+        <span class="text-xl font-bold text-primary">Gestão Fiscal</span>
       </div>
 
       <Card
