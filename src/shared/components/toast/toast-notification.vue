@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { X } from 'lucide-vue-next'
+import { Icon } from '@/shared/ui'
 
 interface Toast {
   id: number
@@ -55,7 +55,7 @@ onMounted(() => {
           class="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
           @click="removeToast(toast.id)"
         >
-          <X class="h-4 w-4" />
+          <Icon name="close" class="h-4 w-4" />
         </button>
       </div>
     </TransitionGroup>

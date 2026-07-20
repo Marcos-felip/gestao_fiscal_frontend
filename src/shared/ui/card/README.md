@@ -65,7 +65,7 @@ import { Card } from '@/shared/ui'
       <div class="flex justify-between items-center">
         <h3 class="text-lg font-semibold">Título do Card</h3>
         <button class="text-muted-foreground hover:text-foreground">
-          <MoreVertical class="h-4 w-4" />
+          <Icon name="more-vertical" class="h-4 w-4" />
         </button>
       </div>
     </template>
@@ -84,8 +84,7 @@ import { Card } from '@/shared/ui'
 </template>
 
 <script setup lang="ts">
-import { Card, Button } from '@/shared/ui'
-import { MoreVertical } from 'lucide-vue-next'
+import { Card, Button, Icon } from '@/shared/ui'
 </script>
 ```
 

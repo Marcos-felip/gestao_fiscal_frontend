@@ -59,7 +59,7 @@ import { Spinner } from '@/shared/ui'
  * Exemplo:
  * <Button variant="primary" size="md" @click="handleClick">
  *   <template #icon>
- *     <LogIn class="h-4 w-4" />
+ *     <Icon name="log-in" class="h-4 w-4" />
  *   </template>
  *   Login
  * </Button>

@@ -272,7 +272,7 @@ export const productRoutes: RouteRecordRaw[] = [
 - **NUNCA** `erasableSyntaxOnly` — declarar propriedades separadamente no constructor.
 - **Textos em PT-BR.**
 - **Preline UI** com tokens de tema (`bg-primary`, `text-primary-foreground`, etc.).
-- **Lucide Icons** (`import { LogIn } from 'lucide-vue-next'`).
+- **Ícones** via `<Icon name="..." />` de `@/shared/ui`. NUNCA importar `lucide-vue-next` direto — registrar novos ícones em `shared/ui/icon/icons.ts`.
 - **Zod v3** — NAO usar v4 (incompativel).
 
 ---

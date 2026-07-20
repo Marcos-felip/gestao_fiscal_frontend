@@ -57,7 +57,7 @@ import { Card, Button } from '@/shared/ui'
     @click="handleLogin"
   >
     <template #icon>
-      <LogIn class="h-4 w-4" />
+      <Icon name="log-in" class="h-4 w-4" />
     </template>
     Login
   </ButtonUi>
@@ -76,7 +76,7 @@ import { Card, Button } from '@/shared/ui'
 <script setup lang="ts">
 import { ref } from 'vue'
 import { ButtonUi } from '@/shared/components/ui'
-import { LogIn } from 'lucide-vue-next'
+import { Icon } from '@/shared/ui'
 
 const isLoading = ref(false)
 

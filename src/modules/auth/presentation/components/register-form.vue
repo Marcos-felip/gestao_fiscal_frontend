@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Eye, EyeOff } from 'lucide-vue-next'
-import { Button, Input } from '@/shared/ui'
+import { Button, Input, Icon } from '@/shared/ui'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {
   registerSchema,
@@ -85,8 +84,7 @@ function togglePasswordVisibility(): void {
             class="text-foreground/50 hover:text-foreground/70 transition-colors"
             @click="togglePasswordVisibility"
           >
-            <Eye v-if="!showPassword" class="h-4 w-4" />
-            <EyeOff v-else class="h-4 w-4" />
+            <Icon :name="showPassword ? 'eye-off' : 'eye'" class="h-4 w-4" />
           </button>
         </template>
       </Input>

@@ -41,7 +41,7 @@ Botão com múltiplas variantes, tamanhos, estado de carregamento e animações.
     @click="handleLogin"
   >
     <template #icon>
-      <LogIn class="h-4 w-4" />
+      <Icon name="log-in" class="h-4 w-4" />
     </template>
     Entrar
   </Button>
@@ -49,8 +49,7 @@ Botão com múltiplas variantes, tamanhos, estado de carregamento e animações.
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Button } from '@/shared/ui'
-import { LogIn } from 'lucide-vue-next'
+import { Button, Icon } from '@/shared/ui'
 
 const isLoading = ref(false)
 

@@ -234,7 +234,7 @@ stateDiagram-v2
 ### Vue
 - `<script setup lang="ts">` em TODOS os SFCs.
 - Preline UI para estilização com tokens de tema (`bg-primary`, `text-primary-foreground`, etc.).
-- Lucide Icons (`import { LogIn } from 'lucide-vue-next'`).
+- Ícones via `<Icon name="..." />` de `@/shared/ui`. **NUNCA** importar `lucide-vue-next` direto — só o registry `shared/ui/icon/icons.ts`. Para novos ícones, registrar a chave lá.
 - Textos em português brasileiro.
 
 ### Pinia
