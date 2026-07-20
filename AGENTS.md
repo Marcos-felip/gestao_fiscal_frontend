@@ -59,6 +59,8 @@ PRESENTATION              APPLICATION               DATA                    DOMA
 ```
 src/
 ├── core/                          # Infraestrutura (NUNCA depende de módulos)
+│   ├── constants/
+│   │   └── storage-keys.ts         # StorageKeys — chaves do localStorage (fonte única)
 │   ├── controllers/
 │   │   └── base-controller.ts      # Classe abstrata com loading, error, handleResult, router
 │   ├── client/
@@ -249,6 +251,7 @@ stateDiagram-v2
 - **Controllers**: processam `Either` com `this.handleResult(result, onSuccess, onError)`.
 - **NUNCA** usar `try/catch` em controllers para erros de API — `handleResult()` já cuida.
 - **NUNCA** `throw` erros de negócio — sempre `Either.left()`.
+- **NUNCA** acessar `localStorage` direto — sempre via `StorageService`. Chaves só em `core/constants/storage-keys.ts`.
 
 #---
 

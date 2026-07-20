@@ -1,47 +1,45 @@
-const TOKEN_KEY = 'access_token'
-const REFRESH_TOKEN_KEY = 'refresh_token'
-const ACTIVE_COMPANY_KEY = 'active_company'
+import { StorageKeys } from '@/core/constants/storage-keys'
 
 export class StorageService {
   static getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY)
+    return localStorage.getItem(StorageKeys.TOKEN)
   }
 
   static setToken(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(StorageKeys.TOKEN, token)
   }
 
   static removeToken(): void {
-    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(StorageKeys.TOKEN)
   }
 
   static getRefreshToken(): string | null {
-    return localStorage.getItem(REFRESH_TOKEN_KEY)
+    return localStorage.getItem(StorageKeys.REFRESH_TOKEN)
   }
 
   static setRefreshToken(token: string): void {
-    localStorage.setItem(REFRESH_TOKEN_KEY, token)
+    localStorage.setItem(StorageKeys.REFRESH_TOKEN, token)
   }
 
   static removeRefreshToken(): void {
-    localStorage.removeItem(REFRESH_TOKEN_KEY)
+    localStorage.removeItem(StorageKeys.REFRESH_TOKEN)
   }
 
   static getActiveCompanyId(): string | null {
-    return localStorage.getItem(ACTIVE_COMPANY_KEY)
+    return localStorage.getItem(StorageKeys.ACTIVE_COMPANY)
   }
 
   static setActiveCompanyId(id: string): void {
-    localStorage.setItem(ACTIVE_COMPANY_KEY, id)
+    localStorage.setItem(StorageKeys.ACTIVE_COMPANY, id)
   }
 
   static removeActiveCompanyId(): void {
-    localStorage.removeItem(ACTIVE_COMPANY_KEY)
+    localStorage.removeItem(StorageKeys.ACTIVE_COMPANY)
   }
 
   static clearAll(): void {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(REFRESH_TOKEN_KEY)
-    localStorage.removeItem(ACTIVE_COMPANY_KEY)
+    localStorage.removeItem(StorageKeys.TOKEN)
+    localStorage.removeItem(StorageKeys.REFRESH_TOKEN)
+    localStorage.removeItem(StorageKeys.ACTIVE_COMPANY)
   }
 }
