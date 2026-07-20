@@ -27,30 +27,3 @@ export class RefreshTokenDto {
     this.refreshToken = refreshToken
   }
 }
-
-export class AuthResultDto {
-  token: { accessToken: string; refreshToken: string }
-  user: {
-    id: string
-    name: string
-    email: string
-    companyActiveId: string | null
-    role: string | null
-    forcePasswordChange: boolean
-  }
-
-  constructor(
-    token: { accessToken: string; refreshToken: string },
-    user: {
-      id: string
-      name: string
-      email: string
-      companyActiveId: string | null
-      role: string | null
-      forcePasswordChange: boolean
-    },
-  ) {
-    this.token = token
-    this.user = user
-  }
-}
