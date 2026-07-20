@@ -1,6 +1,6 @@
-const TOKEN_KEY = 'gf_access_token'
-const REFRESH_TOKEN_KEY = 'gf_refresh_token'
-const ACTIVE_COMPANY_KEY = 'gf_active_company'
+const TOKEN_KEY = 'access_token'
+const REFRESH_TOKEN_KEY = 'refresh_token'
+const ACTIVE_COMPANY_KEY = 'active_company'
 
 export class StorageService {
   static getToken(): string | null {
