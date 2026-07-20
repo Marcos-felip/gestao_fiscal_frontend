@@ -1,7 +1,6 @@
 import type { IAuthRepository } from '@/modules/auth/domain/interfaces/i-auth-repository.interface'
 import { Either } from '@/core/either/either'
-import type { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
-import type { AuthToken } from '@/modules/auth/domain/models/auth-token.model'
+import type { AuthResult } from '@/modules/auth/domain/types/auth.types'
 import type { LoginDto } from '@/modules/auth/domain/dto/auth-dto'
 
 export class LoginUseCase {
@@ -13,7 +12,7 @@ export class LoginUseCase {
 
   async execute(
     dto: LoginDto,
-  ): Promise<Either<Error, { token: AuthToken; user: AuthUser }>> {
+  ): Promise<Either<Error, AuthResult>> {
     return this.authRepository.login(dto)
   }
 }

@@ -22,17 +22,6 @@ export class AuthUser {
     this.forcePasswordChange = forcePasswordChange
   }
 
-  static fromJson(json: Record<string, unknown>): AuthUser {
-    return new AuthUser(
-      json.id as string,
-      json.name as string,
-      json.email as string,
-      json.companyActiveId as string | null,
-      json.role as string | null,
-      json.forcePasswordChange as boolean,
-    )
-  }
-
   get hasActiveCompany(): boolean {
     return this.companyActiveId !== null
   }
