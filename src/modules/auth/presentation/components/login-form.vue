@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Eye, EyeOff } from 'lucide-vue-next'
 import { Button, Input } from '@/shared/ui'
+import { toFormErrors } from '@/core/utils/zod-errors'
 import {
   loginSchema,
   type LoginFormData,
@@ -28,11 +29,7 @@ function handleSubmit(): void {
   })
 
   if (!result.success) {
-    errors.value = {}
-    for (const issue of result.error.issues) {
-      const field = issue.path[0] as keyof LoginFormData
-      errors.value[field] = issue.message
-    }
+    errors.value = toFormErrors(result.error)
     return
   }
 

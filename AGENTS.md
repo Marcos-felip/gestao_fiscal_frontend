@@ -70,7 +70,8 @@ src/
 │   │   ├── api-error.ts            # interface ApiError { statusCode, message, error? }
 │   │   └── paginated-response.ts   # interface PaginatedResponse<T> { data, total, page, limit }
 │   └── utils/
-│       └── storage.ts              # StorageService (localStorage wrapper)
+│       ├── storage.ts              # StorageService (localStorage wrapper)
+│       └── zod-errors.ts           # toFormErrors(ZodError) → { campo: mensagem } p/ formulários
 │
 ├── enums/                          # Enums em arquivos SEPARADOS
 │   ├── membership-role.enum.ts     # export const MembershipRole = {...} as const

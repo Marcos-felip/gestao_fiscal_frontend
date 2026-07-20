@@ -237,6 +237,7 @@ export type ProductFormData = z.infer<typeof productSchema>
 
 ### Component (`presenter/components/<name>-form.vue`)
 - Formulario com validacao Zod (safeParse).
+- Mapeia erros com `toFormErrors(result.error)` de `@/core/utils/zod-errors` (NUNCA iterar `issues` manualmente).
 - Emite `submit` com dados tipados (`FormData`).
 - Recebe `loading` como prop.
 
