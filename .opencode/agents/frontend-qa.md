@@ -23,15 +23,16 @@ Para CADA modulo implementado, valide:
 
 ### 1. Domain — Contratos e Tipos
 - [ ] **DTOs** em `domain/dto/<name>-dto.ts`: classes com propriedades, sem metodos, sem `fromJson()`
-- [ ] **Entities** em `domain/entities/<name>.entity.ts`: classe com `id`, `static fromJson()`, getters de comportamento
-- [ ] **Models** em `domain/models/<name>.model.ts`: valor composto com `static fromJson()`, sem identidade
-- [ ] **Interfaces** em `domain/interfaces/i-<name>-repository.interface.ts`: contrato usando DTOs, Entities, Models e Either
+- [ ] **Entities** em `domain/entities/<name>.entity.ts`: classe com `id` e getters de comportamento, SEM `fromJson`
+- [ ] **Types** em `domain/types/<name>.types.ts`: valor composto/agregado (`AuthToken`, `AuthResult`), sem classe
+- [ ] **Interfaces** em `domain/interfaces/i-<name>-repository.interface.ts`: contrato usando DTOs, Entities, Types e Either
 - [ ] Domain NAO importa Vue, Pinia, Router, HttpClient
 
 ### 2. Data — Repository
 - [ ] **Repository** em `data/<name>-repository.ts`: implementa `I<Name>Repository`
-- [ ] Usa `httpClient` de `@/core/client/http-client`
-- [ ] Transforma resposta com `fromJson()` em Entity/Model
+- [ ] Usa `httpClient` de `@/core/client/http-client` com `<unknown>`
+- [ ] **Mapper** em `data/mappers/<name>.mapper.ts`: schema Zod (`safeParse`) que valida e constroi Entities/Types
+- [ ] Repository delega ao mapper via `flatMap` (nao conhece o formato do JSON)
 - [ ] Retorna `Either<Error, T>` (httpClient ja retorna Either)
 - [ ] NAO tem logica de negocio
 
@@ -46,7 +47,7 @@ Para CADA modulo implementado, valide:
 - [ ] Usa `this.handleResult(result, onSuccess, onError)` para processar Either
 - [ ] Interage com Pinia Store e Router
 - [ ] NAO faz chamadas HTTP diretamente
-- [ ] **Store** em `presenter/stores/<name>-store.ts`: `defineStore` composition API, guarda Entities/Models tipados
+- [ ] **Store** em `presenter/stores/<name>-store.ts`: `defineStore` composition API, guarda Entities/Types tipados
 - [ ] **Schema** em `presenter/schemas/<name>-schema.ts`: Zod schema com mensagens PT-BR + tipo inferido
 - [ ] **Component** em `presenter/components/<name>-form.vue`: validacao Zod (safeParse), emite `submit` com dados tipados
 - [ ] **Page** em `presenter/pages/<name>-page.vue`: instancia Controller, conecta formulario
@@ -56,7 +57,7 @@ Para CADA modulo implementado, valide:
 - [ ] Page → Controller → UseCase → Repository → HttpClient (SEMPRE esta ordem)
 - [ ] Erros SEMPRE como `Either.left()`, nunca `throw` ou `try/catch`
 - [ ] Controller usa `handleResult()` para processar Either
-- [ ] Store guarda Entities/Models tipados, NUNCA plain objects
+- [ ] Store guarda Entities/Types tipados, NUNCA objetos sem tipo
 
 ---
 
@@ -68,7 +69,7 @@ Para CADA modulo implementado, valide:
 - [ ] Enums com valores exatos do backend
 
 ### 7. Response Shape
-- [ ] `fromJson()` mapeia todos os campos da resposta
+- [ ] Mapper (schema Zod) cobre todos os campos da resposta e retorna `left` se o contrato quebrar
 - [ ] Tipos TypeScript batem com o contrato (string | null onde o backend retorna null)
 - [ ] Paginacao: resposta `{ data, total, page, limit }` mapeada com `PaginatedResponse<T>`
 

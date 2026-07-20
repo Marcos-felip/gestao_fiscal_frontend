@@ -38,7 +38,7 @@ PRESENTATION              APPLICATION               DATA                    DOMA
   Controller ──dto──▶ UseCase.execute(dto) ──dto──▶ Repository.method(dto)
     │                              │                          │
     │  handleResult()              │  return Either          │  httpClient.post()
-    │  (loading, error)            │                          │  .map(fromJson)
+    │  (loading, error)            │                          │  .flatMap(mapper)
     ▼                              ▼                          ▼
   AuthStore                   Either<Error, Data>       Either<Error, Response>
 ```
@@ -93,17 +93,19 @@ src/
 ├── modules/                         # MÓDULOS DE FEATURE (1 módulo = 1 domínio)
 │   └── <feature>/                   # ex: auth, companies, products, partners, purchases, stock
 │       ├── domain/                  # CONTRATOS E TIPOS DO DOMÍNIO
-│       │   ├── entities/           # ENTIDADES — classes com identidade, comportamento e fromJson()
+│       │   ├── entities/           # ENTIDADES — classes com identidade e comportamento (sem fromJson)
 │       │   │   └── <name>.entity.ts
-│       │   ├── models/             # MODELOS — classes de valor composto com fromJson()
-│       │   │   └── <name>.model.ts
+│       │   ├── types/              # TIPOS — valores compostos sem identidade (ex: AuthToken, AuthResult)
+│       │   │   └── <name>.types.ts
 │       │   ├── dto/                # DTOs — dados que trafegam entre camadas
 │       │   │   └── <name>-dto.ts
 │       │   └── interfaces/         # INTERFACES — contratos para repository (prefixo I)
 │       │       └── i-<name>-repository.interface.ts
 │       │
 │       ├── data/                   # COMUNICAÇÃO COM A API
-│       │   └── <name>-repository.ts  # Implementa I<Name>Repository, usa HttpClient, transforma JSON
+│       │   ├── <name>-repository.ts  # Implementa I<Name>Repository, usa HttpClient, delega ao mapper
+│       │   └── mappers/            # MAPPERS — schema Zod que valida e traduz JSON → domínio
+│       │       └── <name>.mapper.ts
 │       │
 │       ├── application/            # ORQUESTRAÇÃO
        │       └── <action>.use-case.ts  # Recebe DTO, delega para Repository, retorna Either
@@ -138,16 +140,17 @@ src/
 
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
-| **Entity** (`<name>.entity.ts`) | Conceito de negócio com identidade (`id`). Tem `fromJson()` factory. Pode ter métodos de comportamento (`get hasActiveCompany()`). | Não importa Vue, Pinia, Router, HttpClient. Não tem lógica de apresentação. |
-| **Model** (`<name>.model.ts`) | Valor composto sem identidade própria (`AuthToken = accessToken + refreshToken`). Tem `fromJson()` factory. | Não tem comportamento de negócio. Não importa Vue. |
+| **Entity** (`<name>.entity.ts`) | Conceito de negócio com identidade (`id`) e comportamento (`get hasActiveCompany()`). Construída pelo mapper. | Não tem `fromJson` (mapeamento é do mapper). Não importa Vue, Pinia, Router, HttpClient. |
+| **Type** (`<name>.types.ts`) | Valor composto sem identidade própria (`AuthToken`) e tipos agregados (`AuthResult`). `interface`/`type`, sem classe. | Não tem comportamento nem mapeamento. Não importa Vue. |
 | **DTO** (`<name>-dto.ts`) | Dado tipado que trafega entre camadas. Classes simples com propriedades. (`LoginDto { email, password }`). | Não tem métodos. Não tem fromJson. Não importa Vue. É temporário — vive só no fluxo. |
-| **Interface** (`i-<name>-repository.interface.ts`) | Contrato que o Repository implementa. Define assinaturas usando DTOs, Entities e Models. | Não tem implementação. Importa SÓ de domain (DTOs, Entities, Models, Either). |
+| **Interface** (`i-<name>-repository.interface.ts`) | Contrato que o Repository implementa. Define assinaturas usando DTOs, Entities e Types. | Não tem implementação. Importa SÓ de domain (DTOs, Entities, Types, Either). |
 
 ### Data — `data/`
 
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
-| **Repository** (`<name>-repository.ts`) | Implementa `I<Name>Repository`. Faz chamadas HTTP via `httpClient`. Transforma resposta JSON em Entity/Model com `fromJson()`. Retorna `Either<Error, T>`. | Não orquestra múltiplos repositories. Não tem lógica de negócio. Não sabe sobre Vue. |
+| **Repository** (`<name>-repository.ts`) | Implementa `I<Name>Repository`. Faz chamadas HTTP via `httpClient` (`post<unknown>`). Traduz a resposta com `result.flatMap(mapper)`. Retorna `Either<Error, T>`. | Não conhece o formato do JSON (é do mapper). Não orquestra múltiplos repositories. Não sabe sobre Vue. |
+| **Mapper** (`mappers/<name>.mapper.ts`) | Único ponto que conhece o formato do JSON. Valida com schema Zod (`safeParse`) e constrói Entities/Types. Retorna `Either<Error, T>` (`left` em resposta inválida). | Não faz chamadas HTTP. Não tem lógica de negócio. |
 
 ### Application — `application/`
 
@@ -160,7 +163,7 @@ src/
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
 | **Controller** (`<name>-controller.ts`) | Estende `BaseController`. Cria DTOs tipados. Chama Use Cases. Processa `Either` com `handleResult()`. Gerencia estado (loading, error). Interage com Store e Router. | Não faz chamadas HTTP. Não tem lógica de negócio. |
-| **Store** (`<name>-store.ts`) | Estado reativo global (Pinia). Guarda Entities e Models tipados. Persiste em `StorageService` quando necessário. | Não faz chamadas HTTP. Não chama Use Cases. |
+| **Store** (`<name>-store.ts`) | Estado reativo global (Pinia). Guarda Entities e Types tipados. Persiste em `StorageService` quando necessário. | Não faz chamadas HTTP. Não chama Use Cases. |
 | **Schema** (`<name>-schema.ts`) | Validação de formulário com Zod. Define `z.object()` e exporta tipo inferido. | Não faz chamadas. Não importa Vue. |
 | **Page** (`<name>-page.vue`) | Instancia Controller. Conecta formulário ao Controller. Mostra loading/error feedback. | Não chama Use Cases diretamente. Não faz chamadas HTTP. |
 | **Component** (`<name>-form.vue`) | Formulário com Zod validation. Emite evento `submit` com dados tipados. | Não chama Controller. Não sabe sobre Use Cases. |
@@ -213,12 +216,13 @@ stateDiagram-v2
 ## Convenções de Código — REGRAS OBRIGATÓRIAS
 
 ### Nomenclatura
-- **Arquivos:** kebab-case (`auth-controller.ts`, `login-page.vue`, `auth-token.model.ts`)
+- **Arquivos:** kebab-case (`auth-controller.ts`, `login-page.vue`, `auth.types.ts`, `auth.mapper.ts`)
 - **Classes:** PascalCase (`AuthController`, `LoginUseCase`, `AuthToken`)
 - **Interfaces:** PascalCase com prefixo `I` (`IAuthRepository`) — SOMENTE quando necessário
 - **DTOs:** PascalCase com sufixo `Dto` (`LoginDto`, `CreateProductDto`)
 - **Entities:** PascalCase com sufixo semanticamente none (`AuthUser`, `Product`, `Company`)
-- **Models:** PascalCase sufixo semanticamente contextual (`AuthToken`, `PaginatedData`)
+- **Types:** PascalCase para valores compostos e agregados (`AuthToken`, `AuthResult`, `PaginatedData`)
+- **Mappers:** função `to<Nome>` no arquivo `<name>.mapper.ts` (`toAuthResult`)
 - **Schemas Zod:** camelCase variável, PascalCase tipo exportado (`loginSchema` → `LoginFormData`)
 - **Enums:** PascalCase const + type (`MembershipRole`)
 - **Imports de alias:** SEMPRE use `@/` (configurado no vite.config.ts)
@@ -239,7 +243,7 @@ stateDiagram-v2
 
 ### Pinia
 - `defineStore('nome', () => { ... })` com Composition API.
-- Guardar Entities e Models tipados, NUNCA plain objects.
+- Guardar Entities e Types tipados, NUNCA objetos sem tipo.
 
 ---
 
@@ -268,7 +272,7 @@ export class LoginDto {
   }
 }
 
-// 2. Entity — conceito de negócio
+// 2. Entity — conceito de negócio (sem fromJson; construída pelo mapper)
 export class AuthUser {
   constructor(
     public readonly id: string,
@@ -279,61 +283,68 @@ export class AuthUser {
     public readonly forcePasswordChange: boolean,
   ) {}
 
-  static fromJson(json: Record<string, unknown>): AuthUser {
-    return new AuthUser(
-      json.id as string,
-      json.name as string,
-      json.email as string,
-      json.companyActiveId as string | null,
-      json.role as string | null,
-      json.forcePasswordChange as boolean,
-    )
-  }
-
   get hasActiveCompany(): boolean {
     return this.companyActiveId !== null
   }
 }
 
-// 3. Model — valor composto
-export class AuthToken {
-  constructor(
-    public readonly accessToken: string,
-    public readonly refreshToken: string,
-  ) {}
-  static fromJson(json: Record<string, unknown>): AuthToken {
-    return new AuthToken(json.accessToken as string, json.refreshToken as string)
-  }
+// 3. Types — valor composto e agregado (sem classe, sem fromJson)
+export interface AuthToken {
+  accessToken: string
+  refreshToken: string
+}
+export interface AuthResult {
+  token: AuthToken
+  user: AuthUser
 }
 
 // 4. Interface — contrato
 export interface IAuthRepository {
-  login(dto: LoginDto): Promise<Either<Error, { token: AuthToken; user: AuthUser }>>
+  login(dto: LoginDto): Promise<Either<Error, AuthResult>>
 }
 
-// 5. Repository — implementação
+// 5. Mapper — valida (Zod) e traduz JSON → domínio (único que conhece o formato)
+const authResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  companyActiveId: z.string().nullable().default(null),
+  role: z.string().nullable().default(null),
+  forcePasswordChange: z.boolean().default(false),
+  accessToken: z.string(),
+  refreshToken: z.string(),
+})
+
+export function toAuthResult(data: unknown): Either<Error, AuthResult> {
+  const parsed = authResponseSchema.safeParse(data)
+  if (!parsed.success) return Either.left(new Error('Resposta de autenticação inválida'))
+  const v = parsed.data
+  return Either.right({
+    token: { accessToken: v.accessToken, refreshToken: v.refreshToken },
+    user: new AuthUser(v.id, v.name, v.email, v.companyActiveId, v.role, v.forcePasswordChange),
+  })
+}
+
+// 6. Repository — implementação (não conhece o JSON, delega ao mapper)
 export class AuthRepository implements IAuthRepository {
-  async login(dto: LoginDto): Promise<Either<Error, { token: AuthToken; user: AuthUser }>> {
-    const result = await httpClient.post<Record<string, unknown>>('/auth/login', {
+  async login(dto: LoginDto): Promise<Either<Error, AuthResult>> {
+    const result = await httpClient.post<unknown>('/auth/login', {
       email: dto.email,
       password: dto.password,
     })
-    return result.map((data) => ({
-      token: AuthToken.fromJson(data),
-      user: AuthUser.fromJson(data),
-    }))
+    return result.flatMap(toAuthResult)
   }
 }
 
-// 6. Use Case — orquestração
+// 7. Use Case — orquestração
 export class LoginUseCase {
   constructor(private readonly authRepository: IAuthRepository) {}
-  async execute(dto: LoginDto): Promise<Either<Error, { token: AuthToken; user: AuthUser }>> {
+  async execute(dto: LoginDto): Promise<Either<Error, AuthResult>> {
     return this.authRepository.login(dto)
   }
 }
 
-// 7. Controller — presentation
+// 8. Controller — presentation
 export class AuthController extends BaseController {
   private readonly authRepository = new AuthRepository()
   private readonly loginUseCase = new LoginUseCase(this.authRepository)
@@ -363,20 +374,21 @@ export class AuthController extends BaseController {
 Ao criar qualquer novo módulo (companies, products, partners, etc.), siga ESTA ORDEM:
 
 1. **`domain/dto/`** — Criar DTOs tipados para dados de entrada/saída
-2. **`domain/entities/`** — Criar Entity com `fromJson()` e métodos de comportamento
-3. **`domain/models/`** — Criar Models para valores compostos (se necessário)
+2. **`domain/entities/`** — Criar Entity com métodos de comportamento (sem `fromJson`)
+3. **`domain/types/`** — Criar tipos para valores compostos e agregados (ex: `AuthResult`)
 4. **`domain/interfaces/`** — Criar Interface com assinaturas usando DTOs e Either
-5. **`data/`** — Criar Repository implementando a Interface, usando HttpClient
-6. **`application/use-cases/`** — Criar Use Cases que recebem DTO e chamam Repository
-7. **`presentation/schemas/`** — Criar Zod schemas para validação de formulário
-8. **`presentation/controllers/`** — Criar Controller estendendo BaseController
-9. **`presentation/stores/`** — Criar Pinia store se necessário (estado reativo global)
-10. **`presentation/components/`** — Criar componentes de formulário com Zod
-11. **`presentation/pages/`** — Criar páginas que conectam tudo
-12. **`presentation/routes/`** — Criar rotas com imports no topo
-13. **`enums/`** — Criar enums em arquivos separados no diretório raiz `src/enums/`
-14. **`router/route-names.ts`** — Adicionar nome da rota como const
-15. **`router/index.ts`** — Importar e adicionar rotas do módulo
+5. **`data/mappers/`** — Criar mapper com schema Zod que valida e traduz JSON → domínio
+6. **`data/`** — Criar Repository implementando a Interface, delegando ao mapper via `flatMap`
+7. **`application/use-cases/`** — Criar Use Cases que recebem DTO e chamam Repository
+8. **`presentation/schemas/`** — Criar Zod schemas para validação de formulário
+9. **`presentation/controllers/`** — Criar Controller estendendo BaseController
+10. **`presentation/stores/`** — Criar Pinia store se necessário (estado reativo global)
+11. **`presentation/components/`** — Criar componentes de formulário com Zod
+12. **`presentation/pages/`** — Criar páginas que conectam tudo
+13. **`presentation/routes/`** — Criar rotas com imports no topo
+14. **`enums/`** — Criar enums em arquivos separados no diretório raiz `src/enums/`
+15. **`router/route-names.ts`** — Adicionar nome da rota como const
+16. **`router/index.ts`** — Importar e adicionar rotas do módulo
 
 ---
 

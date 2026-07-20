@@ -1,6 +1,6 @@
 ---
 name: frontend-module-check
-description: Valida que um modulo Vue 3 segue a Clean Architecture completa — Entities, Models, DTOs, Interfaces, Repositories, Use Cases, Controllers, Schemas, Pages, Routes.
+description: Valida que um modulo Vue 3 segue a Clean Architecture completa — Entities, Types, Mappers, DTOs, Interfaces, Repositories, Use Cases, Controllers, Schemas, Pages, Routes.
 ---
 
 Voce e o validador de arquitetura de modulos do Gestao Fiscal Frontend.
@@ -27,10 +27,11 @@ src/modules/<name>/
 ├── domain/
 │   ├── dto/<name>-dto.ts
 │   ├── entities/<name>.entity.ts          (se aplicavel)
-│   ├── models/<name>.model.ts             (se aplicavel)
+│   ├── types/<name>.types.ts              (se aplicavel)
 │   └── interfaces/i-<name>-repository.interface.ts
 ├── data/
-│   └── <name>-repository.ts
+│   ├── <name>-repository.ts
+│   └── mappers/<name>.mapper.ts
 ├── application/
 │   └── use-cases/<action>.use-case.ts     (1 ou mais)
 └── presenter/
@@ -57,20 +58,20 @@ Para cada arquivo FALTANTE:
 
 #### Entity (`domain/entities/<name>.entity.ts`)
 - [ ] Classe com `id` (ou campo unico de negocio)
-- [ ] `static fromJson(json: Record<string, unknown>): <Entity>` factory
+- [ ] SEM `fromJson` — a construcao a partir do JSON e do mapper
 - [ ] Pode ter getters de comportamento (`get ...():`)
 - [ ] NAO importa Vue, Pinia, Router, HttpClient
 - [ ] Propriedades `readonly` quando apropriado
 
-#### Model (`domain/models/<name>.model.ts`)
-- [ ] Classe de valor composto (sem `id`)
-- [ ] `static fromJson(json: Record<string, unknown>): <Model>` factory
+#### Type (`domain/types/<name>.types.ts`)
+- [ ] `interface`/`type` de valor composto (sem `id`) e tipos agregados (`AuthResult`)
+- [ ] SEM classe e SEM `fromJson` — o mapper constroi
 - [ ] NAO tem getters de comportamento de negocio
 
 #### Interface (`domain/interfaces/i-<name>-repository.interface.ts`)
 - [ ] Prefixo `I` no nome
 - [ ] Usa DTOs nas assinaturas (tipos de entrada)
-- [ ] Usa Entities/Models nos retornos (tipos de saida)
+- [ ] Usa Entities/Types nos retornos (tipos de saida)
 - [ ] Retorna `Either<Error, T>` ou `Either<Error, void>`
 - [ ] Importa SOMENTE de `domain/` e `@/core/either`
 
@@ -78,11 +79,15 @@ Para cada arquivo FALTANTE:
 
 #### Repository (`data/<name>-repository.ts`)
 - [ ] Implementa `I<Name>Repository`
-- [ ] Usa `httpClient` importado de `@/core/client/http-client`
-- [ ] Cada metodo transforma resposta com `fromJson()` em Entity/Model
+- [ ] Usa `httpClient` importado de `@/core/client/http-client` com `<unknown>`
+- [ ] Delega a traducao ao mapper via `result.flatMap(to<Name>)`
 - [ ] Retorna `Either<Error, T>` (httpClient ja retorna Either)
-- [ ] Usa `result.map()` para transformar dados
-- [ ] NAO tem logica de negocio
+- [ ] NAO conhece o formato do JSON nem tem logica de negocio
+
+#### Mapper (`data/mappers/<name>.mapper.ts`)
+- [ ] Schema Zod que valida a resposta com `safeParse`
+- [ ] Constroi Entities/Types e retorna `Either<Error, T>` (`left` se invalido)
+- [ ] UNICO ponto que conhece o formato do JSON (substitui `fromJson`/`as`)
 
 ### Passo 4 — Validar Application
 
@@ -106,7 +111,7 @@ Para cada arquivo FALTANTE:
 
 #### Store (`presenter/stores/<name>-store.ts`)
 - [ ] `defineStore('<name>', () => { ... })` com Composition API
-- [ ] Guarda Entities/Models tipados (NUNCA plain objects)
+- [ ] Guarda Entities/Types tipados (NUNCA objetos sem tipo)
 - [ ] Persiste em `StorageService` quando necessario
 
 #### Schema (`presenter/schemas/<name>-schema.ts`)
@@ -146,7 +151,7 @@ Para cada arquivo FALTANTE:
 
 - [ ] URL do Repository bate com `API.md`
 - [ ] DTO enviado bate com contrato (campos obrigatorios, tipos, enums)
-- [ ] `fromJson()` mapeia TODOS os campos da resposta
+- [ ] Schema Zod do mapper cobre TODOS os campos da resposta
 - [ ] Tipos TypeScript batem com contrato (string | null onde backend retorna null)
 - [ ] Paginacao: resposta `{ data, total, page, limit }` mapeada com `PaginatedResponse<T>`
 
