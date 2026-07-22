@@ -29,7 +29,7 @@ Para CADA modulo implementado, valide:
 - [ ] Domain NAO importa Vue, Pinia, Router, HttpClient
 
 ### 2. Data — Repository
-- [ ] **Repository** em `data/<name>-repository.ts`: implementa `I<Name>Repository`
+- [ ] **Repository** em `data/repositories/<name>-repository.ts`: implementa `I<Name>Repository`
 - [ ] Usa `httpClient` de `@/core/client/http-client` com `<unknown>`
 - [ ] **Mapper** em `data/mappers/<name>.mapper.ts`: schema Zod (`safeParse`) que valida e constroi Entities/Responses
 - [ ] Repository delega ao mapper via `flatMap` (nao conhece o formato do JSON)

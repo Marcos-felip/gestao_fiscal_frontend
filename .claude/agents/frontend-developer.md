@@ -50,7 +50,7 @@ Ao criar um novo modulo, siga ESTA ORDEM:
 3. `domain/responses/<name>-response.ts` — Dados de SAIDA (uma interface por arquivo)
 4. `domain/interfaces/i-<name>-repository.interface.ts` — Contrato usando DTOs e Either
 5. `data/mappers/<name>.mapper.ts` — Schema Zod que valida e traduz JSON → dominio
-6. `data/<name>-repository.ts` — Implementacao usando HttpClient + mapper (`flatMap`)
+6. `data/repositories/<name>-repository.ts` — Implementacao usando HttpClient + mapper (`flatMap`)
 7. `application/use-cases/<action>.use-case.ts` — Orquestracao, recebe DTO
 8. `data/mappers/<name>.mapper.spec.ts` — Testes do mapper (OBRIGATORIO)
 9. `presentation/schemas/<name>-schema.ts` — Zod schema + tipo inferido
@@ -143,7 +143,7 @@ export interface IProductRepository {
 }
 ```
 
-### Repository (`data/<name>-repository.ts`)
+### Repository (`data/repositories/<name>-repository.ts`)
 - Implementa `I<Name>Repository`.
 - Usa `httpClient` (singleton importado de `@/core/client/http-client`) com `<unknown>`.
 - NAO conhece o formato do JSON — delega ao **mapper** via `flatMap`.

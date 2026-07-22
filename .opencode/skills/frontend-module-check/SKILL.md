@@ -30,7 +30,7 @@ src/modules/<name>/
 │   ├── responses/<name>-response.ts       (uma interface por arquivo, se aplicavel)
 │   └── interfaces/i-<name>-repository.interface.ts
 ├── data/
-│   ├── <name>-repository.ts
+│   ├── repositories/<name>-repository.ts
 │   ├── mappers/<name>.mapper.ts
 │   └── mappers/<name>.mapper.spec.ts      (OBRIGATORIO)
 ├── application/
@@ -83,7 +83,7 @@ Para cada arquivo FALTANTE:
 
 ### Passo 3 — Validar Data
 
-#### Repository (`data/<name>-repository.ts`)
+#### Repository (`data/repositories/<name>-repository.ts`)
 - [ ] Implementa `I<Name>Repository`
 - [ ] Usa `httpClient` importado de `@/core/client/http-client` com `<unknown>`
 - [ ] Delega a traducao ao mapper via `result.flatMap(to<Name>)`

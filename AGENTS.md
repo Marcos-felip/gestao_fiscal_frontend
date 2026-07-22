@@ -116,9 +116,11 @@ src/
 │       │       └── i-<name>-repository.interface.ts
 │       │
 │       ├── data/                   # COMUNICAÇÃO COM A API
-│       │   ├── <name>-repository.ts  # Implementa I<Name>Repository, usa HttpClient, delega ao mapper
+│       │   ├── repositories/       # REPOSITORIES — implementam a interface, usam HttpClient
+│       │   │   └── <name>-repository.ts
 │       │   └── mappers/            # MAPPERS — schema Zod que valida e traduz JSON → domínio
-│       │       └── <name>.mapper.ts
+│       │       ├── <name>.mapper.ts
+│       │       └── <name>.mapper.spec.ts
 │       │
 │       ├── application/            # ORQUESTRAÇÃO
        │       └── <action>.use-case.ts  # Recebe DTO, delega para Repository, retorna Either
@@ -165,7 +167,7 @@ src/
 
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
-| **Repository** (`<name>-repository.ts`) | Implementa `I<Name>Repository`. Faz chamadas HTTP via `httpClient` (`post<unknown>`). Traduz a resposta com `result.flatMap(mapper)`. Retorna `Either<DomainError, T>`. | Não conhece o formato do JSON (é do mapper). Não orquestra múltiplos repositories. Não sabe sobre Vue. |
+| **Repository** (`repositories/<name>-repository.ts`) | Implementa `I<Name>Repository`. Faz chamadas HTTP via `httpClient` (`post<unknown>`). Traduz a resposta com `result.flatMap(mapper)`. Retorna `Either<DomainError, T>`. | Não conhece o formato do JSON (é do mapper). Não orquestra múltiplos repositories. Não sabe sobre Vue. |
 | **Mapper** (`mappers/<name>.mapper.ts`) | Único ponto que conhece o formato do JSON da API. Valida com schema Zod (`safeParse`) e constrói Entities/Responses do domínio. Retorna `Either<DomainError, T>` (`left` em resposta inválida). | Não faz chamadas HTTP. Não tem lógica de negócio. |
 
 ### Application — `application/`
@@ -480,7 +482,7 @@ Ao criar qualquer novo módulo (companies, products, partners, etc.), siga ESTA 
 4. **`domain/interfaces/`** — Criar Interface com assinaturas usando DTOs e Either
 5. **`data/mappers/`** — Criar mapper com schema Zod que valida e traduz JSON → domínio (use `toPage()` se for lista paginada)
 6. **`data/mappers/<name>.mapper.spec.ts`** — Testar o mapper: válido, default, tipo errado, campo ausente
-7. **`data/`** — Criar Repository implementando a Interface, delegando ao mapper via `flatMap`
+7. **`data/repositories/`** — Criar Repository implementando a Interface, delegando ao mapper via `flatMap`
 8. **`application/use-cases/`** — Criar Use Cases que recebem DTO e chamam Repository
 9. **`presentation/schemas/`** — Criar Zod schemas para validação de formulário
 10. **`presentation/controllers/`** — Criar Controller estendendo BaseController, recebendo Use Cases pelo construtor
