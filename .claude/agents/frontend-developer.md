@@ -23,9 +23,9 @@ Todo modulo DEVE seguir este fluxo. Nunca pule camadas:
 ```
 Page.vue → Controller → UseCase → Repository → HttpClient → API
                 │           │          │
-          loading/error   Either    Either
-          handleResult    <Error,   <Error,
-                          Data>     Response>
+          loading/error   Either       Either
+          handleResult    <DomainError,<DomainError,
+                           Data>        Response>
                             │          │
                       authStore     mapper (Zod)
                       router          │
@@ -55,7 +55,7 @@ Ao criar um novo modulo, siga ESTA ORDEM:
 8. `data/mappers/<name>.mapper.spec.ts` — Testes do mapper (OBRIGATORIO)
 9. `presentation/schemas/<name>-schema.ts` — Zod schema + tipo inferido
 10. `presentation/controllers/<name>-controller.ts` — Estende BaseController, recebe Use Cases no construtor
-11. `<name>.factory.ts` — Composition root na RAIZ do modulo (`make<Name>Controller()`)
+11. `factories/<name>.factory.ts` — Composition root em `factories/` (`make<Name>Controller()`)
 12. `presentation/stores/<name>-store.ts` — Pinia store (se necessario)
 13. `presentation/components/<name>-form.vue` — Formulario com validacao Zod
 14. `presentation/pages/<name>-page.vue` — Chama `make<Name>Controller()`
@@ -181,7 +181,9 @@ export function toProductPage(data: unknown): Either<DomainError, PaginatedRespo
   const parsed = z
     .object({ data: z.array(productSchema), total: z.number(), page: z.number(), limit: z.number() })
     .safeParse(data)
-  if (!parsed.success) return Either.left(new Error('Resposta invalida do servidor'))
+  if (!parsed.success) {
+    return Either.left(new ContractError('products', toIssueList(parsed.error)))
+  }
   const v = parsed.data
   return Either.right({
     data: v.data.map((p) => new Product(p.id, p.name, p.sku, p.currentStock, p.companyId)),
@@ -312,12 +314,12 @@ Todo `Either` carrega uma subclasse de `DomainError` (`@/core/errors/`):
 
 ---
 
-## INJECAO DE DEPENDENCIA — `<name>.factory.ts`
+## INJECAO DE DEPENDENCIA — `factories/<name>.factory.ts`
 
 O Controller NAO da `new` em Repository. Recebe os Use Cases pelo construtor:
 
 ```typescript
-// modules/products/products.factory.ts (raiz do modulo, FORA de presentation/)
+// modules/products/factories/products.factory.ts (pasta factories/, FORA de presentation/)
 export function makeProductController(): ProductController {
   const productRepository = new ProductRepository()
   return new ProductController(new FindAllProductsUseCase(productRepository))
@@ -359,6 +361,9 @@ export const toProductPage = toPage(
 | `application/` | vue, vue-router, pinia, axios, `data/`, `presentation/` |
 | `data/` | vue, vue-router, pinia, `presentation/` |
 | `presentation/` | `data/` — use a factory |
+| qualquer outro arquivo do modulo | `data/` — so `factories/` tem essa porta |
+
+`factories/` e a UNICA pasta autorizada a importar de `data/`.
 
 Se precisar violar, o desenho esta errado. NAO adicione `eslint-disable`.
 

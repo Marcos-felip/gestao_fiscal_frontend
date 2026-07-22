@@ -123,7 +123,8 @@ src/
 │       ├── application/            # ORQUESTRAÇÃO
        │       └── <action>.use-case.ts  # Recebe DTO, delega para Repository, retorna Either
 │       │
-│       ├── <feature>.factory.ts   # COMPOSITION ROOT — único ponto que dá `new` em data/
+│       ├── factories/             # COMPOSITION ROOT — única porta autorizada para data/
+│       │   └── <feature>.factory.ts   # make<Feature>Controller()
 │       │
 │       └── presentation/            # CAMADA VUE (O QUE O USUÁRIO VÊ)
 │           ├── controllers/
@@ -295,12 +296,12 @@ Quem traduz HTTP → `DomainError` é `core/client/http-error-mapper.ts`. É o *
 
 ---
 
-## Injeção de Dependência — `<feature>.factory.ts`
+## Injeção de Dependência — `factories/<feature>.factory.ts`
 
 O Controller **não** dá `new` em Repository. Ele recebe os Use Cases prontos pelo construtor:
 
 ```typescript
-// modules/auth/auth.factory.ts — composition root do módulo
+// modules/auth/factories/auth.factory.ts — composition root do módulo
 export function makeAuthController(): AuthController {
   const authRepository = new AuthRepository()
 
@@ -319,7 +320,7 @@ const controller = makeAuthController()   // nunca `new AuthController()`
 
 **Por quê:** sem isso a `I<Name>Repository` é decorativa — ela existe mas nada é desacoplado, e o Controller vira intestável (toda chamada bate na rede). Com a factory, testes injetam dublês.
 
-A factory fica na **raiz do módulo**, fora de `presentation/`, porque o ESLint proíbe `presentation/` de importar `data/`. Ela é a única fronteira autorizada.
+A factory fica em `<feature>/factories/`, fora de `presentation/`. O ESLint proíbe **qualquer** arquivo do módulo fora de `factories/` de importar `data/` — essa pasta é a única porta autorizada.
 
 ---
 
@@ -457,7 +458,7 @@ export class AuthController extends BaseController {
   }
 }
 
-// 9. Factory — composition root, na raiz do módulo (auth.factory.ts)
+// 9. Factory — composition root, em factories/auth.factory.ts
 export function makeAuthController(): AuthController {
   const authRepository = new AuthRepository()
   return new AuthController(new LoginUseCase(authRepository))
@@ -483,7 +484,7 @@ Ao criar qualquer novo módulo (companies, products, partners, etc.), siga ESTA 
 8. **`application/use-cases/`** — Criar Use Cases que recebem DTO e chamam Repository
 9. **`presentation/schemas/`** — Criar Zod schemas para validação de formulário
 10. **`presentation/controllers/`** — Criar Controller estendendo BaseController, recebendo Use Cases pelo construtor
-11. **`<feature>.factory.ts`** — Criar o composition root (`make<Feature>Controller()`) na raiz do módulo
+11. **`factories/<feature>.factory.ts`** — Criar o composition root (`make<Feature>Controller()`) em `factories/`
 12. **`presentation/stores/`** — Criar Pinia store se necessário (estado reativo global)
 13. **`presentation/components/`** — Criar componentes de formulário com Zod
 14. **`presentation/pages/`** — Criar páginas que chamam `make<Feature>Controller()` (nunca `new`)
@@ -535,7 +536,10 @@ As regras de arquitetura **não são de confiança**: estão em `eslint.config.j
 | `domain/` | vue, vue-router, pinia, axios, e `data/`, `application/`, `presentation/` |
 | `application/` | vue, vue-router, pinia, axios, e `data/`, `presentation/` |
 | `data/` | vue, vue-router, pinia, e `presentation/` |
-| `presentation/` | `data/` — use `<feature>.factory.ts` |
+| `presentation/` | `data/` — use `factories/<feature>.factory.ts` |
+| qualquer outro arquivo do módulo | `data/` — só `factories/` tem essa porta |
+
+`factories/` é intencionalmente irrestrita: é o único lugar autorizado a costurar `data/` com `application/` e `presentation/`.
 
 Arquivos `*.spec.ts` são isentos (precisam montar cenários atravessando camadas).
 

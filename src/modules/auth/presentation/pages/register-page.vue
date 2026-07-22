@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AuthLayout from '@/shared/components/layouts/auth-layout.vue'
 import RegisterForm from '@/modules/auth/presentation/components/register-form.vue'
-import { makeAuthController } from '@/modules/auth/auth.factory'
+import { makeAuthController } from '@/modules/auth/factories/auth.factory'
 import type { RegisterFormData } from '@/modules/auth/presentation/schemas/register-schema'
 import { routeNames } from '@/router/route-names'
 

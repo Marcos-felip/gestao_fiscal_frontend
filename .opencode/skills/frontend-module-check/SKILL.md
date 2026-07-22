@@ -31,11 +31,12 @@ src/modules/<name>/
 │   └── interfaces/i-<name>-repository.interface.ts
 ├── data/
 │   ├── <name>-repository.ts
-│   └── mappers/<name>.mapper.ts
+│   ├── mappers/<name>.mapper.ts
 │   └── mappers/<name>.mapper.spec.ts      (OBRIGATORIO)
 ├── application/
 │   └── use-cases/<action>.use-case.ts     (1 ou mais)
-├── <name>.factory.ts                      (composition root — OBRIGATORIO)
+├── factories/
+│   └── <name>.factory.ts                  (composition root — OBRIGATORIO)
 └── presentation/
     ├── controllers/<name>-controller.ts
     ├── stores/<name>-store.ts              (se aplicavel)
@@ -114,7 +115,7 @@ Para cada arquivo FALTANTE:
 
 ### Passo 5 — Validar Presenter
 
-#### Factory (`<name>.factory.ts`) — na RAIZ do modulo
+#### Factory (`factories/<name>.factory.ts`) — pasta propria do modulo
 - [ ] Exporta `make<Name>Controller()`
 - [ ] E o UNICO arquivo do modulo que importa de `data/`
 - [ ] Fica FORA de `presentation/` (o ESLint proibe presentation → data)

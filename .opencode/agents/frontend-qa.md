@@ -60,10 +60,10 @@ Para CADA modulo implementado, valide:
 - [ ] Store guarda Entities/Responses tipados, NUNCA objetos sem tipo
 
 ### 5.1 Injecao de Dependencia
-- [ ] Existe `<name>.factory.ts` na RAIZ do modulo (fora de `presentation/`)
+- [ ] Existe `factories/<name>.factory.ts` em `factories/` (fora de `presentation/`)
 - [ ] Controller recebe Use Cases pelo construtor — NAO da `new` em Repository
 - [ ] Pages chamam `make<Name>Controller()`, nunca `new <Name>Controller()`
-- [ ] A factory e o UNICO arquivo do modulo que importa de `data/`
+- [ ] `factories/` e a UNICA pasta do modulo que importa de `data/` (garantido pelo ESLint)
 
 ### 5.2 Erros tipados
 - [ ] Nenhum `Either<Error, T>` — sempre `Either<DomainError, T>`
