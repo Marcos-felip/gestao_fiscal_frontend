@@ -28,8 +28,8 @@ TODOS os módulos DEVEM seguir este fluxo de dados. Nunca pule camadas.
 
 ```
 PRESENTATION              APPLICATION               DATA                    DOMAIN
-(pages, components,       (use cases)               (repositories)          (entities, models,
- controllers, stores)                                                        interfaces, DTOs)
+(pages, components,       (use cases)               (repositories,          (entities, responses,
+ controllers, stores)                                mappers)                interfaces, DTOs)
 
   Page.vue                    LoginUseCase              AuthRepository          LoginDto
     │                              │                          │                     │
@@ -40,7 +40,7 @@ PRESENTATION              APPLICATION               DATA                    DOMA
     │  handleResult()              │  return Either          │  httpClient.post()
     │  (loading, error)            │                          │  .flatMap(mapper)
     ▼                              ▼                          ▼
-  AuthStore                   Either<Error, Data>       Either<Error, Response>
+  AuthStore                   Either<DomainError, Data>       Either<DomainError, Response>
 ```
 
 ### Regra de ouro
@@ -64,16 +64,29 @@ src/
 │   ├── controllers/
 │   │   └── base-controller.ts      # Classe abstrata com loading, error, handleResult, router
 │   ├── client/
-│   │   ├── http-client.ts          # Singleton Axios wrapper, retorna Either<Error, T>
+│   │   ├── http-client.ts          # Singleton Axios wrapper, retorna Either<DomainError, T>
+│   │   ├── http-error-mapper.ts    # toDomainError(unknown) — ÚNICO ponto que conhece o Axios
 │   │   └── interceptors.ts         # Auth header + refresh token on 401
 │   ├── either/
-│   │   └── either.ts               # Either<L, R> com map, mapLeft, fold
+│   │   └── either.ts               # Either<L, R> com map, flatMap, mapLeft, fold
+│   ├── errors/                     # HIERARQUIA DE ERROS — um por arquivo
+│   │   ├── domain-error.ts         # Abstrata. Todo erro do Either herda dela
+│   │   ├── network-error.ts        # Sem resposta (offline, timeout)
+│   │   ├── unauthorized-error.ts   # 401
+│   │   ├── forbidden-error.ts      # 403
+│   │   ├── not-found-error.ts      # 404
+│   │   ├── validation-error.ts     # 400/422 — carrega `details[]`
+│   │   ├── server-error.ts         # 5xx — carrega `statusCode`
+│   │   ├── contract-error.ts       # Zod falhou = BUG NOSSO, nunca do usuário
+│   │   └── unexpected-error.ts     # Fallback
+│   ├── mappers/
+│   │   └── to-page.ts              # toPage(...) — fábrica de mappers paginados
 │   ├── types/
 │   │   ├── api-error.ts            # interface ApiError { statusCode, message, error? }
 │   │   └── paginated-response.ts   # interface PaginatedResponse<T> { data, total, page, limit }
 │   └── utils/
 │       ├── storage.ts              # StorageService (localStorage wrapper)
-│       └── zod-errors.ts           # toFormErrors(ZodError) → { campo: mensagem } p/ formulários
+│       └── zod-errors.ts           # toFormErrors() p/ formulários, toIssueList() p/ ContractError
 │
 ├── enums/                          # Enums em arquivos SEPARADOS
 │   ├── membership-role.enum.ts     # export const MembershipRole = {...} as const
@@ -95,10 +108,10 @@ src/
 │       ├── domain/                  # CONTRATOS E TIPOS DO DOMÍNIO
 │       │   ├── entities/           # ENTIDADES — classes com identidade e comportamento (sem fromJson)
 │       │   │   └── <name>.entity.ts
-│       │   ├── types/              # TIPOS — valores compostos sem identidade (ex: AuthToken, AuthResult)
-│       │   │   └── <name>.types.ts
-│       │   ├── dto/                # DTOs — dados que trafegam entre camadas
-│       │   │   └── <name>-dto.ts
+│       │   ├── responses/          # RESPONSES — dados de SAÍDA do domínio (ex: AuthToken, AuthResult)
+│       │   │   └── <name>-response.ts    # uma interface por arquivo
+│       │   ├── dto/                # DTOs — dados de ENTRADA que trafegam entre camadas
+│       │   │   └── <action>-dto.ts       # uma classe por arquivo (login-dto.ts, register-dto.ts)
 │       │   └── interfaces/         # INTERFACES — contratos para repository (prefixo I)
 │       │       └── i-<name>-repository.interface.ts
 │       │
@@ -109,6 +122,8 @@ src/
 │       │
 │       ├── application/            # ORQUESTRAÇÃO
        │       └── <action>.use-case.ts  # Recebe DTO, delega para Repository, retorna Either
+│       │
+│       ├── <feature>.factory.ts   # COMPOSITION ROOT — único ponto que dá `new` em data/
 │       │
 │       └── presentation/            # CAMADA VUE (O QUE O USUÁRIO VÊ)
 │           ├── controllers/
@@ -141,29 +156,29 @@ src/
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
 | **Entity** (`<name>.entity.ts`) | Conceito de negócio com identidade (`id`) e comportamento (`get hasActiveCompany()`). Construída pelo mapper. | Não tem `fromJson` (mapeamento é do mapper). Não importa Vue, Pinia, Router, HttpClient. |
-| **Type** (`<name>.types.ts`) | Valor composto sem identidade própria (`AuthToken`) e tipos agregados (`AuthResult`). `interface`/`type`, sem classe. | Não tem comportamento nem mapeamento. Não importa Vue. |
-| **DTO** (`<name>-dto.ts`) | Dado tipado que trafega entre camadas. Classes simples com propriedades. (`LoginDto { email, password }`). | Não tem métodos. Não tem fromJson. Não importa Vue. É temporário — vive só no fluxo. |
-| **Interface** (`i-<name>-repository.interface.ts`) | Contrato que o Repository implementa. Define assinaturas usando DTOs, Entities e Types. | Não tem implementação. Importa SÓ de domain (DTOs, Entities, Types, Either). |
+| **Response** (`<name>-response.ts`) | Dado de **saída** do domínio: valor composto sem identidade (`AuthToken`) e agregados (`AuthResult`). `interface`/`type`, sem classe. **Uma interface por arquivo.** | Não tem comportamento nem mapeamento. Não importa Vue. Não é o JSON cru da API (isso é o schema Zod do mapper). |
+| **DTO** (`<action>-dto.ts`) | Dado de **entrada** que trafega entre camadas. Classes simples com propriedades (`LoginDto { email, password }`). **Uma classe por arquivo.** | Não tem métodos. Não tem fromJson. Não importa Vue. É temporário — vive só no fluxo. |
+| **Interface** (`i-<name>-repository.interface.ts`) | Contrato que o Repository implementa. Define assinaturas usando DTOs (entrada), Entities e Responses (saída). | Não tem implementação. Importa SÓ de domain (DTOs, Entities, Responses, Either). |
 
 ### Data — `data/`
 
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
-| **Repository** (`<name>-repository.ts`) | Implementa `I<Name>Repository`. Faz chamadas HTTP via `httpClient` (`post<unknown>`). Traduz a resposta com `result.flatMap(mapper)`. Retorna `Either<Error, T>`. | Não conhece o formato do JSON (é do mapper). Não orquestra múltiplos repositories. Não sabe sobre Vue. |
-| **Mapper** (`mappers/<name>.mapper.ts`) | Único ponto que conhece o formato do JSON. Valida com schema Zod (`safeParse`) e constrói Entities/Types. Retorna `Either<Error, T>` (`left` em resposta inválida). | Não faz chamadas HTTP. Não tem lógica de negócio. |
+| **Repository** (`<name>-repository.ts`) | Implementa `I<Name>Repository`. Faz chamadas HTTP via `httpClient` (`post<unknown>`). Traduz a resposta com `result.flatMap(mapper)`. Retorna `Either<DomainError, T>`. | Não conhece o formato do JSON (é do mapper). Não orquestra múltiplos repositories. Não sabe sobre Vue. |
+| **Mapper** (`mappers/<name>.mapper.ts`) | Único ponto que conhece o formato do JSON da API. Valida com schema Zod (`safeParse`) e constrói Entities/Responses do domínio. Retorna `Either<DomainError, T>` (`left` em resposta inválida). | Não faz chamadas HTTP. Não tem lógica de negócio. |
 
 ### Application — `application/`
 
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
-| **Use Case** (`<action>.use-case.ts`) | Orquestra chamadas ao repository. Recebe DTO, retorna `Either<Error, T>`. Pode chamar múltiplos repositories se necessário. | Não sabe sobre Vue, Router ou Pinia. Não faz chamadas HTTP diretamente. |
+| **Use Case** (`<action>.use-case.ts`) | Orquestra chamadas ao repository. Recebe DTO, retorna `Either<DomainError, T>`. Pode chamar múltiplos repositories se necessário. | Não sabe sobre Vue, Router ou Pinia. Não faz chamadas HTTP diretamente. |
 
 ### Presentation — `presentation/`
 
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
 | **Controller** (`<name>-controller.ts`) | Estende `BaseController`. Cria DTOs tipados. Chama Use Cases. Processa `Either` com `handleResult()`. Gerencia estado (loading, error). Interage com Store e Router. | Não faz chamadas HTTP. Não tem lógica de negócio. |
-| **Store** (`<name>-store.ts`) | Estado reativo global (Pinia). Guarda Entities e Types tipados. Persiste em `StorageService` quando necessário. | Não faz chamadas HTTP. Não chama Use Cases. |
+| **Store** (`<name>-store.ts`) | Estado reativo global (Pinia). Guarda Entities e Responses tipados. Persiste em `StorageService` quando necessário. | Não faz chamadas HTTP. Não chama Use Cases. |
 | **Schema** (`<name>-schema.ts`) | Validação de formulário com Zod. Define `z.object()` e exporta tipo inferido. | Não faz chamadas. Não importa Vue. |
 | **Page** (`<name>-page.vue`) | Instancia Controller. Conecta formulário ao Controller. Mostra loading/error feedback. | Não chama Use Cases diretamente. Não faz chamadas HTTP. |
 | **Component** (`<name>-form.vue`) | Formulário com Zod validation. Emite evento `submit` com dados tipados. | Não chama Controller. Não sabe sobre Use Cases. |
@@ -216,19 +231,20 @@ stateDiagram-v2
 ## Convenções de Código — REGRAS OBRIGATÓRIAS
 
 ### Nomenclatura
-- **Arquivos:** kebab-case (`auth-controller.ts`, `login-page.vue`, `auth.types.ts`, `auth.mapper.ts`)
+- **Arquivos:** kebab-case (`auth-controller.ts`, `login-page.vue`, `login-dto.ts`, `auth.mapper.ts`)
 - **Classes:** PascalCase (`AuthController`, `LoginUseCase`, `AuthToken`)
 - **Interfaces:** PascalCase com prefixo `I` (`IAuthRepository`) — SOMENTE quando necessário
-- **DTOs:** PascalCase com sufixo `Dto` (`LoginDto`, `CreateProductDto`)
+- **DTOs:** PascalCase com sufixo `Dto` (`LoginDto`, `CreateProductDto`) — arquivo `<action>-dto.ts`, **uma classe por arquivo**
 - **Entities:** PascalCase com sufixo semanticamente none (`AuthUser`, `Product`, `Company`)
-- **Types:** PascalCase para valores compostos e agregados (`AuthToken`, `AuthResult`, `PaginatedData`)
+- **Responses:** PascalCase para valores compostos e agregados (`AuthToken`, `AuthResult`) — arquivo `<name>-response.ts`, **uma interface por arquivo**
 - **Mappers:** função `to<Nome>` no arquivo `<name>.mapper.ts` (`toAuthResult`)
 - **Schemas Zod:** camelCase variável, PascalCase tipo exportado (`loginSchema` → `LoginFormData`)
 - **Enums:** PascalCase const + type (`MembershipRole`)
 - **Imports de alias:** SEMPRE use `@/` (configurado no vite.config.ts)
 
-### Sem barrel files
-- NÃO criar `index.ts` em nenhuma pasta. Cada arquivo tem responsabilidade única e é importado diretamente.
+### Sem barrel files (com uma exceção)
+- NÃO criar `index.ts` dentro de `modules/`. Cada arquivo tem responsabilidade única e é importado diretamente pelo caminho completo.
+- **Única exceção:** `src/shared/ui/index.ts`. O kit de UI é uma biblioteca interna e esse arquivo é a sua API pública — por isso `import { Button, Input, Icon } from '@/shared/ui'` é o uso correto. Não replicar esse padrão em nenhum outro lugar.
 
 ### TypeScript
 - **JAMAIS** usar `any`. Sempre tipar.
@@ -243,26 +259,92 @@ stateDiagram-v2
 
 ### Pinia
 - `defineStore('nome', () => { ... })` com Composition API.
-- Guardar Entities e Types tipados, NUNCA objetos sem tipo.
+- Guardar Entities e Responses tipados, NUNCA objetos sem tipo.
 
 ---
 
 ## Tratamento de Erros — Either Pattern
 
 ### Regra absoluta
-- **Repositories**: retornam `Either<Error, T>` usando `httpClient.get/post/patch/delete`.
-- **Use Cases**: retornam `Either<Error, T>` (repassam ou transformam).
+- **Repositories**: retornam `Either<DomainError, T>` usando `httpClient.get/post/patch/delete`.
+- **Use Cases**: retornam `Either<DomainError, T>` (repassam ou transformam).
 - **Controllers**: processam `Either` com `this.handleResult(result, onSuccess, onError)`.
 - **NUNCA** usar `try/catch` em controllers para erros de API — `handleResult()` já cuida.
 - **NUNCA** `throw` erros de negócio — sempre `Either.left()`.
+- **NUNCA** usar `Error` cru no `Either`. Sempre uma subclasse de `DomainError`.
 - **NUNCA** acessar `localStorage` direto — sempre via `StorageService`. Chaves só em `core/constants/storage-keys.ts`.
 
-#---
+### Hierarquia de erros — `core/errors/`
+
+Todo erro que trafega no `Either` herda de `DomainError`, que expõe `isUserFacing`:
+
+| Erro | Quando | `isUserFacing` |
+|------|--------|----------------|
+| `NetworkError` | Requisição sem resposta (offline, timeout) | `true` |
+| `UnauthorizedError` | HTTP 401 | `true` |
+| `ForbiddenError` | HTTP 403 (OWNER > ADMIN > MEMBER) | `true` |
+| `NotFoundError` | HTTP 404 | `true` |
+| `ValidationError` | HTTP 400/422 — carrega `details[]` | `true` |
+| `ServerError` | HTTP 5xx — carrega `statusCode` | `false` |
+| `ContractError` | Schema Zod do mapper falhou — carrega `issues[]` | `false` |
+| `UnexpectedError` | Não se encaixa em nada acima | `false` |
+
+**Por que `isUserFacing` importa:** `handleResult()` exibe a mensagem crua quando é `true`. Quando é `false`, o usuário vê um texto genérico e o erro real vai para o console (ponto de integração com telemetria). Um `ContractError` significa que o contrato com o backend quebrou — é bug nosso, não erro do usuário, e jamais deve virar "e-mail ou senha inválidos" na tela.
+
+Quem traduz HTTP → `DomainError` é `core/client/http-error-mapper.ts`. É o **único** arquivo do projeto que conhece o Axios como fonte de erro. As camadas de cima decidem comportamento por `instanceof`, **nunca** inspecionando a string da mensagem.
+
+---
+
+## Injeção de Dependência — `<feature>.factory.ts`
+
+O Controller **não** dá `new` em Repository. Ele recebe os Use Cases prontos pelo construtor:
+
+```typescript
+// modules/auth/auth.factory.ts — composition root do módulo
+export function makeAuthController(): AuthController {
+  const authRepository = new AuthRepository()
+
+  return new AuthController(
+    new LoginUseCase(authRepository),
+    new RegisterUseCase(authRepository),
+    new LogoutUseCase(authRepository),
+  )
+}
+```
+
+```typescript
+// pages/login-page.vue
+const controller = makeAuthController()   // nunca `new AuthController()`
+```
+
+**Por quê:** sem isso a `I<Name>Repository` é decorativa — ela existe mas nada é desacoplado, e o Controller vira intestável (toda chamada bate na rede). Com a factory, testes injetam dublês.
+
+A factory fica na **raiz do módulo**, fora de `presentation/`, porque o ESLint proíbe `presentation/` de importar `data/`. Ela é a única fronteira autorizada.
+
+---
+
+## Paginação — `toPage()`
+
+Não repita o envelope `{ data, total, page, limit }` em cada mapper. Informe só o schema do item e como construir a entidade:
+
+```typescript
+const productSchema = z.object({ id: z.string(), name: z.string() })
+
+export const toProductPage = toPage(
+  'products',
+  productSchema,
+  (p) => new Product(p.id, p.name),
+)
+```
+
+Devolve `Either<DomainError, PaginatedResponse<T>>`, com `ContractError` quando o envelope ou qualquer item quebrar.
+
+---
 
 ## Exemplo completo (referência: módulo auth)
 
 ```typescript
-// 1. DTO — dado de transporte
+// 1. DTO — dado de entrada — domain/dto/login-dto.ts (uma classe por arquivo)
 export class LoginDto {
   email: string
   password: string
@@ -288,11 +370,13 @@ export class AuthUser {
   }
 }
 
-// 3. Types — valor composto e agregado (sem classe, sem fromJson)
+// 3. Responses — dado de saída do domínio (sem classe, sem fromJson) — um por arquivo
+// domain/responses/auth-token-response.ts
 export interface AuthToken {
   accessToken: string
   refreshToken: string
 }
+// domain/responses/auth-result-response.ts
 export interface AuthResult {
   token: AuthToken
   user: AuthUser
@@ -300,7 +384,7 @@ export interface AuthResult {
 
 // 4. Interface — contrato
 export interface IAuthRepository {
-  login(dto: LoginDto): Promise<Either<Error, AuthResult>>
+  login(dto: LoginDto): Promise<Either<DomainError, AuthResult>>
 }
 
 // 5. Mapper — valida (Zod) e traduz JSON → domínio (único que conhece o formato)
@@ -315,9 +399,12 @@ const authResponseSchema = z.object({
   refreshToken: z.string(),
 })
 
-export function toAuthResult(data: unknown): Either<Error, AuthResult> {
+export function toAuthResult(data: unknown): Either<DomainError, AuthResult> {
   const parsed = authResponseSchema.safeParse(data)
-  if (!parsed.success) return Either.left(new Error('Resposta de autenticação inválida'))
+  if (!parsed.success) {
+    // ContractError = bug nosso, isUserFacing: false. Nunca `new Error(...)` cru.
+    return Either.left(new ContractError('auth', toIssueList(parsed.error)))
+  }
   const v = parsed.data
   return Either.right({
     token: { accessToken: v.accessToken, refreshToken: v.refreshToken },
@@ -327,7 +414,7 @@ export function toAuthResult(data: unknown): Either<Error, AuthResult> {
 
 // 6. Repository — implementação (não conhece o JSON, delega ao mapper)
 export class AuthRepository implements IAuthRepository {
-  async login(dto: LoginDto): Promise<Either<Error, AuthResult>> {
+  async login(dto: LoginDto): Promise<Either<DomainError, AuthResult>> {
     const result = await httpClient.post<unknown>('/auth/login', {
       email: dto.email,
       password: dto.password,
@@ -339,19 +426,23 @@ export class AuthRepository implements IAuthRepository {
 // 7. Use Case — orquestração
 export class LoginUseCase {
   constructor(private readonly authRepository: IAuthRepository) {}
-  async execute(dto: LoginDto): Promise<Either<Error, AuthResult>> {
+  async execute(dto: LoginDto): Promise<Either<DomainError, AuthResult>> {
     return this.authRepository.login(dto)
   }
 }
 
-// 8. Controller — presentation
+// 8. Controller — presentation. Recebe os Use Cases prontos; NUNCA dá `new` em Repository.
 export class AuthController extends BaseController {
-  private readonly authRepository = new AuthRepository()
-  private readonly loginUseCase = new LoginUseCase(this.authRepository)
+  private readonly loginUseCase: LoginUseCase
   private readonly authStore = useAuthStore()
 
   readonly email = ref('')
   readonly password = ref('')
+
+  constructor(loginUseCase: LoginUseCase) {
+    super()
+    this.loginUseCase = loginUseCase
+  }
 
   async login(): Promise<void> {
     this.setLoading(true)
@@ -365,6 +456,15 @@ export class AuthController extends BaseController {
     this.setLoading(false)
   }
 }
+
+// 9. Factory — composition root, na raiz do módulo (auth.factory.ts)
+export function makeAuthController(): AuthController {
+  const authRepository = new AuthRepository()
+  return new AuthController(new LoginUseCase(authRepository))
+}
+
+// 10. Page — <script setup lang="ts">
+const controller = makeAuthController()   // nunca `new AuthController()`
 ```
 
 ---
@@ -373,22 +473,25 @@ export class AuthController extends BaseController {
 
 Ao criar qualquer novo módulo (companies, products, partners, etc.), siga ESTA ORDEM:
 
-1. **`domain/dto/`** — Criar DTOs tipados para dados de entrada/saída
+1. **`domain/dto/`** — Criar DTOs de **entrada**, uma classe por arquivo (`login-dto.ts`, `register-dto.ts`)
 2. **`domain/entities/`** — Criar Entity com métodos de comportamento (sem `fromJson`)
-3. **`domain/types/`** — Criar tipos para valores compostos e agregados (ex: `AuthResult`)
+3. **`domain/responses/`** — Criar Responses de **saída**, uma interface por arquivo (ex: `auth-result-response.ts`)
 4. **`domain/interfaces/`** — Criar Interface com assinaturas usando DTOs e Either
-5. **`data/mappers/`** — Criar mapper com schema Zod que valida e traduz JSON → domínio
-6. **`data/`** — Criar Repository implementando a Interface, delegando ao mapper via `flatMap`
-7. **`application/use-cases/`** — Criar Use Cases que recebem DTO e chamam Repository
-8. **`presentation/schemas/`** — Criar Zod schemas para validação de formulário
-9. **`presentation/controllers/`** — Criar Controller estendendo BaseController
-10. **`presentation/stores/`** — Criar Pinia store se necessário (estado reativo global)
-11. **`presentation/components/`** — Criar componentes de formulário com Zod
-12. **`presentation/pages/`** — Criar páginas que conectam tudo
-13. **`presentation/routes/`** — Criar rotas com imports no topo
-14. **`enums/`** — Criar enums em arquivos separados no diretório raiz `src/enums/`
-15. **`router/route-names.ts`** — Adicionar nome da rota como const
-16. **`router/index.ts`** — Importar e adicionar rotas do módulo
+5. **`data/mappers/`** — Criar mapper com schema Zod que valida e traduz JSON → domínio (use `toPage()` se for lista paginada)
+6. **`data/mappers/<name>.mapper.spec.ts`** — Testar o mapper: válido, default, tipo errado, campo ausente
+7. **`data/`** — Criar Repository implementando a Interface, delegando ao mapper via `flatMap`
+8. **`application/use-cases/`** — Criar Use Cases que recebem DTO e chamam Repository
+9. **`presentation/schemas/`** — Criar Zod schemas para validação de formulário
+10. **`presentation/controllers/`** — Criar Controller estendendo BaseController, recebendo Use Cases pelo construtor
+11. **`<feature>.factory.ts`** — Criar o composition root (`make<Feature>Controller()`) na raiz do módulo
+12. **`presentation/stores/`** — Criar Pinia store se necessário (estado reativo global)
+13. **`presentation/components/`** — Criar componentes de formulário com Zod
+14. **`presentation/pages/`** — Criar páginas que chamam `make<Feature>Controller()` (nunca `new`)
+15. **`presentation/routes/`** — Criar rotas com imports no topo
+16. **`enums/`** — Criar enums em arquivos separados no diretório raiz `src/enums/`
+17. **`router/route-names.ts`** — Adicionar nome da rota como const
+18. **`router/index.ts`** — Importar e adicionar rotas do módulo
+19. **`npm run verify`** — lint + testes + build devem passar antes do commit
 
 ---
 
@@ -407,10 +510,55 @@ Ao criar qualquer novo módulo (companies, products, partners, etc.), siga ESTA 
 ## Comandos de Qualidade
 
 ```bash
-npm run build     # Build TypeScript + Vite — DEVE passar sem erros
-npm run dev       # Servidor de desenvolvimento
-npm run format    # Prettier
+npm run verify        # lint + testes + build — rode ANTES de commitar
+npm run lint          # ESLint (inclui as fronteiras de camada)
+npm run lint:fix      # ESLint com correção automática
+npm test              # Vitest (uma passagem)
+npm run test:watch    # Vitest em modo watch
+npm run test:coverage # Cobertura
+npm run build         # Typecheck (vue-tsc) + bundle Vite
+npm run dev           # Servidor de desenvolvimento
+npm run format        # Prettier
+npm run format:check  # Prettier em modo verificação (usado no CI)
 ```
+
+O mesmo pipeline roda no CI (`.github/workflows/ci.yml`) em todo push e PR para `develop`/`main`.
+
+---
+
+## Fronteiras de Camada — garantidas pelo ESLint
+
+As regras de arquitetura **não são de confiança**: estão em `eslint.config.js` com `no-restricted-imports` e quebram o build.
+
+| Camada | Não pode importar |
+|--------|-------------------|
+| `domain/` | vue, vue-router, pinia, axios, e `data/`, `application/`, `presentation/` |
+| `application/` | vue, vue-router, pinia, axios, e `data/`, `presentation/` |
+| `data/` | vue, vue-router, pinia, e `presentation/` |
+| `presentation/` | `data/` — use `<feature>.factory.ts` |
+
+Arquivos `*.spec.ts` são isentos (precisam montar cenários atravessando camadas).
+
+Se você precisa violar uma dessas regras, o desenho está errado — não adicione `eslint-disable`.
+
+---
+
+## Testes
+
+- **Runner:** Vitest (`vitest.config.ts`), ambiente `happy-dom`, alias `@/` configurado.
+- **Localização:** ao lado do arquivo testado, com sufixo `.spec.ts` (`auth.mapper.ts` → `auth.mapper.spec.ts`).
+- **Prioridade:** mappers primeiro. São o único ponto que valida o contrato com a API — um mapper sem teste é o maior risco do projeto.
+
+Todo mapper novo deve cobrir, no mínimo:
+
+1. Resposta válida → `Either.right` com a entidade construída
+2. Campo opcional ausente → default aplicado
+3. Campo com **tipo errado** → `Either.left(ContractError)`
+4. Campo obrigatório ausente → `Either.left` e `issues[]` citando o campo
+
+O caso 3 é o que justifica o mapper existir: antes dos schemas Zod, um `as boolean` engolia contrato quebrado em silêncio.
+
+Controllers são testáveis injetando dublês dos Use Cases — é para isso que serve a factory.
 
 ---
 
