@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import AuthLayout from '@/shared/components/layouts/auth-layout.vue'
 import RegisterForm from '@/modules/auth/presentation/components/register-form.vue'
-import { AuthController } from '@/modules/auth/presentation/controllers/auth-controller'
+import { makeAuthController } from '@/modules/auth/auth.factory'
 import type { RegisterFormData } from '@/modules/auth/presentation/schemas/register-schema'
 import { routeNames } from '@/router/route-names'
 
-const controller = new AuthController()
+const controller = makeAuthController()
 
 async function handleRegister(data: RegisterFormData): Promise<void> {
   controller.name.value = data.name

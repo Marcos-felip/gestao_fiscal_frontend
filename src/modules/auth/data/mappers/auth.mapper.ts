@@ -1,7 +1,10 @@
 import { z } from 'zod'
 import { Either } from '@/core/either/either'
+import type { DomainError } from '@/core/errors/domain-error'
+import { ContractError } from '@/core/errors/contract-error'
 import { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
-import type { AuthResult } from '@/modules/auth/domain/types/auth.types'
+import type { AuthResult } from '@/modules/auth/domain/responses/auth-result-response'
+import { toIssueList } from '@/core/utils/zod-errors'
 
 const authResponseSchema = z.object({
   id: z.string(),
@@ -14,10 +17,11 @@ const authResponseSchema = z.object({
   refreshToken: z.string(),
 })
 
-export function toAuthResult(data: unknown): Either<Error, AuthResult> {
+export function toAuthResult(data: unknown): Either<DomainError, AuthResult> {
   const parsed = authResponseSchema.safeParse(data)
+
   if (!parsed.success) {
-    return Either.left(new Error('Resposta de autenticação inválida'))
+    return Either.left(new ContractError('auth', toIssueList(parsed.error)))
   }
 
   const value = parsed.data

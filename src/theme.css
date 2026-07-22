@@ -1,20 +1,20 @@
 /* Tema de cores para Preline + Tailwind */
 :root {
   color-scheme: light;
-  
+
   /* Cores de fundo */
   --background: #ffffff;
   --background-1: #f9fafb;
   --background-2: #f3f4f6;
   --background-plain: #ffffff;
-  
+
   /* Cores de texto */
   --foreground: #1f2937;
   --foreground-inverse: #ffffff;
-  
+
   /* Inverso */
   --inverse: #1f2937;
-  
+
   /* Linhas/Bordas */
   --border: #e5e7eb;
   --border-line-inverse: #1f2937;
@@ -26,7 +26,7 @@
   --border-line-6: #4b5563;
   --border-line-7: #374151;
   --border-line-8: #1f2937;
-  
+
   /* Cor primária (Azul) */
   --primary-50: #eff6ff;
   --primary-100: #dbeafe;
@@ -40,7 +40,7 @@
   --primary-900: #1e3a8a;
   --primary-950: #172554;
   --primary: #2563eb;
-  
+
   /* Cor secundária (Cyan) */
   --secondary-50: #ecf9ff;
   --secondary-100: #d1f1ff;
@@ -54,7 +54,7 @@
   --secondary-900: #164e63;
   --secondary-950: #082f49;
   --secondary: #06b6d4;
-  
+
   /* Cores de erro (Vermelho) */
   --error-50: #fef2f2;
   --error-100: #fee2e2;
@@ -68,7 +68,7 @@
   --error-900: #7f1d1d;
   --error-950: #431407;
   --error: #ef4444;
-  
+
   /* Cores de sucesso (Verde) */
   --success-50: #f0fdf4;
   --success-100: #dcfce7;
@@ -82,7 +82,7 @@
   --success-900: #145231;
   --success-950: #052e16;
   --success: #22c55e;
-  
+
   /* Cores de aviso (Âmbar) */
   --warning-50: #fffbeb;
   --warning-100: #fef3c7;
@@ -100,20 +100,20 @@
 
 [data-theme='dark'] {
   color-scheme: dark;
-  
+
   /* Cores de fundo (modo escuro) */
   --background: #0f172a;
   --background-1: #1e293b;
   --background-2: #334155;
   --background-plain: #0f172a;
-  
+
   /* Cores de texto (modo escuro) */
   --foreground: #f1f5f9;
   --foreground-inverse: #0f172a;
-  
+
   /* Inverso (modo escuro) */
   --inverse: #f1f5f9;
-  
+
   /* Linhas/Bordas (modo escuro) */
   --border: #334155;
   --border-line-inverse: #f1f5f9;

@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, testes e build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar formatacao
+        run: npm run format:check
+
+      - name: Lint (inclui fronteiras da Clean Architecture)
+        run: npm run lint
+
+      - name: Testes
+        run: npm test
+
+      - name: Build (typecheck + bundle)
+        run: npm run build

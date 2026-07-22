@@ -13,10 +13,7 @@
     ]"
   >
     <!-- Slot de header (opcional) -->
-    <div
-      v-if="$slots.header"
-      class="border-card-divider px-6 py-4 border-b"
-    >
+    <div v-if="$slots.header" class="border-card-divider px-6 py-4 border-b">
       <slot name="header" />
     </div>
 
@@ -86,9 +83,7 @@ const props = withDefaults(defineProps<Props>(), {
 const variantClasses = computed(() => {
   const variants = {
     default: `${props.border ? '' : 'border-transparent'}`,
-    elevated: `${
-      props.border ? '' : 'border-transparent'
-    }`,
+    elevated: `${props.border ? '' : 'border-transparent'}`,
   }
   return variants[props.variant]
 })

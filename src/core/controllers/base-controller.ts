@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Either } from '@/core/either/either'
+import type { Either } from '@/core/either/either'
+import type { DomainError } from '@/core/errors/domain-error'
 
 export abstract class BaseController {
   protected readonly loading = ref(false)
@@ -19,20 +20,31 @@ export abstract class BaseController {
     this.error.value = null
   }
 
-  protected handleResult<L, R>(
-    either: Either<L, R>,
+  /**
+   * Erros marcados como `isUserFacing` são exibidos como vieram. Os demais
+   * (falha de contrato, 5xx, inesperado) são bugs nossos ou de infraestrutura:
+   * o usuário vê um texto genérico e o erro real vai para o console.
+   */
+  private messageFor(error: DomainError): string {
+    if (error.isUserFacing) return error.message
+
+    console.error(error)
+    return 'Não foi possível concluir a operação. Tente novamente.'
+  }
+
+  protected handleResult<R>(
+    either: Either<DomainError, R>,
     onSuccess: (value: R) => void,
-    onError?: (error: L) => void,
+    onError?: (error: DomainError) => void,
   ): void {
     either.fold(
-      (left) => {
-        const message = left instanceof Error ? left.message : String(left)
-        this.setError(message)
-        onError?.(left)
+      (error) => {
+        this.setError(this.messageFor(error))
+        onError?.(error)
       },
-      (right) => {
+      (value) => {
         this.clearError()
-        onSuccess(right)
+        onSuccess(value)
       },
     )
   }

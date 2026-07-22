@@ -103,12 +103,9 @@ const sizeClasses = computed(() => {
  */
 const variantClasses = computed(() => {
   const variants = {
-    primary:
-      'bg-primary text-primary-foreground hover:bg-primary-700',
-    secondary:
-      'bg-secondary text-secondary-foreground hover:bg-secondary-700',
-    destructive:
-      'bg-destructive text-destructive-foreground hover:opacity-90',
+    primary: 'bg-primary text-primary-foreground hover:bg-primary-700',
+    secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary-700',
+    destructive: 'bg-destructive text-destructive-foreground hover:opacity-90',
     ghost:
       'bg-background-1 text-foreground border border-line-2 hover:bg-background-2',
   }
