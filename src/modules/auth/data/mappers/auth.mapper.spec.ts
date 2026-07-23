@@ -4,14 +4,16 @@ import { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
 import { ContractError } from '@/core/errors/contract-error'
 
 const respostaValida = {
-  id: 'user-1',
-  name: 'Marcos',
-  email: 'marcos@jrsistemas.net',
-  companyActiveId: 'company-1',
-  role: 'OWNER',
-  forcePasswordChange: false,
   accessToken: 'access-abc',
   refreshToken: 'refresh-xyz',
+  user: {
+    id: 'user-1',
+    name: 'Marcos',
+    email: 'marcos@jrsistemas.net',
+    companyActiveId: 'company-1',
+    role: 'OWNER',
+    forcePasswordChange: false,
+  },
 }
 
 describe('toAuthResponse', () => {
@@ -30,8 +32,15 @@ describe('toAuthResponse', () => {
   })
 
   it('aplica defaults quando os campos opcionais vêm ausentes', () => {
-    const { companyActiveId: _c, role: _r, ...semOpcionais } = respostaValida
-    const parcial = { ...semOpcionais, forcePasswordChange: undefined }
+    const {
+      companyActiveId: _c,
+      role: _r,
+      ...userSemOpcionais
+    } = respostaValida.user
+    const parcial = {
+      ...respostaValida,
+      user: { ...userSemOpcionais, forcePasswordChange: undefined },
+    }
 
     const result = toAuthResponse(parcial)
 
@@ -46,7 +55,7 @@ describe('toAuthResponse', () => {
   it('rejeita forcePasswordChange com tipo errado', () => {
     const result = toAuthResponse({
       ...respostaValida,
-      forcePasswordChange: 'sim',
+      user: { ...respostaValida.user, forcePasswordChange: 'sim' },
     })
 
     expect(result.isLeft).toBe(true)
@@ -62,6 +71,16 @@ describe('toAuthResponse', () => {
     const error = result.left as ContractError
     expect(error.resource).toBe('auth')
     expect(error.issues.join(' ')).toContain('accessToken')
+  })
+
+  it('rejeita resposta sem o objeto user e aponta o campo que falhou', () => {
+    const { user: _u, ...semUser } = respostaValida
+
+    const result = toAuthResponse(semUser)
+
+    expect(result.isLeft).toBe(true)
+    const error = result.left as ContractError
+    expect(error.issues.join(' ')).toContain('user')
   })
 
   it('marca falha de contrato como não exibível ao usuário', () => {

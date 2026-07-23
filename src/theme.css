@@ -96,6 +96,29 @@
   --warning-900: #78350f;
   --warning-950: #451a03;
   --warning: #f59e0b;
+
+  /* Tokens semânticos (superfícies, texto de apoio, foco) */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --primary-foreground: #ffffff;
+  --secondary-foreground: #ffffff;
+  --ring: var(--primary);
+
+  /* Tipografia — display com caráter + corpo legível */
+  --font-display:
+    'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Raio, movimento e elevação */
+  --radius: 0.625rem;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+  --shadow-soft:
+    0 1px 2px rgb(15 23 42 / 0.04), 0 4px 16px rgb(15 23 42 / 0.06);
+  --shadow-float:
+    0 4px 12px rgb(15 23 42 / 0.08), 0 12px 32px rgb(15 23 42 / 0.12);
 }
 
 [data-theme='dark'] {
@@ -125,4 +148,16 @@
   --border-line-6: #e2e8f0;
   --border-line-7: #f1f5f9;
   --border-line-8: #f1f5f9;
+
+  /* Tokens semânticos (modo escuro) */
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --destructive: #f87171;
+  --destructive-foreground: #0f172a;
+  --primary-foreground: #ffffff;
+  --secondary-foreground: #0f172a;
+  --ring: var(--primary-400);
+
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.4);
+  --shadow-float: 0 4px 12px rgb(0 0 0 / 0.4), 0 12px 32px rgb(0 0 0 / 0.5);
 }

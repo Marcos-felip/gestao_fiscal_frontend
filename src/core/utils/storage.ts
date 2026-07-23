@@ -37,9 +37,30 @@ export class StorageService {
     localStorage.removeItem(StorageKeys.ACTIVE_COMPANY)
   }
 
+  static getUser(): Record<string, unknown> | null {
+    const raw = localStorage.getItem(StorageKeys.USER)
+    if (!raw) return null
+    try {
+      const parsed = JSON.parse(raw) as unknown
+      if (!parsed || typeof parsed !== 'object') return null
+      return parsed as Record<string, unknown>
+    } catch {
+      return null
+    }
+  }
+
+  static setUser(user: Record<string, unknown>): void {
+    localStorage.setItem(StorageKeys.USER, JSON.stringify(user))
+  }
+
+  static removeUser(): void {
+    localStorage.removeItem(StorageKeys.USER)
+  }
+
   static clearAll(): void {
     localStorage.removeItem(StorageKeys.TOKEN)
     localStorage.removeItem(StorageKeys.REFRESH_TOKEN)
     localStorage.removeItem(StorageKeys.ACTIVE_COMPANY)
+    localStorage.removeItem(StorageKeys.USER)
   }
 }

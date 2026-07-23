@@ -1,18 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import './theme.css';
 @import 'tailwindcss';
 
+html,
 body {
-  font-family:
-    'Inter',
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    sans-serif;
+  font-family: var(--font-sans);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.006em;
+}
+
+/* Escala tipográfica editorial: display com caráter nos títulos/marca. */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  font-feature-settings: 'ss01';
+}
+
+/* Números tabulares para dados fiscais (colunas alinhadas) */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Tema de cores para Preline + Tailwind v4 */
 @theme inline {
+  /* Fontes */
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+
   /* Cores de fundo */
   --color-background: var(--background);
   --color-background-1: var(--background-1);
@@ -24,11 +43,24 @@ body {
   --color-foreground-inverse: var(--foreground-inverse);
   --color-inverse: var(--inverse);
 
+  /* Tokens semânticos (antes ausentes → utilities silenciosamente ignoradas) */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-ring: var(--ring);
+
   /* Linhas/Bordas */
   --color-border: var(--border);
   --color-border-line-inverse: var(--border-line-inverse);
   --color-border-line-1: var(--border-line-1);
+  --color-border-line-2: var(--border-line-2);
+  --color-line-1: var(--border-line-1);
   --color-line-2: var(--border-line-2);
+  --color-line-3: var(--border-line-3);
+  --color-line-4: var(--border-line-4);
   --color-border-line-3: var(--border-line-3);
   --color-border-line-4: var(--border-line-4);
   --color-border-line-5: var(--border-line-5);
@@ -132,5 +164,40 @@ body {
   /* Disabled state utility */
   .ui-disabled {
     @apply opacity-50 cursor-not-allowed pointer-events-none;
+  }
+
+  /* Elevação suave do sistema */
+  .ui-shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .ui-shadow-float {
+    box-shadow: var(--shadow-float);
+  }
+}
+
+/* Atmosfera: deriva lenta das manchas de gradiente (tela de auth) */
+@keyframes ui-aurora {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, -3%, 0) scale(1.08);
+  }
+}
+
+.ui-aurora {
+  animation: ui-aurora 18s var(--ease-out-quart) infinite;
+}
+
+/* Acessibilidade: nunca impor movimento a quem pediu para reduzir. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }

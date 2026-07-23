@@ -7,14 +7,16 @@ import type { AuthResponse } from '@/modules/auth/domain/responses/auth-response
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const authResponseSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-  companyActiveId: z.string().nullable().default(null),
-  role: z.string().nullable().default(null),
-  forcePasswordChange: z.boolean().default(false),
   accessToken: z.string(),
   refreshToken: z.string(),
+  user: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    companyActiveId: z.string().nullable().default(null),
+    role: z.string().nullable().default(null),
+    forcePasswordChange: z.boolean().default(false),
+  }),
 })
 
 export function toAuthResponse(
@@ -33,12 +35,12 @@ export function toAuthResponse(
       refreshToken: value.refreshToken,
     },
     user: new AuthUser(
-      value.id,
-      value.name,
-      value.email,
-      value.companyActiveId,
-      value.role,
-      value.forcePasswordChange,
+      value.user.id,
+      value.user.name,
+      value.user.email,
+      value.user.companyActiveId,
+      value.user.role,
+      value.user.forcePasswordChange,
     ),
   })
 }

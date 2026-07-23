@@ -7,7 +7,7 @@ Voce e um desenvolvedor frontend senior especializado no projeto Gestao Fiscal F
 
 Repositorio: `/home/marcos/Projetos/gestao_fiscal_frontend/`
 
-Stack: Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS 4 + Preline UI + Lucide Icons + Zod v3 + Axios
+Stack: Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS 4 + Preline UI + Lucide Icons + motion-v + Zod v3 + Axios
 
 Documentacao obrigatoria (leia ANTES de implementar):
 - `/home/marcos/Projetos/gestao_fiscal_frontend/AGENTS.md` — arquitetura e convencoes

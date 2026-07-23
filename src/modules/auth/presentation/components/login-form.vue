@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Button, Input, Icon } from '@/shared/ui'
+import { Button, Input, PasswordInput } from '@/shared/ui'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {
   loginSchema,
@@ -18,7 +18,6 @@ const props = defineProps<{
 
 const email = ref('')
 const password = ref('')
-const showPassword = ref(false)
 const errors = ref<Partial<Record<keyof LoginFormData, string>>>({})
 
 function handleSubmit(): void {
@@ -34,10 +33,6 @@ function handleSubmit(): void {
 
   errors.value = {}
   emit('submit', result.data)
-}
-
-function togglePasswordVisibility(): void {
-  showPassword.value = !showPassword.value
 }
 
 function handleGoogleLogin(): void {
@@ -59,26 +54,15 @@ function handleGoogleLogin(): void {
         <template #label>E-mail</template>
       </Input>
 
-      <Input
+      <PasswordInput
         id="login-password"
         v-model="password"
-        :type="showPassword ? 'text' : 'password'"
         placeholder="Mínimo 6 caracteres"
         autocomplete="current-password"
         :error="errors.password"
-        input-class="pr-10"
       >
         <template #label>Senha</template>
-        <template #suffix>
-          <button
-            type="button"
-            class="text-foreground/50 hover:text-foreground/70 transition-colors"
-            @click="togglePasswordVisibility"
-          >
-            <Icon :name="showPassword ? 'eye-off' : 'eye'" class="h-4 w-4" />
-          </button>
-        </template>
-      </Input>
+      </PasswordInput>
 
       <Button
         type="submit"
@@ -87,6 +71,7 @@ function handleGoogleLogin(): void {
         text-class="text-white"
         :loading="props.loading"
         :disabled="props.loading"
+        loading-text="Entrando…"
       >
         Continuar
       </Button>

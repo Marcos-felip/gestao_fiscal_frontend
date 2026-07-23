@@ -4,14 +4,16 @@ import RegisterForm from '@/modules/auth/presentation/components/register-form.v
 import { makeAuthController } from '@/modules/auth/factories/auth.factory'
 import type { RegisterFormData } from '@/modules/auth/presentation/schemas/register-schema'
 import { routeNames } from '@/router/route-names'
+import { useProgress } from '@/shared/composables'
 
 const controller = makeAuthController()
+const progress = useProgress()
 
 async function handleRegister(data: RegisterFormData): Promise<void> {
   controller.name.value = data.name
   controller.email.value = data.email
   controller.password.value = data.password
-  await controller.register()
+  await progress.track(controller.register())
 }
 
 function goToLogin(): void {
@@ -22,13 +24,13 @@ function goToLogin(): void {
 <template>
   <AuthLayout>
     <template #title>
-      <h2 class="text-xl font-bold text-foreground text-center">
+      <h2 class="text-2xl font-bold tracking-tight text-foreground">
         Criar sua conta
       </h2>
     </template>
 
     <template #subtitle>
-      <p class="text-sm text-foreground/70 text-center mt-1.5">
+      <p class="mt-1.5 text-sm text-muted-foreground">
         Preencha os dados para se registrar
       </p>
     </template>

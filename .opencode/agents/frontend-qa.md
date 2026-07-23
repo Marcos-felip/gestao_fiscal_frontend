@@ -13,7 +13,7 @@ Referencias obrigatorias (leia ANTES de validar):
 - `/home/marcos/Projetos/gestao_fiscal_backend/REGRAS_DE_NEGOCIO.md` — regras de negocio
 
 Pilha validada:
-- Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS 4 + Preline UI + Lucide Icons + Zod v3 + Axios
+- Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS 4 + Preline UI + Lucide Icons + motion-v + Zod v3 + Axios
 
 ---
 

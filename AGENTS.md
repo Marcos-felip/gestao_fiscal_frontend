@@ -3,7 +3,7 @@
 ## Projeto
 
 SaaS multi-tenant de gestão fiscal para empresas brasileiras.
-Frontend: Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS 4 + Preline UI + Lucide Icons + Zod v3 + Axios
+Frontend: Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS 4 + Preline UI + Lucide Icons + motion-v + Zod v3 + Axios
 
 ## Repositórios
 
@@ -93,15 +93,19 @@ src/
 │   ├── company-type.enum.ts
 │   └── ...                         # UM ARQUIVO POR ENUM
 │
-├── shared/                         # UI compartilhada entre módulos
+├── shared/                         # UI e utilidades compartilhadas entre módulos
 │   ├── ui/                          # Componentes primitivos (Button, Input, Card)
 │   │   └── README.md                # Documentação Design System
-│   ├── components/                  # Componentes inteligentes (Toast, Layouts)
+│   ├── components/                  # Componentes inteligentes (Toast, Layouts, Dialog)
 │   │   ├── toast/
 │   │   │   └── toast-notification.vue
 │   │   ├── layouts/
 │   │   │   └── auth-layout.vue
+│   │   ├── dialog/
+│   │   │   └── confirm-dialog.vue    # Modal de confirmação reutilizável
 │   │   └── README.md                # Documentação componentes smart
+│   ├── composables/                 # Composables Vue compartilhados (useSidebar, useNavbar, ...)
+│   │   └── index.ts                 # Import via `@/shared/composables`
 │
 ├── modules/                         # MÓDULOS DE FEATURE (1 módulo = 1 domínio)
 │   └── <feature>/                   # ex: auth, companies, products, partners, purchases, stock
@@ -208,6 +212,7 @@ src/
 - **Lógica:** Apresentação + comportamento específico
 - **Quando usar:** Em múltiplas páginas, layouts, notificações
 - **Exemplo:** `import Toast from '@/shared/components/toast/toast-notification.vue'`
+- **Disponíveis:** `toast/`, `layouts/`, `navbar/`, `sidebar/`, `dialog/confirm-dialog.vue` (modal de confirmação reutilizável — usado, ex., no logout).
 
 ### Decisão: UI vs Component
 
@@ -257,12 +262,30 @@ stateDiagram-v2
 ### Vue
 - `<script setup lang="ts">` em TODOS os SFCs.
 - Preline UI para estilização com tokens de tema (`bg-primary`, `text-primary-foreground`, etc.).
-- Ícones via `<Icon name="..." />` de `@/shared/ui`. **NUNCA** importar `lucide-vue-next` direto — só o registry `shared/ui/icon/icons.ts`. Para novos ícones, registrar a chave lá.
+- Ícones via `<Icon name="..." />` de `@/shared/ui` (resolve qualquer ícone do Lucide pelo nome, ex: `name="Users"`). **NUNCA** importar `lucide-vue-next` direto nas telas — sempre pelo `<Icon>`.
 - Textos em português brasileiro.
 
 ### Pinia
 - `defineStore('nome', () => { ... })` com Composition API.
 - Guardar Entities e Responses tipados, NUNCA objetos sem tipo.
+
+### Design System e Motion
+- **Direção visual:** editorial-tech — display com caráter nos títulos/marca, corpo legível, muito respiro, um acento azul.
+- **Tipografia:** `--font-display` (Space Grotesk) aplicada automaticamente a `h1/h2/h3` e à classe `.font-display` (marca, números de destaque); `--font-sans` (Inter) no corpo. Use `.tabular-nums` em colunas de dados fiscais.
+- **Tokens semânticos** (definidos em `theme.css`, expostos ao Tailwind no `@theme inline` de `style.css`): `bg-background`, `bg-muted`/`text-muted-foreground`, `bg-primary`/`text-primary-foreground`, `bg-destructive`/`text-destructive-foreground`, `border-line-1..4`, `ring`. **Toda utility de cor precisa de um `--color-*` no `@theme`** — no Tailwind 4, classe sem token é silenciosamente ignorada.
+- **Elevação:** `.ui-shadow-soft` e `.ui-shadow-float` (nunca sombras avulsas). Raio padrão `--radius`.
+- **Dark mode:** alterna o atributo `data-theme="dark"` no `<html>` (via `useNavbar().toggleDarkMode`). `theme.css` chaveia por `[data-theme='dark']` — nunca use `data-hs-theme-switch`.
+- **Animação — `motion-v`:**
+  - `<MotionConfig>` no `App.vue` define a transição padrão e respeita `prefers-reduced-motion`.
+  - Componentes `motion.*` (ex: `motion.button`, `motion.div`) para `initial/animate/variants/whileHover/whilePress`.
+  - **Springs** (`{ type: 'spring', stiffness, damping }`) para interação; `--ease-out-quart` para tweens de CSS.
+  - Listas entram em **stagger** (`staggerChildren`); o item ativo da sidebar usa **`layoutId`** para deslizar entre posições.
+  - Sempre importe `motion` de `motion-v` manualmente (sem auto-import).
+- **Movimento com propósito:** uma sequência de entrada bem dirigida vale mais que vinte micro-hovers aleatórios. Nunca imponha movimento a quem pediu `prefers-reduced-motion`.
+- **Loading e feedback:**
+  - **Barra de progresso global** no topo: `useProgress()` (`@/shared/composables`) com `start()`/`done()`/`track(promise)`. Já ligada ao router; envolva requests com `progress.track(...)`. Renderizada por `ProgressBar` no `App.vue`.
+  - **Botão:** `:loading` mostra o `Spinner` (herda a cor do texto); use `loading-text` para trocar o rótulo (ex: `Entrando…`).
+  - **Skeleton** (`@/shared/ui`): prefira skeleton a spinner central ao carregar dados de tela. Tamanho/raio via utilities (`<Skeleton class="h-4 w-24 rounded" />`).
 
 ---
 
@@ -399,15 +422,18 @@ export interface IAuthRepository {
 }
 
 // 5. Mapper — valida (Zod) e traduz JSON → domínio (único que conhece o formato)
+// O schema reflete o JSON REAL da API: tokens no topo e o usuário aninhado em `user`.
 const authResponseSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-  companyActiveId: z.string().nullable().default(null),
-  role: z.string().nullable().default(null),
-  forcePasswordChange: z.boolean().default(false),
   accessToken: z.string(),
   refreshToken: z.string(),
+  user: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    companyActiveId: z.string().nullable().default(null),
+    role: z.string().nullable().default(null),
+    forcePasswordChange: z.boolean().default(false),
+  }),
 })
 
 export function toAuthResponse(data: unknown): Either<DomainError, AuthResponse> {
@@ -419,7 +445,14 @@ export function toAuthResponse(data: unknown): Either<DomainError, AuthResponse>
   const v = parsed.data
   return Either.right({
     token: { accessToken: v.accessToken, refreshToken: v.refreshToken },
-    user: new AuthUser(v.id, v.name, v.email, v.companyActiveId, v.role, v.forcePasswordChange),
+    user: new AuthUser(
+      v.user.id,
+      v.user.name,
+      v.user.email,
+      v.user.companyActiveId,
+      v.user.role,
+      v.user.forcePasswordChange,
+    ),
   })
 }
 
@@ -482,7 +515,9 @@ const controller = makeAuthController()   // nunca `new AuthController()`
 
 ## Checklist para Criar um Novo Módulo
 
-Ao criar qualquer novo módulo (companies, products, partners, etc.), siga ESTA ORDEM:
+> **Módulos sem backend próprio** (ex: `dashboard`, `errors`) podem ter apenas `presentation/` (pages + routes + components) — não crie `domain/`, `data/` e `application/` vazios só para cumprir a estrutura; isso seria código morto. As camadas entram quando existir contrato de API real. As rotas do módulo são compostas em `router/index.ts` (ex: `dashboardRoutes` como filhas do `AppLayout`; `errorRoutes` no nível raiz, com o catch-all `/:pathMatch(.*)*` do 404 **sempre por último**). As telas de status (403/404/500/502) vivem em `modules/errors/` e reaproveitam o componente `error-view.vue`.
+
+Ao criar qualquer novo módulo (companies, products, partners, etc.) COM backend, siga ESTA ORDEM:
 
 1. **`domain/dto/`** — Criar DTOs de **entrada**, uma classe por arquivo (`login-dto.ts`, `register-dto.ts`)
 2. **`domain/entities/`** — Criar Entity com métodos de comportamento (sem `fromJson`)
