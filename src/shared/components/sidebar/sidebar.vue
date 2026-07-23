@@ -7,7 +7,7 @@
         v-if="isOpen && isMobile"
         :class="[
           'sidebar-backdrop',
-          'fixed inset-0 z-30 bg-black/20 lg:hidden',
+          'fixed inset-0 z-40 bg-black/20 lg:hidden',
         ]"
         @click="closeSidebar"
       />
@@ -19,11 +19,10 @@
         v-if="isOpen && isMobile"
         :class="[
           'sidebar-drawer',
-          'fixed left-0 top-0 bottom-0 z-40 w-68 lg:hidden flex flex-col border-r border-border bg-background',
+          'fixed left-0 top-0 bottom-0 z-50 w-68 lg:hidden flex flex-col border-r border-border bg-background',
         ]"
       >
         <SidebarHeader />
-        <SidebarMobileHeader />
         <SidebarNav />
         <SidebarFooter />
       </div>
@@ -48,7 +47,6 @@
 import { watch } from 'vue'
 import { useSidebar } from '@/composables'
 import SidebarHeader from './sidebar-header.vue'
-import SidebarMobileHeader from './sidebar-mobile-header.vue'
 import SidebarNav from './sidebar-nav.vue'
 import SidebarFooter from './sidebar-footer.vue'
 
