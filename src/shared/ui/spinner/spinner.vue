@@ -1,7 +1,7 @@
 <template>
-  <div class="inline-flex" role="status" aria-label="loading">
+  <span class="inline-flex" role="status" aria-label="carregando">
     <svg
-      class="animate-spin size-6 shrink-0 text-foreground"
+      :class="['animate-spin shrink-0 text-current', sizeClass]"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -22,6 +22,18 @@
         <path d="M7.05 4.08L8.3 6.25" opacity="0.5" />
       </g>
     </svg>
-    <span class="sr-only">Loading...</span>
-  </div>
+    <span class="sr-only">Carregando...</span>
+  </span>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const props = withDefaults(defineProps<{ size?: 'sm' | 'md' | 'lg' }>(), {
+  size: 'md',
+})
+
+const sizeClass = computed(
+  () => ({ sm: 'size-4', md: 'size-6', lg: 'size-8' })[props.size],
+)
+</script>

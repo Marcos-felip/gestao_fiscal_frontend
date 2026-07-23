@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { motion } from 'motion-v'
+import { Skeleton } from '@/shared/ui'
 import DashboardStatCard from './dashboard-stat-card.vue'
+
+defineProps<{ loading?: boolean }>()
 
 interface Stat {
   key: string
@@ -44,7 +47,7 @@ const stats: Stat[] = [
 // Entrada em cascata dos cartões.
 const container = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+  visible: { transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
 }
 
 const item = {
@@ -58,7 +61,28 @@ const item = {
 </script>
 
 <template>
+  <!-- Estado de carregamento: skeleton dos cartões -->
+  <div
+    v-if="loading"
+    class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+  >
+    <div
+      v-for="n in 4"
+      :key="`sk-${n}`"
+      class="rounded-2xl border border-line-2 bg-background p-5 ui-shadow-soft"
+    >
+      <div class="flex items-start justify-between gap-3">
+        <Skeleton class="h-3 w-24 rounded" />
+        <Skeleton class="h-9 w-9 rounded-xl" />
+      </div>
+      <Skeleton class="mt-5 h-7 w-20 rounded" />
+      <Skeleton class="mt-2 h-3 w-28 rounded" />
+    </div>
+  </div>
+
+  <!-- Conteúdo carregado -->
   <motion.section
+    v-else
     class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
     :variants="container"
     initial="hidden"

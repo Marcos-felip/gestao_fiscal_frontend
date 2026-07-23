@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { MotionConfig } from 'motion-v'
 import ToastNotification from '@/shared/components/toast/toast-notification.vue'
+import ProgressBar from '@/shared/components/feedback/progress-bar.vue'
 </script>
 
 <template>
   <MotionConfig :transition="{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }">
+    <ProgressBar />
     <router-view v-slot="{ Component }">
       <Transition name="page" mode="out-in">
         <component :is="Component" />

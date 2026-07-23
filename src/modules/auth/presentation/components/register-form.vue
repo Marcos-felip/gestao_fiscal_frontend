@@ -80,6 +80,7 @@ function handleSubmit(): void {
         text-class="text-white"
         :loading="props.loading"
         :disabled="props.loading"
+        loading-text="Criando conta…"
       >
         Criar conta
       </Button>

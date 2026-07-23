@@ -4,13 +4,15 @@ import LoginForm from '@/modules/auth/presentation/components/login-form.vue'
 import { makeAuthController } from '@/modules/auth/factories/auth.factory'
 import type { LoginFormData } from '@/modules/auth/presentation/schemas/login-schema'
 import { routeNames } from '@/router/route-names'
+import { useProgress } from '@/shared/composables'
 
 const controller = makeAuthController()
+const progress = useProgress()
 
 async function handleLogin(data: LoginFormData): Promise<void> {
   controller.email.value = data.email
   controller.password.value = data.password
-  await controller.login()
+  await progress.track(controller.login())
 }
 
 function goToRegister(): void {

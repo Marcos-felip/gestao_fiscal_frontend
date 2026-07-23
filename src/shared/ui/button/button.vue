@@ -23,18 +23,17 @@
       loading && 'opacity-80',
     ]"
   >
-    <!-- Spinner de carregamento -->
-    <span v-if="loading" class="mr-2">
-      <Spinner />
-    </span>
+    <!-- Spinner de carregamento (herda a cor do texto do botão) -->
+    <Spinner v-if="loading" size="sm" />
 
-    <!-- Slot de ícone (opcional, antes do texto) -->
-    <span v-if="$slots.icon" class="inline-flex items-center">
+    <!-- Slot de ícone (oculto durante o carregamento) -->
+    <span v-else-if="$slots.icon" class="inline-flex items-center">
       <slot name="icon" />
     </span>
 
-    <!-- Conteúdo do botão -->
-    <slot />
+    <!-- Conteúdo: usa loadingText durante o carregamento, se houver -->
+    <span v-if="loading && loadingText">{{ loadingText }}</span>
+    <slot v-else />
   </motion.button>
 </template>
 
@@ -69,6 +68,7 @@ interface Props {
   type?: 'button' | 'submit' | 'reset'
   textClass?: string
   fullWidth?: boolean
+  loadingText?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -79,6 +79,7 @@ const props = withDefaults(defineProps<Props>(), {
   type: 'button',
   textClass: '',
   fullWidth: false,
+  loadingText: '',
 })
 
 // Sem movimento quando o botão não responde a interação.
@@ -113,16 +114,3 @@ const variantClasses = computed(() => {
   return variants[props.variant]
 })
 </script>
-
-<style scoped>
-/* Animação do estado de carregamento */
-.ui-spinner {
-  animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-</style>

@@ -71,6 +71,7 @@ function handleGoogleLogin(): void {
         text-class="text-white"
         :loading="props.loading"
         :disabled="props.loading"
+        loading-text="Entrando…"
       >
         Continuar
       </Button>

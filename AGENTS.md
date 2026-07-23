@@ -282,6 +282,10 @@ stateDiagram-v2
   - Listas entram em **stagger** (`staggerChildren`); o item ativo da sidebar usa **`layoutId`** para deslizar entre posições.
   - Sempre importe `motion` de `motion-v` manualmente (sem auto-import).
 - **Movimento com propósito:** uma sequência de entrada bem dirigida vale mais que vinte micro-hovers aleatórios. Nunca imponha movimento a quem pediu `prefers-reduced-motion`.
+- **Loading e feedback:**
+  - **Barra de progresso global** no topo: `useProgress()` (`@/shared/composables`) com `start()`/`done()`/`track(promise)`. Já ligada ao router; envolva requests com `progress.track(...)`. Renderizada por `ProgressBar` no `App.vue`.
+  - **Botão:** `:loading` mostra o `Spinner` (herda a cor do texto); use `loading-text` para trocar o rótulo (ex: `Entrando…`).
+  - **Skeleton** (`@/shared/ui`): prefira skeleton a spinner central ao carregar dados de tela. Tamanho/raio via utilities (`<Skeleton class="h-4 w-24 rounded" />`).
 
 ---
 

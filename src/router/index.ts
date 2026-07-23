@@ -5,6 +5,7 @@ import { authRoutes } from '@/modules/auth/presentation/routes/auth-routes'
 import { dashboardRoutes } from '@/modules/dashboard/presentation/routes/dashboard-routes'
 import { errorRoutes } from '@/modules/errors/presentation/routes/error-routes'
 import AppLayout from '@/shared/components/layouts/app-layout.vue'
+import { useProgress } from '@/shared/composables'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -22,5 +23,17 @@ const router = createRouter({
 
 authGuard(router)
 guestGuard(router)
+
+// Barra de progresso durante a navegação.
+const progress = useProgress()
+router.beforeEach(() => {
+  progress.start()
+})
+router.afterEach(() => {
+  progress.done()
+})
+router.onError(() => {
+  progress.done()
+})
 
 export default router
