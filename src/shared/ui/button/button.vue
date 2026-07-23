@@ -26,7 +26,7 @@
     </span>
 
     <!-- Slot de ícone (opcional, antes do texto) -->
-    <span v-if="$slots.icon" class="inline-flex items-center mr-2">
+    <span v-if="$slots.icon" class="inline-flex items-center">
       <slot name="icon" />
     </span>
 

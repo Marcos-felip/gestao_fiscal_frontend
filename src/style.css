@@ -1,9 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import './theme.css';
 @import 'tailwindcss';
 
+html,
 body {
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Tema de cores para Preline + Tailwind v4 */
@@ -23,6 +27,7 @@ body {
   --color-border: var(--border);
   --color-border-line-inverse: var(--border-line-inverse);
   --color-border-line-1: var(--border-line-1);
+  --color-border-line-2: var(--border-line-2);
   --color-line-2: var(--border-line-2);
   --color-border-line-3: var(--border-line-3);
   --color-border-line-4: var(--border-line-4);
