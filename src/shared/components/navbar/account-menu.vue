@@ -112,7 +112,7 @@
             size="sm"
             fullWidth
             class="h-auto! px-4! py-2! justify-start! gap-3! border-0! bg-transparent! hover:bg-destructive/10! text-destructive!"
-            @click="handleLogout"
+            @click="askLogout"
           >
             <template #icon>
               <Icon name="LogOut" size="sm" />
@@ -123,6 +123,16 @@
         </div>
       </div>
     </Transition>
+
+    <ConfirmDialog
+      v-model="showLogoutConfirm"
+      title="Sair da conta"
+      description="Você precisará entrar novamente para acessar o sistema."
+      confirm-label="Sair"
+      cancel-label="Cancelar"
+      variant="destructive"
+      @confirm="handleLogout"
+    />
   </div>
 </template>
 
@@ -130,12 +140,14 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button, NavbarButton, Icon, Switch, Span, Avatar } from '@/shared/ui'
+import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import { useNavbar } from '@/composables'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
 import { routeNames } from '@/router/route-names'
 
 const { isDarkMode, toggleDarkMode } = useNavbar()
 const authStore = useAuthStore()
+const showLogoutConfirm = ref(false)
 const router = useRouter()
 
 const showMenu = ref(false)
@@ -204,9 +216,14 @@ const userInitials = computed(() => {
   return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || ''
 })
 
-const handleLogout = async () => {
-  authStore.clear()
+const askLogout = () => {
   closeMenu()
+  showLogoutConfirm.value = true
+}
+
+const handleLogout = async () => {
+  showLogoutConfirm.value = false
+  authStore.clear()
 
   await router.push({ name: routeNames.LOGIN })
 }

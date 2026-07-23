@@ -2,8 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { authGuard } from './guards/auth-guard'
 import { guestGuard } from './guards/guest-guard'
 import { authRoutes } from '@/modules/auth/presentation/routes/auth-routes'
+import { dashboardRoutes } from '@/modules/dashboard/presentation/routes/dashboard-routes'
 import AppLayout from '@/shared/components/layouts/app-layout.vue'
-import DashboardHome from '@/shared/components/dashboard/dashboard-home.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,13 +12,7 @@ const router = createRouter({
       path: '/',
       component: AppLayout,
       meta: { requiresAuth: true },
-      children: [
-        {
-          path: '',
-          name: 'dashboard',
-          component: DashboardHome,
-        },
-      ],
+      children: [...dashboardRoutes],
     },
     ...authRoutes,
   ],

@@ -208,6 +208,7 @@ src/
 - **Lógica:** Apresentação + comportamento específico
 - **Quando usar:** Em múltiplas páginas, layouts, notificações
 - **Exemplo:** `import Toast from '@/shared/components/toast/toast-notification.vue'`
+- **Disponíveis:** `toast/`, `layouts/`, `navbar/`, `sidebar/`, `dialog/confirm-dialog.vue` (modal de confirmação reutilizável — usado, ex., no logout).
 
 ### Decisão: UI vs Component
 
@@ -506,7 +507,9 @@ const controller = makeAuthController()   // nunca `new AuthController()`
 
 ## Checklist para Criar um Novo Módulo
 
-Ao criar qualquer novo módulo (companies, products, partners, etc.), siga ESTA ORDEM:
+> **Módulos sem backend próprio** (ex: `dashboard`) podem ter apenas `presentation/` (pages + routes) — não crie `domain/`, `data/` e `application/` vazios só para cumprir a estrutura; isso seria código morto. As camadas entram quando existir contrato de API real. As rotas do módulo são compostas em `router/index.ts` (ex: `dashboardRoutes` como filhas do `AppLayout`).
+
+Ao criar qualquer novo módulo (companies, products, partners, etc.) COM backend, siga ESTA ORDEM:
 
 1. **`domain/dto/`** — Criar DTOs de **entrada**, uma classe por arquivo (`login-dto.ts`, `register-dto.ts`)
 2. **`domain/entities/`** — Criar Entity com métodos de comportamento (sem `fromJson`)
