@@ -10,6 +10,7 @@
 
 export { default as Button } from './button/button.vue'
 export { default as Input } from './input/input.vue'
+export { default as PasswordInput } from './password-input/password-input.vue'
 export { default as Card } from './card/card.vue'
 export { default as Spinner } from './spinner/spinner.vue'
 export { default as NavbarButton } from './navbar-button/navbar-button.vue'
