@@ -94,4 +94,10 @@ const colorResolution = computed(() => resolveColor(props.color))
 .ui-span {
   display: inline-flex;
 }
+
+.ui-span.truncate {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
 </style>
