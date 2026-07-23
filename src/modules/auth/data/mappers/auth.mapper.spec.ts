@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { toAuthResult } from '@/modules/auth/data/mappers/auth.mapper'
+import { toAuthResponse } from '@/modules/auth/data/mappers/auth.mapper'
 import { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
 import { ContractError } from '@/core/errors/contract-error'
 
@@ -14,9 +14,9 @@ const respostaValida = {
   refreshToken: 'refresh-xyz',
 }
 
-describe('toAuthResult', () => {
+describe('toAuthResponse', () => {
   it('constrói AuthUser e token a partir de uma resposta válida', () => {
-    const result = toAuthResult(respostaValida)
+    const result = toAuthResponse(respostaValida)
 
     expect(result.isRight).toBe(true)
     const { token, user } = result.right
@@ -33,7 +33,7 @@ describe('toAuthResult', () => {
     const { companyActiveId: _c, role: _r, ...semOpcionais } = respostaValida
     const parcial = { ...semOpcionais, forcePasswordChange: undefined }
 
-    const result = toAuthResult(parcial)
+    const result = toAuthResponse(parcial)
 
     expect(result.isRight).toBe(true)
     expect(result.right.user.companyActiveId).toBeNull()
@@ -44,7 +44,7 @@ describe('toAuthResult', () => {
 
   // Regressão: antes do mapper Zod isso era um `as boolean` que passava batido.
   it('rejeita forcePasswordChange com tipo errado', () => {
-    const result = toAuthResult({
+    const result = toAuthResponse({
       ...respostaValida,
       forcePasswordChange: 'sim',
     })
@@ -56,7 +56,7 @@ describe('toAuthResult', () => {
   it('rejeita resposta sem accessToken e aponta o campo que falhou', () => {
     const { accessToken: _a, ...semToken } = respostaValida
 
-    const result = toAuthResult(semToken)
+    const result = toAuthResponse(semToken)
 
     expect(result.isLeft).toBe(true)
     const error = result.left as ContractError
@@ -65,15 +65,15 @@ describe('toAuthResult', () => {
   })
 
   it('marca falha de contrato como não exibível ao usuário', () => {
-    const result = toAuthResult({ qualquer: 'coisa' })
+    const result = toAuthResponse({ qualquer: 'coisa' })
 
     expect(result.isLeft).toBe(true)
     expect(result.left.isUserFacing).toBe(false)
   })
 
   it('rejeita payload que não é objeto', () => {
-    expect(toAuthResult(null).isLeft).toBe(true)
-    expect(toAuthResult('texto').isLeft).toBe(true)
-    expect(toAuthResult(undefined).isLeft).toBe(true)
+    expect(toAuthResponse(null).isLeft).toBe(true)
+    expect(toAuthResponse('texto').isLeft).toBe(true)
+    expect(toAuthResponse(undefined).isLeft).toBe(true)
   })
 })

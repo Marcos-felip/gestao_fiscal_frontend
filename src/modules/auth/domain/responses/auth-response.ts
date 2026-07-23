@@ -1,6 +1,6 @@
 import type { AuthToken } from '@/modules/auth/domain/responses/auth-token-response'
 
-export interface AuthResult {
+export interface AuthResponse {
   token: AuthToken
   user: {
     id: string

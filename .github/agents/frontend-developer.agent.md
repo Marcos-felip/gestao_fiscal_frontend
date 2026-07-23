@@ -93,7 +93,7 @@ export class Product {
 
 ### Response (`domain/responses/<name>-response.ts`)
 - Dado de SAIDA do dominio: valor composto SEM identidade e tipos agregados.
-- Agrupa dados que andam juntos (AuthToken) ou o resultado de um fluxo (AuthResult).
+- Agrupa dados que andam juntos (AuthToken) ou o resultado de um fluxo (AuthResponse).
 - UMA interface por arquivo.
 - SEM classe, SEM `fromJson` — o mapper constroi.
 - NAO e o JSON cru da API — isso e o schema Zod dentro de `data/mappers/`.
@@ -105,10 +105,19 @@ export interface AuthToken {
   refreshToken: string
 }
 
-// domain/responses/auth-result-response.ts
-export interface AuthResult {
+// domain/responses/auth-response.ts
+// NAO importa a entidade: os campos sao declarados a mao
+export interface AuthResponse {
   token: AuthToken
-  user: AuthUser
+  user: {
+    id: string
+    name: string
+    email: string
+    companyActiveId: string | null
+    role: string | null
+    forcePasswordChange: boolean
+    hasActiveCompany: boolean
+  }
 }
 ```
 

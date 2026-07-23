@@ -108,7 +108,7 @@ src/
 │       ├── domain/                  # CONTRATOS E TIPOS DO DOMÍNIO
 │       │   ├── entities/           # ENTIDADES — classes com identidade e comportamento (sem fromJson)
 │       │   │   └── <name>.entity.ts
-│       │   ├── responses/          # RESPONSES — dados de SAÍDA do domínio (ex: AuthToken, AuthResult)
+│       │   ├── responses/          # RESPONSES — dados de SAÍDA do domínio (ex: AuthToken, AuthResponse)
 │       │   │   └── <name>-response.ts    # uma interface por arquivo
 │       │   ├── dto/                # DTOs — dados de ENTRADA que trafegam entre camadas
 │       │   │   └── <action>-dto.ts       # uma classe por arquivo (login-dto.ts, register-dto.ts)
@@ -159,7 +159,7 @@ src/
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
 | **Entity** (`<name>.entity.ts`) | Conceito de negócio com identidade (`id`) e comportamento (`get hasActiveCompany()`). Construída pelo mapper. | Não tem `fromJson` (mapeamento é do mapper). Não importa Vue, Pinia, Router, HttpClient. |
-| **Response** (`<name>-response.ts`) | Dado de **saída** do domínio: valor composto sem identidade (`AuthToken`) e agregados (`AuthResult`). `interface`/`type`, sem classe. **Uma interface por arquivo.** | Não tem comportamento nem mapeamento. Não importa Vue. Não é o JSON cru da API (isso é o schema Zod do mapper). |
+| **Response** (`<name>-response.ts`) | Dado de **saída** do domínio: valor composto sem identidade (`AuthToken`) e agregados (`AuthResponse`). `interface`/`type`, sem classe. **Uma interface por arquivo.** | Não tem comportamento nem mapeamento. Não importa Vue. Não é o JSON cru da API (isso é o schema Zod do mapper). |
 | **DTO** (`<action>-dto.ts`) | Dado de **entrada** que trafega entre camadas. Classes simples com propriedades (`LoginDto { email, password }`). **Uma classe por arquivo.** | Não tem métodos. Não tem fromJson. Não importa Vue. É temporário — vive só no fluxo. |
 | **Interface** (`i-<name>-repository.interface.ts`) | Contrato que o Repository implementa. Define assinaturas usando DTOs (entrada), Entities e Responses (saída). | Não tem implementação. Importa SÓ de domain (DTOs, Entities, Responses, Either). |
 
@@ -239,8 +239,8 @@ stateDiagram-v2
 - **Interfaces:** PascalCase com prefixo `I` (`IAuthRepository`) — SOMENTE quando necessário
 - **DTOs:** PascalCase com sufixo `Dto` (`LoginDto`, `CreateProductDto`) — arquivo `<action>-dto.ts`, **uma classe por arquivo**
 - **Entities:** PascalCase com sufixo semanticamente none (`AuthUser`, `Product`, `Company`)
-- **Responses:** PascalCase para valores compostos e agregados (`AuthToken`, `AuthResult`) — arquivo `<name>-response.ts`, **uma interface por arquivo**
-- **Mappers:** função `to<Nome>` no arquivo `<name>.mapper.ts` (`toAuthResult`)
+- **Responses:** PascalCase para valores compostos e agregados (`AuthToken`, `AuthResponse`) — arquivo `<name>-response.ts`, **uma interface por arquivo**
+- **Mappers:** função `to<Nome>` no arquivo `<name>.mapper.ts` (`toAuthResponse`)
 - **Schemas Zod:** camelCase variável, PascalCase tipo exportado (`loginSchema` → `LoginFormData`)
 - **Enums:** PascalCase const + type (`MembershipRole`)
 - **Imports de alias:** SEMPRE use `@/` (configurado no vite.config.ts)
@@ -379,15 +379,23 @@ export interface AuthToken {
   accessToken: string
   refreshToken: string
 }
-// domain/responses/auth-result-response.ts
-export interface AuthResult {
+// domain/responses/auth-response.ts — NÃO importa a entidade: os campos são declarados à mão
+export interface AuthResponse {
   token: AuthToken
-  user: AuthUser
+  user: {
+    id: string
+    name: string
+    email: string
+    companyActiveId: string | null
+    role: string | null
+    forcePasswordChange: boolean
+    hasActiveCompany: boolean
+  }
 }
 
 // 4. Interface — contrato
 export interface IAuthRepository {
-  login(dto: LoginDto): Promise<Either<DomainError, AuthResult>>
+  login(dto: LoginDto): Promise<Either<DomainError, AuthResponse>>
 }
 
 // 5. Mapper — valida (Zod) e traduz JSON → domínio (único que conhece o formato)
@@ -402,7 +410,7 @@ const authResponseSchema = z.object({
   refreshToken: z.string(),
 })
 
-export function toAuthResult(data: unknown): Either<DomainError, AuthResult> {
+export function toAuthResponse(data: unknown): Either<DomainError, AuthResponse> {
   const parsed = authResponseSchema.safeParse(data)
   if (!parsed.success) {
     // ContractError = bug nosso, isUserFacing: false. Nunca `new Error(...)` cru.
@@ -417,19 +425,19 @@ export function toAuthResult(data: unknown): Either<DomainError, AuthResult> {
 
 // 6. Repository — implementação (não conhece o JSON, delega ao mapper)
 export class AuthRepository implements IAuthRepository {
-  async login(dto: LoginDto): Promise<Either<DomainError, AuthResult>> {
+  async login(dto: LoginDto): Promise<Either<DomainError, AuthResponse>> {
     const result = await httpClient.post<unknown>('/auth/login', {
       email: dto.email,
       password: dto.password,
     })
-    return result.flatMap(toAuthResult)
+    return result.flatMap(toAuthResponse)
   }
 }
 
 // 7. Use Case — orquestração
 export class LoginUseCase {
   constructor(private readonly authRepository: IAuthRepository) {}
-  async execute(dto: LoginDto): Promise<Either<DomainError, AuthResult>> {
+  async execute(dto: LoginDto): Promise<Either<DomainError, AuthResponse>> {
     return this.authRepository.login(dto)
   }
 }
@@ -478,7 +486,7 @@ Ao criar qualquer novo módulo (companies, products, partners, etc.), siga ESTA 
 
 1. **`domain/dto/`** — Criar DTOs de **entrada**, uma classe por arquivo (`login-dto.ts`, `register-dto.ts`)
 2. **`domain/entities/`** — Criar Entity com métodos de comportamento (sem `fromJson`)
-3. **`domain/responses/`** — Criar Responses de **saída**, uma interface por arquivo (ex: `auth-result-response.ts`)
+3. **`domain/responses/`** — Criar Responses de **saída**, uma interface por arquivo (ex: `auth-response.ts`)
 4. **`domain/interfaces/`** — Criar Interface com assinaturas usando DTOs e Either
 5. **`data/mappers/`** — Criar mapper com schema Zod que valida e traduz JSON → domínio (use `toPage()` se for lista paginada)
 6. **`data/mappers/<name>.mapper.spec.ts`** — Testar o mapper: válido, default, tipo errado, campo ausente

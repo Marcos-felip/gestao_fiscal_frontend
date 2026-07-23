@@ -24,7 +24,7 @@ Para CADA modulo implementado, valide:
 ### 1. Domain — Contratos e Tipos
 - [ ] **DTOs** (entrada) em `domain/dto/<action>-dto.ts`: UMA classe por arquivo, com propriedades, sem metodos, sem `fromJson()`
 - [ ] **Entities** em `domain/entities/<name>.entity.ts`: classe com `id` e getters de comportamento, SEM `fromJson`
-- [ ] **Responses** (saida) em `domain/responses/<name>-response.ts`: UMA interface por arquivo, valor composto/agregado (`AuthToken`, `AuthResult`), sem classe
+- [ ] **Responses** (saida) em `domain/responses/<name>-response.ts`: UMA interface por arquivo, valor composto/agregado (`AuthToken`, `AuthResponse`), sem classe
 - [ ] **Interfaces** em `domain/interfaces/i-<name>-repository.interface.ts`: contrato usando DTOs (entrada), Entities/Responses (saida) e Either
 - [ ] Domain NAO importa Vue, Pinia, Router, HttpClient
 

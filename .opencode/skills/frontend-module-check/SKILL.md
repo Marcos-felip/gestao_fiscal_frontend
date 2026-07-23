@@ -68,8 +68,8 @@ Para cada arquivo FALTANTE:
 - [ ] Propriedades `readonly` quando apropriado
 
 #### Response (`domain/responses/<name>-response.ts`) — dado de SAIDA
-- [ ] UMA interface por arquivo (`auth-token-response.ts`, `auth-result-response.ts`)
-- [ ] `interface`/`type` de valor composto (sem `id`) e tipos agregados (`AuthResult`)
+- [ ] UMA interface por arquivo (`auth-token-response.ts`, `auth-response.ts`)
+- [ ] `interface`/`type` de valor composto (sem `id`) e tipos agregados (`AuthResponse`)
 - [ ] SEM classe e SEM `fromJson` — o mapper constroi
 - [ ] NAO tem getters de comportamento de negocio
 - [ ] NAO e o JSON cru da API — esse formato vive no schema Zod do mapper

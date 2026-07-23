@@ -3,7 +3,7 @@ import { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
-import type { AuthResult } from '@/modules/auth/domain/responses/auth-result-response'
+import type { AuthResponse } from '@/modules/auth/domain/responses/auth-response'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const authResponseSchema = z.object({
@@ -17,7 +17,9 @@ const authResponseSchema = z.object({
   refreshToken: z.string(),
 })
 
-export function toAuthResult(data: unknown): Either<DomainError, AuthResult> {
+export function toAuthResponse(
+  data: unknown,
+): Either<DomainError, AuthResponse> {
   const parsed = authResponseSchema.safeParse(data)
 
   if (!parsed.success) {
