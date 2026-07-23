@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { watch } from 'vue'
-import { useSidebar } from '@/composables'
+import { useSidebar } from '@/shared/composables'
 import SidebarHeader from './sidebar-header.vue'
 import SidebarNav from './sidebar-nav.vue'
 import SidebarFooter from './sidebar-footer.vue'

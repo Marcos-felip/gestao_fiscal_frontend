@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { SearchInput } from '@/shared/ui'
-import { useNavbar } from '@/composables'
+import { useNavbar } from '@/shared/composables'
 
 const { searchQuery } = useNavbar()
 

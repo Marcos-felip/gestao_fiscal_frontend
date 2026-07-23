@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { NavbarButton, Icon } from '@/shared/ui'
-// import { useNotifications } from '@/composables'
+// import { useNotifications } from '@/shared/composables'
 // import LanguageSelector from './language-selector.vue'
 import AccountMenu from './account-menu.vue'
 import SearchModal from './search-modal.vue'

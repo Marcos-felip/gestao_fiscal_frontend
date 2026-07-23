@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { NavbarButton, Icon } from '@/shared/ui'
-import { useSidebar } from '@/composables'
+import { useSidebar } from '@/shared/composables'
 import NavbarSearch from './navbar-search.vue'
 import NavbarActions from './navbar-actions.vue'
 

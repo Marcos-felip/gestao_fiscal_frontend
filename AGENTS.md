@@ -93,15 +93,19 @@ src/
 │   ├── company-type.enum.ts
 │   └── ...                         # UM ARQUIVO POR ENUM
 │
-├── shared/                         # UI compartilhada entre módulos
+├── shared/                         # UI e utilidades compartilhadas entre módulos
 │   ├── ui/                          # Componentes primitivos (Button, Input, Card)
 │   │   └── README.md                # Documentação Design System
-│   ├── components/                  # Componentes inteligentes (Toast, Layouts)
+│   ├── components/                  # Componentes inteligentes (Toast, Layouts, Dialog)
 │   │   ├── toast/
 │   │   │   └── toast-notification.vue
 │   │   ├── layouts/
 │   │   │   └── auth-layout.vue
+│   │   ├── dialog/
+│   │   │   └── confirm-dialog.vue    # Modal de confirmação reutilizável
 │   │   └── README.md                # Documentação componentes smart
+│   ├── composables/                 # Composables Vue compartilhados (useSidebar, useNavbar, ...)
+│   │   └── index.ts                 # Import via `@/shared/composables`
 │
 ├── modules/                         # MÓDULOS DE FEATURE (1 módulo = 1 domínio)
 │   └── <feature>/                   # ex: auth, companies, products, partners, purchases, stock

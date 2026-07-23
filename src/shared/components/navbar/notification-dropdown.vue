@@ -127,7 +127,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Icon } from '@/shared/ui'
-import { useNotifications } from '@/composables'
+import { useNotifications } from '@/shared/composables'
 
 const {
   notifications,

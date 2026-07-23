@@ -131,6 +131,7 @@
       confirm-label="Sair"
       cancel-label="Cancelar"
       variant="destructive"
+      icon="LogOut"
       @confirm="handleLogout"
     />
   </div>
@@ -141,7 +142,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button, NavbarButton, Icon, Switch, Span, Avatar } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
-import { useNavbar } from '@/composables'
+import { useNavbar } from '@/shared/composables'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
 import { routeNames } from '@/router/route-names'
 

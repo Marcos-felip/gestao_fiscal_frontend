@@ -2,7 +2,7 @@
  * Composables - Vue 3 Composition API utilities
  *
  * Uso:
- * import { useNavbar, useSidebar, useNavigation, useNotifications } from '@/composables'
+ * import { useNavbar, useSidebar, useNavigation, useNotifications } from '@/shared/composables'
  */
 
 export { useNavbar } from './useNavbar'

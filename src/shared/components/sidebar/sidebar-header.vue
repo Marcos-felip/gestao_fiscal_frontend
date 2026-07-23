@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { Icon, Span } from '@/shared/ui'
-import { useSidebar } from '@/composables'
+import { useSidebar } from '@/shared/composables'
 
 const { close: closeSidebar } = useSidebar()
 </script>
