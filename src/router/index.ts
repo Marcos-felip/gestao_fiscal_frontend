@@ -3,6 +3,7 @@ import { authGuard } from './guards/auth-guard'
 import { guestGuard } from './guards/guest-guard'
 import { authRoutes } from '@/modules/auth/presentation/routes/auth-routes'
 import { dashboardRoutes } from '@/modules/dashboard/presentation/routes/dashboard-routes'
+import { errorRoutes } from '@/modules/errors/presentation/routes/error-routes'
 import AppLayout from '@/shared/components/layouts/app-layout.vue'
 
 const router = createRouter({
@@ -15,6 +16,7 @@ const router = createRouter({
       children: [...dashboardRoutes],
     },
     ...authRoutes,
+    ...errorRoutes,
   ],
 })
 

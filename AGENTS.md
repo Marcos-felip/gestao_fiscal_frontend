@@ -511,7 +511,7 @@ const controller = makeAuthController()   // nunca `new AuthController()`
 
 ## Checklist para Criar um Novo Módulo
 
-> **Módulos sem backend próprio** (ex: `dashboard`) podem ter apenas `presentation/` (pages + routes) — não crie `domain/`, `data/` e `application/` vazios só para cumprir a estrutura; isso seria código morto. As camadas entram quando existir contrato de API real. As rotas do módulo são compostas em `router/index.ts` (ex: `dashboardRoutes` como filhas do `AppLayout`).
+> **Módulos sem backend próprio** (ex: `dashboard`, `errors`) podem ter apenas `presentation/` (pages + routes + components) — não crie `domain/`, `data/` e `application/` vazios só para cumprir a estrutura; isso seria código morto. As camadas entram quando existir contrato de API real. As rotas do módulo são compostas em `router/index.ts` (ex: `dashboardRoutes` como filhas do `AppLayout`; `errorRoutes` no nível raiz, com o catch-all `/:pathMatch(.*)*` do 404 **sempre por último**). As telas de status (403/404/500/502) vivem em `modules/errors/` e reaproveitam o componente `error-view.vue`.
 
 Ao criar qualquer novo módulo (companies, products, partners, etc.) COM backend, siga ESTA ORDEM:
 
