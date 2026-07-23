@@ -10,11 +10,7 @@
         <!-- Sidebar toggle (mobile) -->
         <div class="flex items-center gap-4 flex-shrink-0">
           <!-- Sidebar toggle button (mobile) -->
-          <NavbarButton
-            class="lg:hidden"
-            tooltip="Menu"
-            @click="toggleSidebar"
-          >
+          <NavbarButton class="lg:hidden" tooltip="Menu" @click="toggleSidebar">
             <Icon name="Menu" size="md" />
           </NavbarButton>
         </div>

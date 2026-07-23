@@ -7,9 +7,7 @@
         'w-full group relative flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-sans',
         'transition-colors duration-200 text-left',
         'hover:bg-muted hover:text-foreground',
-        isOpen
-          ? 'bg-muted text-foreground'
-          : 'text-muted-foreground',
+        isOpen ? 'bg-muted text-foreground' : 'text-muted-foreground',
       ]"
       @click="toggle"
     >
@@ -19,10 +17,7 @@
       </span>
 
       <!-- Rótulo -->
-      <Span
-        size="sm"
-        class="flex-1 truncate"
-      >
+      <Span size="sm" class="flex-1 truncate">
         {{ label }}
       </Span>
 
@@ -46,11 +41,7 @@
     </button>
 
     <!-- Content (items) -->
-    <Transition
-      name="accordion"
-      @enter="onEnter"
-      @leave="onLeave"
-    >
+    <Transition name="accordion" @enter="onEnter" @leave="onLeave">
       <div
         v-if="isOpen"
         :class="['accordion-content', 'space-y-1 overflow-hidden']"

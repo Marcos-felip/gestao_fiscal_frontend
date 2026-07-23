@@ -1,18 +1,12 @@
 <template>
-  <div
-    ref="rootEl"
-    :class="['account-menu']"
-  >
+  <div ref="rootEl" :class="['account-menu']">
     <NavbarButton
       class="relative group"
       :aria-expanded="showMenu"
       aria-haspopup="menu"
       @click="toggleMenu"
     >
-      <Avatar
-        :initials="userInitials"
-        size="sm"
-      />
+      <Avatar :initials="userInitials" size="sm" />
     </NavbarButton>
 
     <Transition name="dropdown-scale">
@@ -34,24 +28,12 @@
             class="h-auto! px-3! justify-start! gap-3! border-0! bg-transparent! hover:bg-muted!"
             @click="closeMenu"
           >
-            <Avatar
-              :initials="userInitials"
-              size="sm"
-              aria-hidden="true"
-            />
+            <Avatar :initials="userInitials" size="sm" aria-hidden="true" />
             <div class="text-left min-w-0">
-              <Span
-                size="sm"
-                weight="semibold"
-                class="truncate"
-              >
+              <Span size="sm" weight="semibold" class="truncate">
                 {{ userName }}
               </Span>
-              <Span
-                size="xs"
-                variant="muted"
-                class="truncate"
-              >
+              <Span size="xs" variant="muted" class="truncate">
                 {{ userEmail }}
               </Span>
             </div>
@@ -73,9 +55,7 @@
               <Icon name="Settings" size="sm" />
             </template>
 
-            <Span size="sm">
-              Configurações
-            </Span>
+            <Span size="sm"> Configurações </Span>
           </Button>
 
           <Button
@@ -89,9 +69,7 @@
               <Icon name="User" size="sm" />
             </template>
 
-            <Span size="sm">
-              Minha conta
-            </Span>
+            <Span size="sm"> Minha conta </Span>
           </Button>
         </div>
 
@@ -100,12 +78,7 @@
         <!-- Theme switch -->
         <div class="px-4 py-3">
           <div class="flex items-center gap-3">
-            <Span
-              size="sm"
-              class="flex-1"
-            >
-              Tema escuro
-            </Span>
+            <Span size="sm" class="flex-1"> Tema escuro </Span>
 
             <Switch
               size="md"
@@ -131,9 +104,7 @@
               <Icon name="Users" size="sm" />
             </template>
 
-            <Span size="sm">
-              Gerenciar equipe
-            </Span>
+            <Span size="sm"> Gerenciar equipe </Span>
           </Button>
 
           <Button
@@ -147,12 +118,9 @@
               <Icon name="LogOut" size="sm" />
             </template>
 
-            <Span size="sm">
-              Sair
-            </Span>
+            <Span size="sm"> Sair </Span>
           </Button>
         </div>
-
       </div>
     </Transition>
   </div>
@@ -255,7 +223,9 @@ const handleLogout = async () => {
 
 .dropdown-scale-enter-active,
 .dropdown-scale-leave-active {
-  transition: transform 150ms ease-in-out, opacity 150ms ease-in-out;
+  transition:
+    transform 150ms ease-in-out,
+    opacity 150ms ease-in-out;
 }
 
 .dropdown-scale-enter-from,

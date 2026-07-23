@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
-import { AuthToken } from '@/modules/auth/domain/models/auth-token.model'
+import type { AuthToken } from '@/modules/auth/domain/responses/auth-token-response'
 import { StorageService } from '@/core/utils/storage'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -49,11 +49,18 @@ export const useAuthStore = defineStore('auth', () => {
     const storedUser = StorageService.getUser()
 
     if (accessToken && refreshToken) {
-      token.value = new AuthToken(accessToken, refreshToken)
+      token.value = { accessToken, refreshToken }
     }
 
     if (storedUser) {
-      user.value = AuthUser.fromJson(storedUser)
+      user.value = new AuthUser(
+        storedUser.id as string,
+        storedUser.name as string,
+        storedUser.email as string,
+        (storedUser.companyActiveId as string | null) ?? null,
+        (storedUser.role as string | null) ?? null,
+        (storedUser.forcePasswordChange as boolean) ?? false,
+      )
     }
   }
 

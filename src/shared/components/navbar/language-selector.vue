@@ -1,9 +1,6 @@
 <template>
   <div :class="['language-selector']">
-    <NavbarButton
-      tooltip="Idioma"
-      @click="showMenu = !showMenu"
-    >
+    <NavbarButton tooltip="Idioma" @click="showMenu = !showMenu">
       <Icon name="Globe" size="md" />
     </NavbarButton>
 
@@ -31,7 +28,12 @@
           >
             <span class="text-base">{{ lang.flag }}</span>
             <span>{{ lang.name }}</span>
-            <Icon v-if="currentLanguage === lang.code" name="Check" size="sm" class="ml-auto" />
+            <Icon
+              v-if="currentLanguage === lang.code"
+              name="Check"
+              size="sm"
+              class="ml-auto"
+            />
           </button>
         </div>
       </div>
@@ -79,7 +81,9 @@ const selectLanguage = (code: string) => {
 
 .dropdown-scale-enter-active,
 .dropdown-scale-leave-active {
-  transition: transform 150ms ease-in-out, opacity 150ms ease-in-out;
+  transition:
+    transform 150ms ease-in-out,
+    opacity 150ms ease-in-out;
 }
 
 .dropdown-scale-enter-from,

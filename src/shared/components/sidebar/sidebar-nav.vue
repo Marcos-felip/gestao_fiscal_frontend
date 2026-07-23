@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { /* ref */ } from 'vue'
+import {} from /* ref */ 'vue'
 import { SidebarLink, Icon } from '@/shared/ui'
 </script>
 

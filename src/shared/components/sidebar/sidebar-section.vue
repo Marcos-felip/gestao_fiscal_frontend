@@ -2,7 +2,9 @@
   <div :class="['sidebar-section', 'relative my-4']">
     <div :class="['divider', 'absolute inset-x-0 top-1/2 h-px bg-border']" />
     <div :class="['label', 'relative flex justify-center']">
-      <span class="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-background">
+      <span
+        class="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-background"
+      >
         {{ label }}
       </span>
     </div>

@@ -28,10 +28,18 @@
           />
 
           <!-- Results -->
-          <div v-if="query" :class="['results', 'max-h-96 overflow-y-auto border-t border-border']">
+          <div
+            v-if="query"
+            :class="[
+              'results',
+              'max-h-96 overflow-y-auto border-t border-border',
+            ]"
+          >
             <!-- Placeholder -->
             <div v-if="results.length === 0" class="p-8 text-center">
-              <p class="text-sm text-muted-foreground">Nenhum resultado encontrado para "{{ query }}"</p>
+              <p class="text-sm text-muted-foreground">
+                Nenhum resultado encontrado para "{{ query }}"
+              </p>
             </div>
 
             <!-- Result items -->
@@ -46,8 +54,12 @@
             >
               <div class="flex items-start justify-between">
                 <div class="flex-1 min-w-0">
-                  <h4 class="text-sm font-semibold text-foreground">{{ result.title }}</h4>
-                  <p class="text-xs text-muted-foreground mt-1">{{ result.category }}</p>
+                  <h4 class="text-sm font-semibold text-foreground">
+                    {{ result.title }}
+                  </h4>
+                  <p class="text-xs text-muted-foreground mt-1">
+                    {{ result.category }}
+                  </p>
                 </div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

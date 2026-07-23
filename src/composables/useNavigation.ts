@@ -89,7 +89,10 @@ const isRouteActive = (routePath: string): boolean => {
 const breadcrumbs = computed(() => {
   const crumbs: Array<{ label: string; to?: string }> = []
 
-  const findBreadcrumbs = (items: NavigationItem[], path: Array<{ label: string; to?: string }>) => {
+  const findBreadcrumbs = (
+    items: NavigationItem[],
+    path: Array<{ label: string; to?: string }>,
+  ) => {
     for (const item of items) {
       if (item.to && isRouteActive(item.to)) {
         path.push({ label: item.label, to: item.to })

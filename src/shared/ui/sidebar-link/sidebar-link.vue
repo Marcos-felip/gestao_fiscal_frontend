@@ -5,9 +5,7 @@
       'sidebar-link',
       'group relative flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-sans',
       'transition-colors duration-200',
-      isActive
-        ? 'bg-primary text-white'
-        : 'text-muted-foreground',
+      isActive ? 'bg-primary text-white' : 'text-muted-foreground',
     ]"
     :active-class="'active'"
     :exact-active-class="'exact-active'"
@@ -25,7 +23,6 @@
     >
       <slot>{{ label }}</slot>
     </Span>
-
   </RouterLink>
 </template>
 

@@ -1,30 +1,12 @@
 <template>
   <div :class="['project-dropdown', 'relative']">
-    <div
-      :class="[
-        'trigger',
-        'flex items-center gap-2 px-4',
-        'min-w-0',
-      ]"
-    >
-      <Avatar
-        :initials="userInitials"
-        size="sm"
-        shape="circle"
-      />
+    <div :class="['trigger', 'flex items-center gap-2 px-4', 'min-w-0']">
+      <Avatar :initials="userInitials" size="sm" shape="circle" />
       <div class="text-left min-w-0">
-        <Span
-          size="sm"
-          weight="semibold"
-          class="truncate"
-        >
+        <Span size="sm" weight="semibold" class="truncate">
           {{ userName }}
         </Span>
-        <Span
-          size="xs"
-          variant="muted"
-          class="truncate"
-        >
+        <Span size="xs" variant="muted" class="truncate">
           {{ userEmail }}
         </Span>
       </div>
@@ -54,7 +36,9 @@ const userInitials = computed(() => {
 <style scoped lang="css">
 .dropdown-scale-enter-active,
 .dropdown-scale-leave-active {
-  transition: transform 150ms ease-in-out, opacity 150ms ease-in-out;
+  transition:
+    transform 150ms ease-in-out,
+    opacity 150ms ease-in-out;
 }
 
 .dropdown-scale-enter-from,

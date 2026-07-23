@@ -14,18 +14,22 @@
         'focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary',
         'disabled:opacity-50 disabled:cursor-not-allowed',
       ]"
-      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      @input="
+        $emit('update:modelValue', ($event.target as HTMLInputElement).value)
+      "
       @keydown.enter="$emit('submit')"
       @keydown.escape="$emit('cancel')"
       @keydown="onKeydown"
     />
-    <div :class="['search-icon', 'absolute inset-y-0 flex items-center', sizeClasses.icon]">
+    <div
+      :class="[
+        'search-icon',
+        'absolute inset-y-0 flex items-center',
+        sizeClasses.icon,
+      ]"
+    >
       <slot name="icon">
-        <Icon
-          name="Search"
-          :size="sizeClasses.iconSize"
-          :stroke-width="1.5"
-        />
+        <Icon name="Search" :size="sizeClasses.iconSize" :stroke-width="1.5" />
       </slot>
     </div>
 

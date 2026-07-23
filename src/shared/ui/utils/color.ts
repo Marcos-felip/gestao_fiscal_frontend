@@ -23,7 +23,11 @@ export function resolveColor(value?: string): ColorResolution {
   if (!value) return {}
 
   if (isCssColorValue(value)) {
-    const colorValue = value.startsWith('var(') ? value : value.startsWith('--') ? `var(${value})` : value
+    const colorValue = value.startsWith('var(')
+      ? value
+      : value.startsWith('--')
+        ? `var(${value})`
+        : value
     return { style: { color: colorValue } }
   }
 

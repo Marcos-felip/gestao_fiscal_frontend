@@ -3,7 +3,12 @@
 
 html,
 body {
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -17,12 +22,12 @@ body {
   --color-background-1: var(--background-1);
   --color-background-2: var(--background-2);
   --color-background-plain: var(--background-plain);
-  
+
   /* Cores de texto */
   --color-foreground: var(--foreground);
   --color-foreground-inverse: var(--foreground-inverse);
   --color-inverse: var(--inverse);
-  
+
   /* Linhas/Bordas */
   --color-border: var(--border);
   --color-border-line-inverse: var(--border-line-inverse);
@@ -35,7 +40,7 @@ body {
   --color-border-line-6: var(--border-line-6);
   --color-border-line-7: var(--border-line-7);
   --color-border-line-8: var(--border-line-8);
-  
+
   /* Cor primária (Azul) */
   --color-primary-50: var(--primary-50);
   --color-primary-100: var(--primary-100);
@@ -49,7 +54,7 @@ body {
   --color-primary-900: var(--primary-900);
   --color-primary-950: var(--primary-950);
   --color-primary: var(--primary);
-  
+
   /* Cor secundária (Cyan) */
   --color-secondary-50: var(--secondary-50);
   --color-secondary-100: var(--secondary-100);

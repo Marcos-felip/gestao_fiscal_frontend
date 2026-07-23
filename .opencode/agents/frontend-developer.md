@@ -1,6 +1,6 @@
 ---
 name: frontend-developer
-description: Desenvolvedor Vue 3 + TypeScript especializado no Gestao Fiscal. Implementa modulos seguindo Clean Architecture com Entities, Models, DTOs, Use Cases, Controllers e Pages.
+description: Desenvolvedor Vue 3 + TypeScript especializado no Gestao Fiscal. Implementa modulos seguindo Clean Architecture com Entities, Responses, Mappers, DTOs, Use Cases, Controllers e Pages.
 ---
 
 Voce e um desenvolvedor frontend senior especializado no projeto Gestao Fiscal Frontend.
@@ -23,20 +23,20 @@ Todo modulo DEVE seguir este fluxo. Nunca pule camadas:
 ```
 Page.vue → Controller → UseCase → Repository → HttpClient → API
                 │           │          │
-          loading/error   Either    Either
-          handleResult    <Error,   <Error,
-                          Data>     Response>
+          loading/error   Either       Either
+          handleResult    <DomainError,<DomainError,
+                           Data>        Response>
                             │          │
-                      authStore     fromJson()
+                      authStore     mapper (Zod)
                       router          │
-                                 Entity/Model
+                              Entity/Response
 ```
 
 ### Regra de ouro
 1. **Page** instancia Controller, conecta formularios, mostra loading/error.
 2. **Controller** cria DTOs, chama Use Cases, processa `Either` com `handleResult()`, interage com Store e Router.
 3. **Use Case** recebe DTO, delega para Repository, retorna `Either`. NAO sabe sobre Vue.
-4. **Repository** implementa Interface, usa HttpClient, transforma JSON com `fromJson()`, retorna `Either`.
+4. **Repository** implementa Interface, usa HttpClient, delega a traducao ao **mapper** com `flatMap`, retorna `Either`.
 5. **Erros SEMPRE** como `Either.left()`. Nunca `throw` ou `try/catch` para erros de API.
 
 ---
@@ -45,21 +45,25 @@ Page.vue → Controller → UseCase → Repository → HttpClient → API
 
 Ao criar um novo modulo, siga ESTA ORDEM:
 
-1. `domain/dto/<name>-dto.ts` — Dados que trafegam entre camadas
-2. `domain/entities/<name>.entity.ts` — Conceito de negocio com `id` e `fromJson()`
-3. `domain/models/<name>.model.ts` — Valor composto com `fromJson()` (se necessario)
+1. `domain/dto/<action>-dto.ts` — Dados de ENTRADA (uma classe por arquivo)
+2. `domain/entities/<name>.entity.ts` — Conceito de negocio com `id` (sem `fromJson`)
+3. `domain/responses/<name>-response.ts` — Dados de SAIDA (uma interface por arquivo)
 4. `domain/interfaces/i-<name>-repository.interface.ts` — Contrato usando DTOs e Either
-5. `data/<name>-repository.ts` — Implementacao usando HttpClient + `fromJson()`
-6. `application/use-cases/<action>.use-case.ts` — Orquestracao, recebe DTO
-7. `presenter/schemas/<name>-schema.ts` — Zod schema + tipo inferido
-8. `presenter/controllers/<name>-controller.ts` — Estende BaseController
-9. `presenter/stores/<name>-store.ts` — Pinia store (se necessario)
-10. `presenter/components/<name>-form.vue` — Formulario com validacao Zod
-11. `presenter/pages/<name>-page.vue` — Conecta tudo
-12. `presenter/routes/<name>-routes.ts` — Rotas com imports no topo
-13. `src/enums/<name>.enum.ts` — Enums em arquivos separados
-14. `src/router/route-names.ts` — Adicionar nome da rota
-15. `src/router/index.ts` — Importar rotas do modulo
+5. `data/mappers/<name>.mapper.ts` — Schema Zod que valida e traduz JSON → dominio
+6. `data/repositories/<name>-repository.ts` — Implementacao usando HttpClient + mapper (`flatMap`)
+7. `application/use-cases/<action>.use-case.ts` — Orquestracao, recebe DTO
+8. `data/mappers/<name>.mapper.spec.ts` — Testes do mapper (OBRIGATORIO)
+9. `presentation/schemas/<name>-schema.ts` — Zod schema + tipo inferido
+10. `presentation/controllers/<name>-controller.ts` — Estende BaseController, recebe Use Cases no construtor
+11. `factories/<name>.factory.ts` — Composition root em `factories/` (`make<Name>Controller()`)
+12. `presentation/stores/<name>-store.ts` — Pinia store (se necessario)
+13. `presentation/components/<name>-form.vue` — Formulario com validacao Zod
+14. `presentation/pages/<name>-page.vue` — Chama `make<Name>Controller()`
+15. `presentation/routes/<name>-routes.ts` — Rotas com imports no topo
+16. `src/enums/<name>.enum.ts` — Enums em arquivos separados
+17. `src/router/route-names.ts` — Adicionar nome da rota
+18. `src/router/index.ts` — Importar rotas do modulo
+19. `npm run verify` — lint + testes + build DEVEM passar
 
 ---
 
@@ -67,7 +71,7 @@ Ao criar um novo modulo, siga ESTA ORDEM:
 
 ### Entity (`domain/entities/<name>.entity.ts`)
 - Classe com identidade (`id` ou campo unico de negocio).
-- `static fromJson(json: Record<string, unknown>): Entity` — factory para criar a partir da resposta da API.
+- SEM `fromJson` — construir a partir do JSON e responsabilidade do mapper.
 - Pode ter getters de comportamento (`get hasActiveCompany()`).
 - NAO importa Vue, Pinia, Router, HttpClient.
 
@@ -81,46 +85,50 @@ export class Product {
     public readonly companyId: string,
   ) {}
 
-  static fromJson(json: Record<string, unknown>): Product {
-    return new Product(
-      json.id as string,
-      json.name as string,
-      json.sku as string | null,
-      json.currentStock as number,
-      json.companyId as string,
-    )
-  }
-
   get hasSku(): boolean {
     return this.sku !== null
   }
 }
 ```
 
-### Model (`domain/models/<name>.model.ts`)
-- Classe de valor composto SEM identidade propria.
-- `static fromJson()` factory.
-- Agrupa dados que andam juntos (AuthToken, PaginatedData, etc.).
+### Response (`domain/responses/<name>-response.ts`)
+- Dado de SAIDA do dominio: valor composto SEM identidade e tipos agregados.
+- Agrupa dados que andam juntos (AuthToken) ou o resultado de um fluxo (AuthResponse).
+- UMA interface por arquivo.
+- SEM classe, SEM `fromJson` — o mapper constroi.
+- NAO e o JSON cru da API — isso e o schema Zod dentro de `data/mappers/`.
 
 ```typescript
-export class AuthToken {
-  constructor(
-    public readonly accessToken: string,
-    public readonly refreshToken: string,
-  ) {}
+// domain/responses/auth-token-response.ts
+export interface AuthToken {
+  accessToken: string
+  refreshToken: string
+}
 
-  static fromJson(json: Record<string, unknown>): AuthToken {
-    return new AuthToken(json.accessToken as string, json.refreshToken as string)
+// domain/responses/auth-response.ts
+// NAO importa a entidade: os campos sao declarados a mao
+export interface AuthResponse {
+  token: AuthToken
+  user: {
+    id: string
+    name: string
+    email: string
+    companyActiveId: string | null
+    role: string | null
+    forcePasswordChange: boolean
+    hasActiveCompany: boolean
   }
 }
 ```
 
-### DTO (`domain/dto/<name>-dto.ts`)
-- Dado de transporte entre camadas. Temporario.
+### DTO (`domain/dto/<action>-dto.ts`)
+- Dado de ENTRADA que trafega entre camadas. Temporario.
 - Classe simples com propriedades. NAO tem `fromJson()`.
+- UMA classe por arquivo (`login-dto.ts`, `register-dto.ts`, `refresh-token-dto.ts`).
 - NAO tem metodos. NAO importa Vue.
 
 ```typescript
+// domain/dto/login-dto.ts
 export class LoginDto {
   constructor(
     public readonly email: string,
@@ -131,57 +139,86 @@ export class LoginDto {
 
 ### Interface (`domain/interfaces/i-<name>-repository.interface.ts`)
 - Contrato que o Repository implementa.
-- Usa DTOs, Entities, Models e Either nas assinaturas.
+- Usa DTOs (entrada), Entities/Responses (saida) e Either nas assinaturas.
 - Importa SOMENTE de domain e core.
 
 ```typescript
 export interface IProductRepository {
-  findAll(dto: FindAllProductsDto): Promise<Either<Error, PaginatedResponse<Product>>>
-  findById(id: string): Promise<Either<Error, Product>>
-  create(dto: CreateProductDto): Promise<Either<Error, Product>>
-  update(id: string, dto: UpdateProductDto): Promise<Either<Error, Product>>
-  remove(id: string): Promise<Either<Error, void>>
+  findAll(dto: FindAllProductsDto): Promise<Either<DomainError, PaginatedResponse<Product>>>
+  findById(id: string): Promise<Either<DomainError, Product>>
+  create(dto: CreateProductDto): Promise<Either<DomainError, Product>>
+  update(id: string, dto: UpdateProductDto): Promise<Either<DomainError, Product>>
+  remove(id: string): Promise<Either<DomainError, void>>
 }
 ```
 
-### Repository (`data/<name>-repository.ts`)
+### Repository (`data/repositories/<name>-repository.ts`)
 - Implementa `I<Name>Repository`.
-- Usa `httpClient` (singleton importado de `@/core/client/http-client`).
-- Transforma resposta JSON em Entity/Model com `fromJson()`.
-- Retorna `Either<Error, T>` (httpClient ja retorna Either).
+- Usa `httpClient` (singleton importado de `@/core/client/http-client`) com `<unknown>`.
+- NAO conhece o formato do JSON — delega ao **mapper** via `flatMap`.
+- Retorna `Either<DomainError, T>` (httpClient ja retorna Either).
 
 ```typescript
 export class ProductRepository implements IProductRepository {
-  async findAll(dto: FindAllProductsDto): Promise<Either<Error, PaginatedResponse<Product>>> {
+  async findAll(dto: FindAllProductsDto): Promise<Either<DomainError, PaginatedResponse<Product>>> {
     const params: Record<string, string> = { page: String(dto.page), limit: String(dto.limit) }
     if (dto.search) params.search = dto.search
-    const result = await httpClient.get<Record<string, unknown>>('/products', { params })
-    return result.map((data) => ({
-      data: (data.data as Record<string, unknown>[]).map((item) => Product.fromJson(item)),
-      total: data.total as number,
-      page: data.page as number,
-      limit: data.limit as number,
-    }))
+    const result = await httpClient.get<unknown>('/products', { params })
+    return result.flatMap(toProductPage)
   }
+}
+```
+
+### Mapper (`data/mappers/<name>.mapper.ts`)
+- UNICO ponto que conhece o formato do JSON da API.
+- Valida com schema Zod (`safeParse`) e constroi Entities/Responses.
+- Retorna `Either<DomainError, T>` — `left` quando a resposta e invalida (contrato quebrado).
+- Substitui os antigos `fromJson()` e os `as` casts (que nao validavam em runtime).
+
+```typescript
+import { z } from 'zod'
+
+const productSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  sku: z.string().nullable().default(null),
+  currentStock: z.number().default(0),
+  companyId: z.string(),
+})
+
+export function toProductPage(data: unknown): Either<DomainError, PaginatedResponse<Product>> {
+  const parsed = z
+    .object({ data: z.array(productSchema), total: z.number(), page: z.number(), limit: z.number() })
+    .safeParse(data)
+  if (!parsed.success) {
+    return Either.left(new ContractError('products', toIssueList(parsed.error)))
+  }
+  const v = parsed.data
+  return Either.right({
+    data: v.data.map((p) => new Product(p.id, p.name, p.sku, p.currentStock, p.companyId)),
+    total: v.total,
+    page: v.page,
+    limit: v.limit,
+  })
 }
 ```
 
 ### Use Case (`application/use-cases/<action>.use-case.ts`)
 - Recebe DTO como parametro.
 - Delega para Repository.
-- Retorna `Either<Error, T>`.
+- Retorna `Either<DomainError, T>`.
 - NAO sabe sobre Vue, Router ou Pinia.
 
 ```typescript
 export class FindAllProductsUseCase {
   constructor(private readonly productRepository: IProductRepository) {}
-  async execute(dto: FindAllProductsDto): Promise<Either<Error, PaginatedResponse<Product>>> {
+  async execute(dto: FindAllProductsDto): Promise<Either<DomainError, PaginatedResponse<Product>>> {
     return this.productRepository.findAll(dto)
   }
 }
 ```
 
-### Controller (`presenter/controllers/<name>-controller.ts`)
+### Controller (`presentation/controllers/<name>-controller.ts`)
 - Estende `BaseController` de `@/core/controllers/base-controller`.
 - Instancia Repository e Use Cases.
 - Cria DTOs tipados a partir de refs do formulario.
@@ -210,7 +247,7 @@ export class ProductController extends BaseController {
 }
 ```
 
-### Zod Schema (`presenter/schemas/<name>-schema.ts`)
+### Zod Schema (`presentation/schemas/<name>-schema.ts`)
 - Define `z.object()` com validacoes em PT-BR.
 - Exporta schema e tipo inferido.
 
@@ -226,23 +263,24 @@ export const productSchema = z.object({
 export type ProductFormData = z.infer<typeof productSchema>
 ```
 
-### Pinia Store (`presenter/stores/<name>-store.ts`)
+### Pinia Store (`presentation/stores/<name>-store.ts`)
 - `defineStore('nome', () => { ... })` com Composition API.
-- Guarda Entities e Models tipados (NUNCA plain objects).
+- Guarda Entities e Responses tipados (NUNCA objetos sem tipo).
 - Persiste em `StorageService` quando necessario.
 
-### Page (`presenter/pages/<name>-page.vue`)
+### Page (`presentation/pages/<name>-page.vue`)
 - Instancia Controller.
 - Conecta formulario ao Controller.
 - Mostra `controller.isLoading` e `controller.errorMessage`.
 - `<script setup lang="ts">`.
 
-### Component (`presenter/components/<name>-form.vue`)
+### Component (`presentation/components/<name>-form.vue`)
 - Formulario com validacao Zod (safeParse).
+- Mapeia erros com `toFormErrors(result.error)` de `@/core/utils/zod-errors` (NUNCA iterar `issues` manualmente).
 - Emite `submit` com dados tipados (`FormData`).
 - Recebe `loading` como prop.
 
-### Routes (`presenter/routes/<name>-routes.ts`)
+### Routes (`presentation/routes/<name>-routes.ts`)
 - `RouteRecordRaw[]` com imports NO TOPO do arquivo (NUNCA inline).
 - Usa `routeNames` para nome e path.
 
@@ -262,6 +300,92 @@ export const productRoutes: RouteRecordRaw[] = [
 
 ---
 
+## ERROS — SEMPRE `DomainError`, NUNCA `Error` cru
+
+Todo `Either` carrega uma subclasse de `DomainError` (`@/core/errors/`):
+
+| Erro | Quando | `isUserFacing` |
+|------|--------|----------------|
+| `NetworkError` | Sem resposta (offline, timeout) | `true` |
+| `UnauthorizedError` | 401 | `true` |
+| `ForbiddenError` | 403 | `true` |
+| `NotFoundError` | 404 | `true` |
+| `ValidationError` | 400/422 (`details[]`) | `true` |
+| `ServerError` | 5xx (`statusCode`) | `false` |
+| `ContractError` | Schema Zod falhou (`issues[]`) | `false` |
+| `UnexpectedError` | Fallback | `false` |
+
+- O mapper SEMPRE devolve `ContractError`, nunca `new Error(...)`:
+  `Either.left(new ContractError('<recurso>', toIssueList(parsed.error)))`
+- `toDomainError()` (em `core/client/http-error-mapper.ts`) e o UNICO ponto que conhece o Axios.
+- Decida comportamento por `instanceof`, NUNCA pela string da mensagem.
+- `handleResult()` ja trata `isUserFacing`: `false` mostra texto generico e loga o erro real.
+
+---
+
+## INJECAO DE DEPENDENCIA — `factories/<name>.factory.ts`
+
+O Controller NAO da `new` em Repository. Recebe os Use Cases pelo construtor:
+
+```typescript
+// modules/products/factories/products.factory.ts (pasta factories/, FORA de presentation/)
+export function makeProductController(): ProductController {
+  const productRepository = new ProductRepository()
+  return new ProductController(new FindAllProductsUseCase(productRepository))
+}
+```
+
+```typescript
+// pages/product-list-page.vue
+const controller = makeProductController()   // NUNCA `new ProductController()`
+```
+
+Sem isso a interface do repositorio e decorativa e o Controller fica intestavel.
+
+---
+
+## PAGINACAO — `toPage()`
+
+Nao repita o envelope `{ data, total, page, limit }`:
+
+```typescript
+import { toPage } from '@/core/mappers/to-page'
+
+const productSchema = z.object({ id: z.string(), name: z.string() })
+
+export const toProductPage = toPage(
+  'products',
+  productSchema,
+  (p) => new Product(p.id, p.name),
+)
+```
+
+---
+
+## FRONTEIRAS DE CAMADA — o ESLint quebra o build
+
+| Camada | NAO pode importar |
+|--------|-------------------|
+| `domain/` | vue, vue-router, pinia, axios, `data/`, `application/`, `presentation/` |
+| `application/` | vue, vue-router, pinia, axios, `data/`, `presentation/` |
+| `data/` | vue, vue-router, pinia, `presentation/` |
+| `presentation/` | `data/` — use a factory |
+| qualquer outro arquivo do modulo | `data/` — so `factories/` tem essa porta |
+
+`factories/` e a UNICA pasta autorizada a importar de `data/`.
+
+Se precisar violar, o desenho esta errado. NAO adicione `eslint-disable`.
+
+---
+
+## TESTES — Vitest
+
+- Arquivo ao lado do testado, sufixo `.spec.ts`.
+- Todo mapper novo cobre no minimo: valido / default aplicado / tipo errado / campo ausente.
+- O caso "tipo errado" e o que justifica o mapper existir.
+
+---
+
 ## CONVENCoes GERAIS
 
 - **Kebab-case** em nomes de arquivo.
@@ -271,7 +395,7 @@ export const productRoutes: RouteRecordRaw[] = [
 - **NUNCA** `erasableSyntaxOnly` — declarar propriedades separadamente no constructor.
 - **Textos em PT-BR.**
 - **Preline UI** com tokens de tema (`bg-primary`, `text-primary-foreground`, etc.).
-- **Lucide Icons** (`import { LogIn } from 'lucide-vue-next'`).
+- **Ícones** via `<Icon name="..." />` de `@/shared/ui`. NUNCA importar `lucide-vue-next` direto — registrar novos ícones em `shared/ui/icon/icons.ts`.
 - **Zod v3** — NAO usar v4 (incompativel).
 
 ---

@@ -6,7 +6,9 @@
     :stroke-width="props.strokeWidth"
     :style="colorResolution.style"
   />
-  <span v-else class="text-destructive text-xs" title="Ícone não encontrado">⚠️</span>
+  <span v-else class="text-destructive text-xs" title="Ícone não encontrado"
+    >⚠️</span
+  >
 </template>
 
 <script setup lang="ts">
@@ -62,7 +64,9 @@ const IconComponent = computed<Component | null>(() => {
     return null
   }
 
-  const icon = (LucideIcons as Record<string, any>)[props.name]
+  const icon = (LucideIcons as Record<string, unknown>)[props.name] as
+    | Component
+    | undefined
   if (!icon) {
     console.warn(`[Icon] Ícone "${props.name}" não encontrado no Lucide Icons`)
     return null

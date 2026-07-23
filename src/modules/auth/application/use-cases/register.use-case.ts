@@ -1,8 +1,8 @@
 import type { IAuthRepository } from '@/modules/auth/domain/interfaces/i-auth-repository.interface'
-import { Either } from '@/core/either/either'
-import type { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
-import type { AuthToken } from '@/modules/auth/domain/models/auth-token.model'
-import type { RegisterDto } from '@/modules/auth/domain/dto/auth-dto'
+import type { Either } from '@/core/either/either'
+import type { DomainError } from '@/core/errors/domain-error'
+import type { AuthResponse } from '@/modules/auth/domain/responses/auth-response'
+import type { RegisterDto } from '@/modules/auth/domain/dto/register-dto'
 
 export class RegisterUseCase {
   private readonly authRepository: IAuthRepository
@@ -11,9 +11,7 @@ export class RegisterUseCase {
     this.authRepository = authRepository
   }
 
-  async execute(
-    dto: RegisterDto,
-  ): Promise<Either<Error, { token: AuthToken; user: AuthUser }>> {
+  async execute(dto: RegisterDto): Promise<Either<DomainError, AuthResponse>> {
     return this.authRepository.register(dto)
   }
 }

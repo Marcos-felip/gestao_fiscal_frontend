@@ -32,9 +32,10 @@ const toggleItem = (id: string) => {
   }
 }
 
-const isItemExpanded = (id: string) => computed(() => {
-  return expandedItems.value.includes(id)
-})
+const isItemExpanded = (id: string) =>
+  computed(() => {
+    return expandedItems.value.includes(id)
+  })
 
 const collapseAll = () => {
   expandedItems.value = []

@@ -6,7 +6,12 @@
     </div>
 
     <!-- Tabs -->
-    <div :class="['tabs', 'flex items-center gap-4 border-b border-border px-4 py-2']">
+    <div
+      :class="[
+        'tabs',
+        'flex items-center gap-4 border-b border-border px-4 py-2',
+      ]"
+    >
       <button
         :class="[
           'tab',
@@ -37,7 +42,10 @@
     <div :class="['content', 'flex-1 overflow-y-auto']">
       <!-- All notifications -->
       <div v-if="activeTab === 'all'">
-        <div v-if="notifications.length === 0" class="p-4 text-center text-sm text-muted-foreground">
+        <div
+          v-if="notifications.length === 0"
+          class="p-4 text-center text-sm text-muted-foreground"
+        >
           Nenhuma notificação
         </div>
         <div
@@ -74,7 +82,10 @@
 
       <!-- Archived notifications -->
       <div v-else>
-        <div v-if="archivedNotifications.length === 0" class="p-4 text-center text-sm text-muted-foreground">
+        <div
+          v-if="archivedNotifications.length === 0"
+          class="p-4 text-center text-sm text-muted-foreground"
+        >
           Nenhuma notificação arquivada
         </div>
         <div
@@ -104,7 +115,9 @@
 
     <!-- Footer -->
     <div :class="['footer', 'border-t border-border px-4 py-3']">
-      <button class="w-full text-center text-xs font-medium text-primary hover:text-primary/80 transition-colors">
+      <button
+        class="w-full text-center text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+      >
         Ver todas as notificações
       </button>
     </div>
@@ -116,8 +129,13 @@ import { ref } from 'vue'
 import { Icon } from '@/shared/ui'
 import { useNotifications } from '@/composables'
 
-const { notifications, archivedNotifications, markAsRead, archiveNotification, restoreNotification } =
-  useNotifications()
+const {
+  notifications,
+  archivedNotifications,
+  markAsRead,
+  archiveNotification,
+  restoreNotification,
+} = useNotifications()
 
 const activeTab = ref<'all' | 'archived'>('all')
 

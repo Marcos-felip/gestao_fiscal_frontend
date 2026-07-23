@@ -1,6 +1,6 @@
 ---
 name: frontend-module-check
-description: Valida que um modulo Vue 3 segue a Clean Architecture completa — Entities, Models, DTOs, Interfaces, Repositories, Use Cases, Controllers, Schemas, Pages, Routes.
+description: Valida que um modulo Vue 3 segue a Clean Architecture completa — Entities, Responses, Mappers, DTOs, Interfaces, Repositories, Use Cases, Controllers, Schemas, Pages, Routes.
 ---
 
 Voce e o validador de arquitetura de modulos do Gestao Fiscal Frontend.
@@ -25,15 +25,19 @@ Para o modulo `<name>`, verifique que TODOS os arquivos existem:
 ```
 src/modules/<name>/
 ├── domain/
-│   ├── dto/<name>-dto.ts
+│   ├── dto/<action>-dto.ts                (uma classe por arquivo)
 │   ├── entities/<name>.entity.ts          (se aplicavel)
-│   ├── models/<name>.model.ts             (se aplicavel)
+│   ├── responses/<name>-response.ts       (uma interface por arquivo, se aplicavel)
 │   └── interfaces/i-<name>-repository.interface.ts
 ├── data/
-│   └── <name>-repository.ts
+│   ├── repositories/<name>-repository.ts
+│   ├── mappers/<name>.mapper.ts
+│   └── mappers/<name>.mapper.spec.ts      (OBRIGATORIO)
 ├── application/
 │   └── use-cases/<action>.use-case.ts     (1 ou mais)
-└── presenter/
+├── factories/
+│   └── <name>.factory.ts                  (composition root — OBRIGATORIO)
+└── presentation/
     ├── controllers/<name>-controller.ts
     ├── stores/<name>-store.ts              (se aplicavel)
     ├── schemas/<name>-schema.ts
@@ -48,7 +52,8 @@ Para cada arquivo FALTANTE:
 
 ### Passo 2 — Validar Domain
 
-#### DTO (`domain/dto/<name>-dto.ts`)
+#### DTO (`domain/dto/<action>-dto.ts`) — dado de ENTRADA
+- [ ] UMA classe por arquivo (`login-dto.ts`, `register-dto.ts`, `refresh-token-dto.ts`)
 - [ ] Classe com propriedades tipadas
 - [ ] NAO tem metodos (apenas constructor)
 - [ ] NAO tem `fromJson()`
@@ -57,76 +62,96 @@ Para cada arquivo FALTANTE:
 
 #### Entity (`domain/entities/<name>.entity.ts`)
 - [ ] Classe com `id` (ou campo unico de negocio)
-- [ ] `static fromJson(json: Record<string, unknown>): <Entity>` factory
+- [ ] SEM `fromJson` — a construcao a partir do JSON e do mapper
 - [ ] Pode ter getters de comportamento (`get ...():`)
 - [ ] NAO importa Vue, Pinia, Router, HttpClient
 - [ ] Propriedades `readonly` quando apropriado
 
-#### Model (`domain/models/<name>.model.ts`)
-- [ ] Classe de valor composto (sem `id`)
-- [ ] `static fromJson(json: Record<string, unknown>): <Model>` factory
+#### Response (`domain/responses/<name>-response.ts`) — dado de SAIDA
+- [ ] UMA interface por arquivo (`auth-token-response.ts`, `auth-response.ts`)
+- [ ] `interface`/`type` de valor composto (sem `id`) e tipos agregados (`AuthResponse`)
+- [ ] SEM classe e SEM `fromJson` — o mapper constroi
 - [ ] NAO tem getters de comportamento de negocio
+- [ ] NAO e o JSON cru da API — esse formato vive no schema Zod do mapper
 
 #### Interface (`domain/interfaces/i-<name>-repository.interface.ts`)
 - [ ] Prefixo `I` no nome
 - [ ] Usa DTOs nas assinaturas (tipos de entrada)
-- [ ] Usa Entities/Models nos retornos (tipos de saida)
-- [ ] Retorna `Either<Error, T>` ou `Either<Error, void>`
+- [ ] Usa Entities/Responses nos retornos (tipos de saida)
+- [ ] Retorna `Either<DomainError, T>` ou `Either<DomainError, void>`
 - [ ] Importa SOMENTE de `domain/` e `@/core/either`
 
 ### Passo 3 — Validar Data
 
-#### Repository (`data/<name>-repository.ts`)
+#### Repository (`data/repositories/<name>-repository.ts`)
 - [ ] Implementa `I<Name>Repository`
-- [ ] Usa `httpClient` importado de `@/core/client/http-client`
-- [ ] Cada metodo transforma resposta com `fromJson()` em Entity/Model
-- [ ] Retorna `Either<Error, T>` (httpClient ja retorna Either)
-- [ ] Usa `result.map()` para transformar dados
-- [ ] NAO tem logica de negocio
+- [ ] Usa `httpClient` importado de `@/core/client/http-client` com `<unknown>`
+- [ ] Delega a traducao ao mapper via `result.flatMap(to<Name>)`
+- [ ] Retorna `Either<DomainError, T>` (httpClient ja retorna Either)
+- [ ] NAO conhece o formato do JSON nem tem logica de negocio
+
+#### Mapper (`data/mappers/<name>.mapper.ts`)
+- [ ] Schema Zod que valida a resposta com `safeParse`
+- [ ] Constroi Entities/Responses e retorna `Either<DomainError, T>` (`left` se invalido)
+- [ ] Devolve `ContractError` com `toIssueList(parsed.error)` — NUNCA `new Error(...)`
+- [ ] Se for lista paginada, usa `toPage()` de `@/core/mappers/to-page`
+- [ ] UNICO ponto que conhece o formato do JSON (substitui `fromJson`/`as`)
+
+#### Teste do Mapper (`data/mappers/<name>.mapper.spec.ts`) — OBRIGATORIO
+- [ ] Resposta valida → `Either.right` com a entidade construida
+- [ ] Campo opcional ausente → default aplicado
+- [ ] Campo com TIPO ERRADO → `Either.left(ContractError)`
+- [ ] Campo obrigatorio ausente → `left` e `issues[]` cita o campo
+- Severidade se faltar: **ALTA** — mapper e o unico ponto que valida o contrato da API
 
 ### Passo 4 — Validar Application
 
 #### Use Case (`application/use-cases/<action>.use-case.ts`)
 - [ ] Recebe DTO como parametro
 - [ ] Delega para Repository via `this.<repo>.<method>(dto)`
-- [ ] Retorna `Either<Error, T>`
+- [ ] Retorna `Either<DomainError, T>`
 - [ ] NAO sabe sobre Vue, Router, Pinia
 - [ ] NAO faz chamadas HTTP diretamente
 
 ### Passo 5 — Validar Presenter
 
-#### Controller (`presenter/controllers/<name>-controller.ts`)
+#### Factory (`factories/<name>.factory.ts`) — pasta propria do modulo
+- [ ] Exporta `make<Name>Controller()`
+- [ ] E o UNICO arquivo do modulo que importa de `data/`
+- [ ] Fica FORA de `presentation/` (o ESLint proibe presentation → data)
+
+#### Controller (`presentation/controllers/<name>-controller.ts`)
 - [ ] Estende `BaseController` de `@/core/controllers/base-controller`
-- [ ] Instancia Repository e Use Cases
+- [ ] Recebe os Use Cases pelo CONSTRUTOR — NAO da `new` em Repository
 - [ ] Cria DTOs tipados a partir de `ref()`s
 - [ ] Usa `this.handleResult(result, onSuccess, onError)`
 - [ ] Interage com Store e Router no `onSuccess`
 - [ ] NAO faz chamadas HTTP diretamente
 - [ ] Gerencia estado com `this.setLoading()`, `this.setError()`, `this.clearError()`
 
-#### Store (`presenter/stores/<name>-store.ts`)
+#### Store (`presentation/stores/<name>-store.ts`)
 - [ ] `defineStore('<name>', () => { ... })` com Composition API
-- [ ] Guarda Entities/Models tipados (NUNCA plain objects)
+- [ ] Guarda Entities/Responses tipados (NUNCA objetos sem tipo)
 - [ ] Persiste em `StorageService` quando necessario
 
-#### Schema (`presenter/schemas/<name>-schema.ts`)
+#### Schema (`presentation/schemas/<name>-schema.ts`)
 - [ ] `z.object()` com validacoes
 - [ ] Mensagens de erro em PT-BR
 - [ ] Exporta tipo inferido: `export type <Name>FormData = z.infer<typeof <name>Schema>`
 
-#### Component (`presenter/components/<name>-form.vue`)
+#### Component (`presentation/components/<name>-form.vue`)
 - [ ] `<script setup lang="ts">`
 - [ ] Valida com `safeParse()` do Zod
 - [ ] Emite `submit` com dados tipados (`<Name>FormData`)
 - [ ] Recebe `loading` como prop
 
-#### Page (`presenter/pages/<name>-page.vue`)
+#### Page (`presentation/pages/<name>-page.vue`)
 - [ ] `<script setup lang="ts">`
-- [ ] Instancia Controller
+- [ ] Usa `make<Name>Controller()` — NUNCA `new <Name>Controller()`
 - [ ] Mostra `controller.isLoading` e `controller.errorMessage`
 - [ ] Usa componentes com `@submit` conectado ao Controller
 
-#### Routes (`presenter/routes/<name>-routes.ts`)
+#### Routes (`presentation/routes/<name>-routes.ts`)
 - [ ] Imports NO TOPO do arquivo (nunma inline `() => import(...)`)
 - [ ] Usa `routeNames` para `name`
 - [ ] Exporta `const <name>Routes: RouteRecordRaw[]`
@@ -146,7 +171,7 @@ Para cada arquivo FALTANTE:
 
 - [ ] URL do Repository bate com `API.md`
 - [ ] DTO enviado bate com contrato (campos obrigatorios, tipos, enums)
-- [ ] `fromJson()` mapeia TODOS os campos da resposta
+- [ ] Schema Zod do mapper cobre TODOS os campos da resposta
 - [ ] Tipos TypeScript batem com contrato (string | null onde backend retorna null)
 - [ ] Paginacao: resposta `{ data, total, page, limit }` mapeada com `PaginatedResponse<T>`
 
@@ -164,8 +189,16 @@ Para cada arquivo FALTANTE:
 - [ ] Sem `any` em tipagens
 - [ ] `import type { ... }` para tipos
 - [ ] Sem `erasableSyntaxOnly`
-- [ ] Sem `index.ts` barrel files
+- [ ] Sem `index.ts` barrel files em `modules/` (unica excecao: `src/shared/ui/index.ts`)
 - [ ] Imports de alias com `@/`
+
+### Passo 11 — Validar Fronteiras e Pipeline
+
+- [ ] `npm run lint` passa sem erros (as fronteiras de camada estao no `eslint.config.js`)
+- [ ] Nenhum `eslint-disable` de `no-restricted-imports` — se precisou, o desenho esta errado
+- [ ] `npm test` passa
+- [ ] `npm run build` passa
+- [ ] Nenhum `Either<Error, T>` remanescente — sempre `Either<DomainError, T>`
 
 ---
 

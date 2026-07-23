@@ -26,10 +26,7 @@
       <Transition name="dropdown-fade">
         <div
           v-if="isOpen"
-          :class="[
-            'dropdown-backdrop',
-            'fixed inset-0 z-40',
-          ]"
+          :class="['dropdown-backdrop', 'fixed inset-0 z-40']"
           @click="close"
         />
       </Transition>
@@ -134,7 +131,9 @@ import { computed } from 'vue'
 
 .dropdown-scale-enter-active,
 .dropdown-scale-leave-active {
-  transition: transform 150ms ease-in-out, opacity 150ms ease-in-out;
+  transition:
+    transform 150ms ease-in-out,
+    opacity 150ms ease-in-out;
 }
 
 .dropdown-scale-enter-from,

@@ -4,10 +4,7 @@
     <Transition name="backdrop-fade">
       <div
         v-if="isOpen"
-        :class="[
-          'activity-backdrop',
-          'fixed inset-0 z-40 bg-black/20',
-        ]"
+        :class="['activity-backdrop', 'fixed inset-0 z-40 bg-black/20']"
         @click="close"
       />
     </Transition>
@@ -22,8 +19,15 @@
         ]"
       >
         <!-- Header -->
-        <div :class="['header', 'flex items-center justify-between border-b border-border px-6 py-4']">
-          <h2 class="text-lg font-semibold text-foreground">Atividades Recentes</h2>
+        <div
+          :class="[
+            'header',
+            'flex items-center justify-between border-b border-border px-6 py-4',
+          ]"
+        >
+          <h2 class="text-lg font-semibold text-foreground">
+            Atividades Recentes
+          </h2>
           <button
             class="text-muted-foreground hover:text-foreground transition-colors"
             @click="close"
@@ -74,17 +78,30 @@
                   stroke-linejoin="round"
                   class="h-5 w-5"
                 >
-                  <polyline v-if="activity.type === 'create'" points="12 2 15.09 10.26 24 12.75 15.6 19.16 17.82 28 12 24.29 6.18 28 8.4 19.16 0 12.75 8.91 10.26 12 2" />
-                  <polyline v-else-if="activity.type === 'update'" points="16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z" />
-                  <path v-else-if="activity.type === 'delete'" d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6h16zM10 11v6M14 11v6" />
+                  <polyline
+                    v-if="activity.type === 'create'"
+                    points="12 2 15.09 10.26 24 12.75 15.6 19.16 17.82 28 12 24.29 6.18 28 8.4 19.16 0 12.75 8.91 10.26 12 2"
+                  />
+                  <polyline
+                    v-else-if="activity.type === 'update'"
+                    points="16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"
+                  />
+                  <path
+                    v-else-if="activity.type === 'delete'"
+                    d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6h16zM10 11v6M14 11v6"
+                  />
                   <circle v-else cx="12" cy="12" r="1" />
                 </svg>
               </div>
 
               <!-- Content -->
               <div class="flex-1 min-w-0">
-                <h4 class="text-sm font-semibold text-foreground">{{ activity.title }}</h4>
-                <p class="text-xs text-muted-foreground mt-1">{{ activity.description }}</p>
+                <h4 class="text-sm font-semibold text-foreground">
+                  {{ activity.title }}
+                </h4>
+                <p class="text-xs text-muted-foreground mt-1">
+                  {{ activity.description }}
+                </p>
                 <time class="text-xs text-muted-foreground block mt-2">
                   {{ formatTime(activity.timestamp) }}
                 </time>
@@ -93,14 +110,18 @@
 
             <!-- Empty state -->
             <div v-if="activities.length === 0" class="py-12 text-center">
-              <p class="text-sm text-muted-foreground">Nenhuma atividade recente</p>
+              <p class="text-sm text-muted-foreground">
+                Nenhuma atividade recente
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Footer -->
         <div :class="['footer', 'border-t border-border px-6 py-4']">
-          <button class="w-full text-center text-xs font-medium text-primary hover:text-primary/80 transition-colors">
+          <button
+            class="w-full text-center text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+          >
             Ver histórico completo
           </button>
         </div>

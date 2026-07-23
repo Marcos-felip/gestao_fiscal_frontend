@@ -15,7 +15,10 @@ const router = createRouter({
         {
           path: '',
           name: 'dashboard',
-          component: { template: '<div class="text-center py-12"><h1 class="text-2xl font-bold">Dashboard</h1></div>' },
+          component: {
+            template:
+              '<div class="text-center py-12"><h1 class="text-2xl font-bold">Dashboard</h1></div>',
+          },
         },
       ],
     },

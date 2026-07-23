@@ -1,7 +1,10 @@
 <template>
   <div class="ui-input-wrapper">
     <!-- Slot de label (opcional, antes do input) -->
-    <label v-if="$slots.label" class="block text-sm font-medium text-foreground mb-2">
+    <label
+      v-if="$slots.label"
+      class="block text-sm font-medium text-foreground mb-2"
+    >
       <slot name="label" />
     </label>
 
@@ -23,8 +26,10 @@
           // Estado de foco com anel primário
           'focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none',
           // Estado de erro - borda vermelha
-          error && '!border-error-500 focus:!border-error-500 focus:!ring-error-500',
-          success && '!border-success-500 focus:!border-success-500 focus:!ring-success-500',
+          error &&
+            '!border-error-500 focus:!border-error-500 focus:!ring-error-500',
+          success &&
+            '!border-success-500 focus:!border-success-500 focus:!ring-success-500',
           // Estado desabilitado
           disabled && 'opacity-50 cursor-not-allowed bg-background-2',
           // Estilo do placeholder
@@ -32,7 +37,9 @@
           (error || success || $slots.suffix) && 'pe-10',
           inputClass,
         ]"
-        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        @input="
+          $emit('update:modelValue', ($event.target as HTMLInputElement).value)
+        "
         @blur="$emit('blur')"
         @focus="$emit('focus')"
       />
@@ -84,6 +91,7 @@
     <!-- Mensagem de dica ou erro (após input) -->
     <div v-if="hint || error || success" class="mt-2">
       <p
+        :id="helperId"
         :class="[
           'text-sm transition-colors duration-300',
           error
@@ -92,7 +100,6 @@
               ? 'text-success-500 font-medium'
               : 'text-foreground/70',
         ]"
-        :id="helperId"
       >
         {{ error || success || hint }}
       </p>

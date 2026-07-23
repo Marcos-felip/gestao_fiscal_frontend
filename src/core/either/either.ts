@@ -39,6 +39,12 @@ export class Either<L, R> {
       : Either.right(fn(this._value as R))
   }
 
+  flatMap<T>(fn: (value: R) => Either<L, T>): Either<L, T> {
+    return this._isLeft
+      ? (Either.left(this._value as L) as Either<L, T>)
+      : fn(this._value as R)
+  }
+
   mapLeft<T>(fn: (value: L) => T): Either<T, R> {
     return this._isLeft
       ? Either.left(fn(this._value as L))

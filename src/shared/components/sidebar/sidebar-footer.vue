@@ -1,5 +1,10 @@
 <template>
-  <div :class="['sidebar-footer', 'hidden lg:block border-t border-border px-4 py-2']">
+  <div
+    :class="[
+      'sidebar-footer',
+      'hidden lg:block border-t border-border px-4 py-2',
+    ]"
+  >
     <ProjectDropdown />
   </div>
 </template>

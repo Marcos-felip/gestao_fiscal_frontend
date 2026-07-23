@@ -8,16 +8,8 @@
       variantClasses,
     ]"
   >
-    <img
-      v-if="src"
-      :src="src"
-      :alt="alt"
-      class="h-full w-full object-cover"
-    />
-    <span
-      v-else
-      :class="['ui-avatar-initials', textSizeClasses]"
-    >
+    <img v-if="src" :src="src" :alt="alt" class="h-full w-full object-cover" />
+    <span v-else :class="['ui-avatar-initials', textSizeClasses]">
       {{ displayInitials }}
     </span>
   </div>
