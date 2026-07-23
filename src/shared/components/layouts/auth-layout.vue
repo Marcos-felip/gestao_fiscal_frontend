@@ -52,11 +52,15 @@ const features = [
       >
         <!-- Marca -->
         <motion.div class="flex items-center gap-3" :variants="item">
-          <img
-            src="/apple-touch-icon.png"
-            alt="Gestão Fiscal"
-            class="h-11 w-11 rounded-xl shadow-lg ring-1 ring-white/20"
-          />
+          <span
+            class="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-lg ring-1 ring-white/25"
+          >
+            <img
+              src="/apple-touch-icon.png"
+              alt="Gestão Fiscal"
+              class="h-8 w-8"
+            />
+          </span>
           <span
             class="font-display text-xl font-bold tracking-tight text-white"
           >
@@ -123,11 +127,15 @@ const features = [
           class="mb-8 flex items-center justify-center gap-2.5 lg:hidden"
           :variants="item"
         >
-          <img
-            src="/apple-touch-icon.png"
-            alt="Gestão Fiscal"
-            class="h-10 w-10 rounded-xl"
-          />
+          <span
+            class="flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-line-2"
+          >
+            <img
+              src="/apple-touch-icon.png"
+              alt="Gestão Fiscal"
+              class="h-7 w-7"
+            />
+          </span>
           <span class="font-display text-lg font-bold tracking-tight">
             <span class="text-foreground">Gestão</span>
             <span class="text-primary">Fiscal</span>
