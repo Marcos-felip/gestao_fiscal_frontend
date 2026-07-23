@@ -46,6 +46,9 @@
 
     <!-- Account menu -->
     <AccountMenu />
+
+    <!-- Modal de busca (mobile) -->
+    <SearchModal v-model="showSearchModal" />
   </div>
 </template>
 
@@ -55,6 +58,7 @@ import { NavbarButton, Icon } from '@/shared/ui'
 // import { useNotifications } from '@/composables'
 // import LanguageSelector from './language-selector.vue'
 import AccountMenu from './account-menu.vue'
+import SearchModal from './search-modal.vue'
 
 // const { unreadCount } = useNotifications()
 

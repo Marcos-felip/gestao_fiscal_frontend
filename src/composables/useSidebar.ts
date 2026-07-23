@@ -41,10 +41,20 @@ const collapseAll = () => {
   expandedItems.value = []
 }
 
-const isMobile = computed(() => {
-  // Simular breakpoint lg: 1024px
-  return typeof window !== 'undefined' && window.innerWidth < 1024
-})
+// Largura observada de forma reativa: sem isto o isMobile ficava preso ao valor
+// avaliado uma única vez, e o drawer nunca abria após um resize cruzar o 1024px.
+const viewportWidth = ref(
+  typeof window !== 'undefined' ? window.innerWidth : 1024,
+)
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', () => {
+    viewportWidth.value = window.innerWidth
+  })
+}
+
+// Breakpoint lg: 1024px
+const isMobile = computed(() => viewportWidth.value < 1024)
 
 export const useSidebar = () => {
   onMounted(() => {

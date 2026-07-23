@@ -18,8 +18,6 @@ interface NavigationItem {
   children?: NavigationItem[]
 }
 
-const route = useRoute()
-
 const navigationItems = computed((): NavigationItem[] => {
   return [
     {
@@ -78,46 +76,52 @@ const navigationItems = computed((): NavigationItem[] => {
   ]
 })
 
-const currentRouteName = computed(() => {
-  return route.name as string | undefined
-})
+export const useNavigation = () => {
+  // useRoute() PRECISA ser chamado dentro do setup — no escopo do módulo ele
+  // retorna undefined e todo acesso a route.path/route.name quebrava.
+  const route = useRoute()
 
-const isRouteActive = (routePath: string): boolean => {
-  return route.path === routePath || route.path.startsWith(routePath + '/')
-}
+  const currentRouteName = computed(() => {
+    return route.name as string | undefined
+  })
 
-const breadcrumbs = computed(() => {
-  const crumbs: Array<{ label: string; to?: string }> = []
-
-  const findBreadcrumbs = (
-    items: NavigationItem[],
-    path: Array<{ label: string; to?: string }>,
-  ) => {
-    for (const item of items) {
-      if (item.to && isRouteActive(item.to)) {
-        path.push({ label: item.label, to: item.to })
-        return true
-      }
-
-      if (item.children) {
-        if (findBreadcrumbs(item.children, path)) {
-          path.unshift({ label: item.label })
-          return true
-        }
-      }
-    }
-    return false
+  const isRouteActive = (routePath: string): boolean => {
+    return route.path === routePath || route.path.startsWith(routePath + '/')
   }
 
-  findBreadcrumbs(navigationItems.value, crumbs)
+  const breadcrumbs = computed(() => {
+    const crumbs: Array<{ label: string; to?: string }> = []
 
-  // Adicionar Dashboard como primeiro breadcrumb
-  return [{ label: 'Dashboard', to: '/' }, ...crumbs]
-})
+    const findBreadcrumbs = (
+      items: NavigationItem[],
+      path: Array<{ label: string; to?: string }>,
+    ) => {
+      for (const item of items) {
+        if (item.to && isRouteActive(item.to)) {
+          path.push({ label: item.label, to: item.to })
+          return true
+        }
 
-export const useNavigation = () => ({
-  navigationItems,
-  currentRouteName,
-  isRouteActive,
-  breadcrumbs,
-})
+        if (item.children) {
+          if (findBreadcrumbs(item.children, path)) {
+            path.unshift({ label: item.label })
+            return true
+          }
+        }
+      }
+      return false
+    }
+
+    findBreadcrumbs(navigationItems.value, crumbs)
+
+    // Adicionar Dashboard como primeiro breadcrumb
+    return [{ label: 'Dashboard', to: '/' }, ...crumbs]
+  })
+
+  return {
+    navigationItems,
+    currentRouteName,
+    isRouteActive,
+    breadcrumbs,
+  }
+}

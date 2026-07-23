@@ -1,3 +1,4 @@
+GF
 <template>
   <div
     :class="[
@@ -19,19 +20,20 @@
     </RouterLink>
 
     <!-- Close button (mobile) -->
-    <button
-      :class="['close-btn', 'lg:hidden']"
+    <Button
+      class="close-btn lg:hidden"
+      variant="ghost"
+      size="sm"
       @click="closeSidebar"
-      aria-label="Fechar menu"
     >
       <Icon name="X" size="md" />
-    </button>
+    </Button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import { Icon, Span } from '@/shared/ui'
+import { Icon, Span, Button } from '@/shared/ui'
 import { useSidebar } from '@/composables'
 
 const { close: closeSidebar } = useSidebar()

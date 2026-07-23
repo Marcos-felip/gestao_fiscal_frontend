@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { SearchInput } from '@/shared/ui'
 
 interface SearchResult {
@@ -109,6 +109,15 @@ const emit = defineEmits<{
 
 const isOpen = ref(props.modelValue)
 const query = ref('')
+
+// Sincroniza a abertura com o v-model do pai (antes só lia o valor inicial).
+watch(
+  () => props.modelValue,
+  (value) => {
+    isOpen.value = value
+    if (value) query.value = ''
+  },
+)
 
 const results = computed((): SearchResult[] => {
   if (!query.value) return []

@@ -19,7 +19,7 @@
         v-if="isOpen && isMobile"
         :class="[
           'sidebar-drawer',
-          'fixed left-0 top-0 bottom-0 z-40 w-64 lg:hidden flex flex-col border-r border-border bg-background',
+          'fixed left-0 top-0 bottom-0 z-40 w-68 lg:hidden flex flex-col border-r border-border bg-background',
         ]"
       >
         <SidebarHeader />
@@ -30,7 +30,7 @@
     </Transition>
   </Teleport>
 
-  <!-- Desktop sidebar (fixed) -->
+  <!-- Desktop sidebar -->
   <aside
     v-if="!isMobile"
     :class="[
