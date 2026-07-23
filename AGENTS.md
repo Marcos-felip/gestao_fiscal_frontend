@@ -3,7 +3,7 @@
 ## Projeto
 
 SaaS multi-tenant de gestão fiscal para empresas brasileiras.
-Frontend: Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS 4 + Preline UI + Lucide Icons + Zod v3 + Axios
+Frontend: Vue 3 + TypeScript + Vite + Pinia + Tailwind CSS 4 + Preline UI + Lucide Icons + motion-v + Zod v3 + Axios
 
 ## Repositórios
 
@@ -257,12 +257,26 @@ stateDiagram-v2
 ### Vue
 - `<script setup lang="ts">` em TODOS os SFCs.
 - Preline UI para estilização com tokens de tema (`bg-primary`, `text-primary-foreground`, etc.).
-- Ícones via `<Icon name="..." />` de `@/shared/ui`. **NUNCA** importar `lucide-vue-next` direto — só o registry `shared/ui/icon/icons.ts`. Para novos ícones, registrar a chave lá.
+- Ícones via `<Icon name="..." />` de `@/shared/ui` (resolve qualquer ícone do Lucide pelo nome, ex: `name="Users"`). **NUNCA** importar `lucide-vue-next` direto nas telas — sempre pelo `<Icon>`.
 - Textos em português brasileiro.
 
 ### Pinia
 - `defineStore('nome', () => { ... })` com Composition API.
 - Guardar Entities e Responses tipados, NUNCA objetos sem tipo.
+
+### Design System e Motion
+- **Direção visual:** editorial-tech — display com caráter nos títulos/marca, corpo legível, muito respiro, um acento azul.
+- **Tipografia:** `--font-display` (Space Grotesk) aplicada automaticamente a `h1/h2/h3` e à classe `.font-display` (marca, números de destaque); `--font-sans` (Inter) no corpo. Use `.tabular-nums` em colunas de dados fiscais.
+- **Tokens semânticos** (definidos em `theme.css`, expostos ao Tailwind no `@theme inline` de `style.css`): `bg-background`, `bg-muted`/`text-muted-foreground`, `bg-primary`/`text-primary-foreground`, `bg-destructive`/`text-destructive-foreground`, `border-line-1..4`, `ring`. **Toda utility de cor precisa de um `--color-*` no `@theme`** — no Tailwind 4, classe sem token é silenciosamente ignorada.
+- **Elevação:** `.ui-shadow-soft` e `.ui-shadow-float` (nunca sombras avulsas). Raio padrão `--radius`.
+- **Dark mode:** alterna o atributo `data-theme="dark"` no `<html>` (via `useNavbar().toggleDarkMode`). `theme.css` chaveia por `[data-theme='dark']` — nunca use `data-hs-theme-switch`.
+- **Animação — `motion-v`:**
+  - `<MotionConfig>` no `App.vue` define a transição padrão e respeita `prefers-reduced-motion`.
+  - Componentes `motion.*` (ex: `motion.button`, `motion.div`) para `initial/animate/variants/whileHover/whilePress`.
+  - **Springs** (`{ type: 'spring', stiffness, damping }`) para interação; `--ease-out-quart` para tweens de CSS.
+  - Listas entram em **stagger** (`staggerChildren`); o item ativo da sidebar usa **`layoutId`** para deslizar entre posições.
+  - Sempre importe `motion` de `motion-v` manualmente (sem auto-import).
+- **Movimento com propósito:** uma sequência de entrada bem dirigida vale mais que vinte micro-hovers aleatórios. Nunca imponha movimento a quem pediu `prefers-reduced-motion`.
 
 ---
 

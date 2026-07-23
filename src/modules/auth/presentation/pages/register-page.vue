@@ -22,7 +22,7 @@ function goToLogin(): void {
 <template>
   <AuthLayout>
     <template #title>
-      <h2 class="text-xl font-bold text-foreground text-center">
+      <h2 class="text-2xl font-bold tracking-tight text-foreground text-center">
         Criar sua conta
       </h2>
     </template>

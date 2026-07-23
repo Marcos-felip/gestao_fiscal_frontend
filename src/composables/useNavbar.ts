@@ -21,16 +21,18 @@ const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
 }
 
+const applyTheme = (dark: boolean) => {
+  if (dark) {
+    document.documentElement.setAttribute('data-theme', 'dark')
+  } else {
+    document.documentElement.removeAttribute('data-theme')
+  }
+}
+
 const toggleDarkMode = () => {
   isDarkMode.value = !isDarkMode.value
-
-  if (isDarkMode.value) {
-    document.documentElement.setAttribute('data-hs-theme-switch', 'dark')
-    localStorage.setItem('theme', 'dark')
-  } else {
-    document.documentElement.removeAttribute('data-hs-theme-switch')
-    localStorage.setItem('theme', 'light')
-  }
+  applyTheme(isDarkMode.value)
+  localStorage.setItem('theme', isDarkMode.value ? 'dark' : 'light')
 }
 
 const clearSearch = () => {
@@ -48,7 +50,7 @@ export const useNavbar = () => {
     const savedTheme = localStorage.getItem('theme')
     if (savedTheme === 'dark') {
       isDarkMode.value = true
-      document.documentElement.setAttribute('data-hs-theme-switch', 'dark')
+      applyTheme(true)
     }
 
     // Fechar menu ao apertar ESC

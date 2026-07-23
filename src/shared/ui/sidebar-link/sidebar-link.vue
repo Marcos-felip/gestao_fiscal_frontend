@@ -3,32 +3,36 @@
     :to="to"
     :class="[
       'sidebar-link',
-      'group relative flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-sans',
+      'group relative flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium',
       'transition-colors duration-200',
-      isActive ? 'bg-primary text-white' : 'text-muted-foreground',
+      isActive
+        ? 'text-white'
+        : 'text-muted-foreground hover:text-foreground hover:bg-muted',
     ]"
-    :active-class="'active'"
-    :exact-active-class="'exact-active'"
   >
+    <!-- Indicador ativo compartilhado: desliza entre os itens (layoutId) -->
+    <motion.span
+      v-if="isActive"
+      layout-id="sidebar-active-pill"
+      class="absolute inset-0 rounded-lg bg-primary ui-shadow-soft"
+      :transition="{ type: 'spring', stiffness: 480, damping: 40 }"
+    />
+
     <!-- Ícone -->
-    <span :class="['icon', 'h-5 w-5 shrink-0']">
+    <span class="relative z-10 h-5 w-5 shrink-0">
       <slot name="icon" />
     </span>
 
     <!-- Rótulo -->
-    <Span
-      size="sm"
-      :color="isActive ? 'text-white' : 'text-muted-foreground'"
-      class="flex-1 truncate"
-    >
+    <span class="relative z-10 min-w-0 flex-1 truncate">
       <slot>{{ label }}</slot>
-    </Span>
+    </span>
   </RouterLink>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Span } from '@/shared/ui'
+import { motion } from 'motion-v'
 import { RouterLink, useRoute } from 'vue-router'
 
 interface Props {
@@ -50,31 +54,5 @@ const isActive = computed(() => {
 <style scoped lang="css">
 .sidebar-link {
   position: relative;
-}
-
-.sidebar-link:hover::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background-color: var(--color-primary);
-  border-radius: 0 3px 3px 0;
-}
-
-.sidebar-link.active {
-  position: relative;
-}
-
-.sidebar-link.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background-color: var(--color-primary-foreground);
-  border-radius: 0 3px 3px 0;
 }
 </style>

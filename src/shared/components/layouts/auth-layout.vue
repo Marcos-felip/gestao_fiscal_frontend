@@ -1,5 +1,22 @@
 <script setup lang="ts">
+import { motion } from 'motion-v'
 import { Card } from '@/shared/ui'
+
+const container = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.05 },
+  },
+}
+
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 320, damping: 28 },
+  },
+}
 </script>
 
 <template>
@@ -8,29 +25,36 @@ import { Card } from '@/shared/ui'
   >
     <div class="pointer-events-none absolute inset-0">
       <div
-        class="absolute -top-20 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary-200/70 via-primary-300/50 to-transparent blur-[90px]"
+        class="ui-aurora absolute -top-20 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary-200/70 via-primary-300/50 to-transparent blur-[90px]"
       ></div>
       <div
-        class="absolute -top-10 right-[10%] h-[400px] w-[500px] rounded-full bg-gradient-to-br from-primary-300/55 via-primary-200/40 to-transparent blur-[80px]"
+        class="ui-aurora absolute -top-10 right-[10%] h-[400px] w-[500px] rounded-full bg-gradient-to-br from-primary-300/55 via-primary-200/40 to-transparent blur-[80px]"
+        style="animation-delay: -6s"
       ></div>
       <div
-        class="absolute top-[25%] -left-10 h-[450px] w-[400px] rounded-full bg-gradient-to-r from-primary-200/50 via-secondary-200/35 to-transparent blur-[70px]"
+        class="ui-aurora absolute top-[25%] -left-10 h-[450px] w-[400px] rounded-full bg-gradient-to-r from-primary-200/50 via-secondary-200/35 to-transparent blur-[70px]"
+        style="animation-delay: -3s"
       ></div>
       <div
-        class="absolute bottom-[10%] right-[10%] h-[350px] w-[350px] rounded-full bg-gradient-to-tl from-secondary-200/45 via-primary-200/30 to-transparent blur-[70px]"
+        class="ui-aurora absolute bottom-[10%] right-[10%] h-[350px] w-[350px] rounded-full bg-gradient-to-tl from-secondary-200/45 via-primary-200/30 to-transparent blur-[70px]"
+        style="animation-delay: -9s"
       ></div>
       <div
-        class="absolute bottom-[5%] left-[15%] h-[300px] w-[400px] rounded-full bg-gradient-to-tr from-primary-200/45 via-primary-100/30 to-transparent blur-[60px]"
+        class="ui-aurora absolute bottom-[5%] left-[15%] h-[300px] w-[400px] rounded-full bg-gradient-to-tr from-primary-200/45 via-primary-100/30 to-transparent blur-[60px]"
+        style="animation-delay: -12s"
       ></div>
       <div
         class="absolute top-[8%] left-[30%] h-[250px] w-[350px] rounded-full bg-gradient-to-b from-secondary-200/30 to-transparent blur-[70px]"
       ></div>
     </div>
 
-    <main
+    <motion.main
       class="relative z-10 flex w-full max-w-md flex-col items-center gap-7"
+      :variants="container"
+      initial="hidden"
+      animate="visible"
     >
-      <div class="flex items-center gap-2">
+      <motion.div class="flex items-center gap-2" :variants="item">
         <svg
           class="h-7 w-7 text-primary"
           viewBox="0 0 32 32"
@@ -54,24 +78,28 @@ import { Card } from '@/shared/ui'
             stroke-linecap="round"
           />
         </svg>
-        <span class="text-xl font-bold text-primary">Gestão Fiscal</span>
-      </div>
+        <span class="font-display text-xl font-bold tracking-tight text-primary"
+          >Gestão Fiscal</span
+        >
+      </motion.div>
 
-      <Card
-        variant="elevated"
-        padding="sm"
-        class="w-full rounded-xl border border-line-2 bg-background"
-      >
-        <div v-if="$slots.title" class="mb-2">
-          <slot name="title" />
-        </div>
+      <motion.div class="w-full" :variants="item">
+        <Card
+          variant="elevated"
+          padding="sm"
+          class="w-full rounded-2xl border border-line-2 bg-background ui-shadow-float"
+        >
+          <div v-if="$slots.title" class="mb-2">
+            <slot name="title" />
+          </div>
 
-        <div v-if="$slots.subtitle" class="mb-6">
-          <slot name="subtitle" />
-        </div>
+          <div v-if="$slots.subtitle" class="mb-6">
+            <slot name="subtitle" />
+          </div>
 
-        <slot />
-      </Card>
-    </main>
+          <slot />
+        </Card>
+      </motion.div>
+    </motion.main>
   </div>
 </template>

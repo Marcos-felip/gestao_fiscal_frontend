@@ -3,6 +3,7 @@ import { authGuard } from './guards/auth-guard'
 import { guestGuard } from './guards/guest-guard'
 import { authRoutes } from '@/modules/auth/presentation/routes/auth-routes'
 import AppLayout from '@/shared/components/layouts/app-layout.vue'
+import DashboardHome from '@/shared/components/dashboard/dashboard-home.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -15,10 +16,7 @@ const router = createRouter({
         {
           path: '',
           name: 'dashboard',
-          component: {
-            template:
-              '<div class="text-center py-12"><h1 class="text-2xl font-bold">Dashboard</h1></div>',
-          },
+          component: DashboardHome,
         },
       ],
     },

@@ -13,8 +13,17 @@
       <img src="/apple-touch-icon.png" alt="Gestão Fiscal" class="h-12 w-12" />
 
       <div class="leading-none">
-        <Span size="2xl" weight="bold" class="mr-1"> Gestão </Span>
-        <Span size="2xl" weight="bold" variant="primary"> Fiscal </Span>
+        <Span size="2xl" weight="bold" class="font-display mr-1 tracking-tight">
+          Gestão
+        </Span>
+        <Span
+          size="2xl"
+          weight="bold"
+          variant="primary"
+          class="font-display tracking-tight"
+        >
+          Fiscal
+        </Span>
       </div>
     </RouterLink>
 
