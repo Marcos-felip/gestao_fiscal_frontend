@@ -28,29 +28,43 @@ export class RefreshTokenDto {
   }
 }
 
-export class AuthResultDto {
-  token: { accessToken: string; refreshToken: string }
-  user: {
-    id: string
-    name: string
-    email: string
-    companyActiveId: string | null
-    role: string | null
-    forcePasswordChange: boolean
-  }
+export class AuthUserResponseDto {
+  id: string
+  name: string
+  email: string
+  companyActiveId: string | null
+  role: string | null
+  forcePasswordChange: boolean
 
   constructor(
-    token: { accessToken: string; refreshToken: string },
-    user: {
-      id: string
-      name: string
-      email: string
-      companyActiveId: string | null
-      role: string | null
-      forcePasswordChange: boolean
-    },
+    id: string,
+    name: string,
+    email: string,
+    companyActiveId: string | null,
+    role: string | null,
+    forcePasswordChange: boolean,
   ) {
-    this.token = token
+    this.id = id
+    this.name = name
+    this.email = email
+    this.companyActiveId = companyActiveId
+    this.role = role
+    this.forcePasswordChange = forcePasswordChange
+  }
+}
+
+export class AuthResponseDto {
+  accessToken: string
+  refreshToken: string
+  user: AuthUserResponseDto
+
+  constructor(
+    accessToken: string,
+    refreshToken: string,
+    user: AuthUserResponseDto,
+  ) {
+    this.accessToken = accessToken
+    this.refreshToken = refreshToken
     this.user = user
   }
 }

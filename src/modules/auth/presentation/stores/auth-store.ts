@@ -18,6 +18,14 @@ export const useAuthStore = defineStore('auth', () => {
 
   function setUser(authUser: AuthUser): void {
     user.value = authUser
+    StorageService.setUser({
+      id: authUser.id,
+      name: authUser.name,
+      email: authUser.email,
+      companyActiveId: authUser.companyActiveId,
+      role: authUser.role,
+      forcePasswordChange: authUser.forcePasswordChange,
+    })
     if (authUser.companyActiveId) {
       StorageService.setActiveCompanyId(authUser.companyActiveId)
     }
@@ -38,9 +46,14 @@ export const useAuthStore = defineStore('auth', () => {
   function initializeFromStorage(): void {
     const accessToken = StorageService.getToken()
     const refreshToken = StorageService.getRefreshToken()
+    const storedUser = StorageService.getUser()
 
     if (accessToken && refreshToken) {
       token.value = new AuthToken(accessToken, refreshToken)
+    }
+
+    if (storedUser) {
+      user.value = AuthUser.fromJson(storedUser)
     }
   }
 

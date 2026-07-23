@@ -7,10 +7,8 @@ export class AuthToken {
     this.refreshToken = refreshToken
   }
 
-  static fromJson(json: Record<string, unknown>): AuthToken {
-    return new AuthToken(
-      json.accessToken as string,
-      json.refreshToken as string,
-    )
+  static fromJson(json: Record<string, unknown> | { accessToken: string; refreshToken: string }): AuthToken {
+    const data = json as { accessToken: string; refreshToken: string }
+    return new AuthToken(data.accessToken, data.refreshToken)
   }
 }
