@@ -21,13 +21,13 @@ function goToRegister(): void {
 <template>
   <AuthLayout>
     <template #title>
-      <h2 class="text-2xl font-bold tracking-tight text-foreground text-center">
+      <h2 class="text-2xl font-bold tracking-tight text-foreground">
         Bem-vindo de volta
       </h2>
     </template>
 
     <template #subtitle>
-      <p class="text-sm text-foreground/70 text-center mt-1.5">
+      <p class="mt-1.5 text-sm text-muted-foreground">
         Insira suas credenciais para acessar o sistema
       </p>
     </template>
