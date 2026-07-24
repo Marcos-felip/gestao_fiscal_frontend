@@ -4,6 +4,7 @@ import { guestGuard } from './guards/guest-guard'
 import { authRoutes } from '@/modules/auth/presentation/routes/auth-routes'
 import { dashboardRoutes } from '@/modules/dashboard/presentation/routes/dashboard-routes'
 import { companiesRoutes } from '@/modules/companies/presentation/routes/companies-routes'
+import { establishmentsRoutes } from '@/modules/establishments/presentation/routes/establishments-routes'
 import { errorRoutes } from '@/modules/errors/presentation/routes/error-routes'
 import AppLayout from '@/shared/components/layouts/app-layout.vue'
 import { useProgress } from '@/shared/composables'
@@ -15,7 +16,11 @@ const router = createRouter({
       path: '/',
       component: AppLayout,
       meta: { requiresAuth: true },
-      children: [...dashboardRoutes, ...companiesRoutes],
+      children: [
+        ...dashboardRoutes,
+        ...companiesRoutes,
+        ...establishmentsRoutes,
+      ],
     },
     ...authRoutes,
     ...errorRoutes,
