@@ -6,26 +6,24 @@
       'bg-background rounded-xl border border-line-2',
       // Estilos de variante
       variantClasses,
-      // Padding customizado
-      paddingClasses,
       // Efeito de hover para variante elevated
       variant === 'elevated' && '',
     ]"
   >
     <!-- Slot de header (opcional) -->
-    <div v-if="$slots.header" class="border-card-divider px-6 py-4 border-b">
+    <div v-if="$slots.header" class="border-line-2 border-b px-6 py-4">
       <slot name="header" />
     </div>
 
     <!-- Slot de conteúdo principal -->
-    <div :class="['ui-card-content', $slots.header && 'pt-0', paddingClasses]">
+    <div :class="['ui-card-content', paddingClasses]">
       <slot />
     </div>
 
     <!-- Slot de footer (opcional) -->
     <div
       v-if="$slots.footer"
-      class="border-card-divider bg-muted/20 px-6 py-4 border-t mt-auto"
+      class="border-line-2 bg-muted/20 px-6 py-4 border-t mt-auto"
     >
       <slot name="footer" />
     </div>
