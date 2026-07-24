@@ -45,7 +45,9 @@ const { tabs, openFromRoute, closeTab } = useTabs()
 watch(() => route.fullPath, () => openFromRoute(route), { immediate: true })
 
 function isActive(tab: AppTab): boolean {
-  return route.path === tab.path
+  if (route.path === tab.path) return true
+  // Rotas aninhadas (ex.: /establishments/new) mantêm a aba do pai ativa.
+  return tab.path !== '/' && route.path.startsWith(`${tab.path}/`)
 }
 
 function go(tab: AppTab): void {

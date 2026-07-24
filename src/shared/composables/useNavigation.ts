@@ -47,6 +47,11 @@ const navigationItems = computed((): NavigationItem[] => {
       to: '/companies',
     },
     {
+      id: 'establishments',
+      label: 'Estabelecimentos',
+      to: '/establishments',
+    },
+    {
       id: 'account',
       label: 'Conta',
       children: [

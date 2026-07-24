@@ -33,6 +33,7 @@ const links: NavLink[] = [
   { to: '/stock', label: 'Estoque', icon: 'Layers' },
   { to: '/purchases', label: 'Compras', icon: 'ShoppingCart' },
   { to: '/companies', label: 'Empresa', icon: 'Building' },
+  { to: '/establishments', label: 'Estabelecimentos', icon: 'Store' },
 ]
 
 // Entrada encenada: os itens surgem em cascata a partir da esquerda.
