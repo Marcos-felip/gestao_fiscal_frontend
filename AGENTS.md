@@ -203,6 +203,7 @@ src/
 - **Lógica:** ZERO — apenas apresentação
 - **Quando usar:** Em formulários, listas, cards, headers
 - **Exemplo:** `import { ButtonUi, InputUi, CardUi } from '@/shared/ui'`
+- **Disponíveis (destaques):** `Button`, `Input` (repassa `maxlength`/`inputmode`/`id` ao `<input>` real; slots `#prefix`/`#suffix`), `PasswordInput`, `Select` (campos de enum, API igual à do Input), `Tooltip` (dica por hover/foco), `Card`, `Icon`, `Span`, `Badge`, `Switch`, `Spinner`, `Skeleton`. Utilitários de máscara/validação BR em `@/shared/ui/utils/masks` (`formatCnpj`, `formatCep`, `formatPhone`, `onlyDigits`, `isValidCnpj`).
 
 ### `@/shared/components/` — Componentes Inteligentes
 
@@ -212,7 +213,7 @@ src/
 - **Lógica:** Apresentação + comportamento específico
 - **Quando usar:** Em múltiplas páginas, layouts, notificações
 - **Exemplo:** `import Toast from '@/shared/components/toast/toast-notification.vue'`
-- **Disponíveis:** `toast/`, `layouts/`, `navbar/`, `sidebar/`, `dialog/confirm-dialog.vue` (modal de confirmação reutilizável — usado, ex., no logout).
+- **Disponíveis:** `toast/`, `layouts/`, `navbar/`, `sidebar/`, `dialog/confirm-dialog.vue` (modal de confirmação reutilizável — usado, ex., no logout), `form/form-section.vue` (seção de formulário em Card com ícone/título/descrição — usada no form de empresa).
 
 ### Decisão: UI vs Component
 
@@ -286,6 +287,10 @@ stateDiagram-v2
   - **Barra de progresso global** no topo: `useProgress()` (`@/shared/composables`) com `start()`/`done()`/`track(promise)`. Já ligada ao router; envolva requests com `progress.track(...)`. Renderizada por `ProgressBar` no `App.vue`.
   - **Botão:** `:loading` mostra o `Spinner` (herda a cor do texto); use `loading-text` para trocar o rótulo (ex: `Entrando…`).
   - **Skeleton** (`@/shared/ui`): prefira skeleton a spinner central ao carregar dados de tela. Tamanho/raio via utilities (`<Skeleton class="h-4 w-24 rounded" />`).
+  - **Toast** de sucesso/erro: `useToast()` (`@/shared/composables`) com `.success()`/`.error()`/`.info()` — encapsula o evento escutado por `ToastNotification` no `App.vue`.
+- **Formulários:** agrupe campos por assunto em `FormSection` (Card com ícone/título). Use `Select` para enums, `Tooltip` (ícone `HelpCircle`) para ajuda contextual, `maxlength`/`inputmode` e as máscaras de `@/shared/ui/utils/masks` aplicadas no `@update:model-value`. Validação client-side com `safeParse` + `toFormErrors` (padrão dos forms de auth e empresa).
+- **Shell / Navbar:** header **escuro da marca** (gradiente `primary-900/950` + `secondary-950`) com duas linhas — breadcrumb (`NavbarBreadcrumb`, derivado de `useNavigation().breadcrumbs`) + ações à direita, e uma faixa de **abas** por página (`NavbarTabs`). Botões da navbar usam `NavbarButton` com `tone="light"` sobre o fundo escuro. A busca é um **ícone** que abre o `SearchModal` (não há mais barra de busca fixa).
+- **Abas de páginas (`useTabs`):** cada rota com `meta: { title, icon }` vira uma aba; a lista persiste em `localStorage` e a aba "Início" é fixa. Ao criar uma página navegável, adicione `meta.title` (rótulo da aba) e `meta.icon` (nome Lucide) na rota. Aba ativa = rota atual; fechar (`✕`) navega para a vizinha.
 
 ---
 
