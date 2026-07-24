@@ -1,6 +1,6 @@
 <template>
   <motion.nav
-    :class="['sidebar-nav', 'flex-1 overflow-y-auto px-4 py-4 space-y-1']"
+    :class="['sidebar-nav', 'flex-1 overflow-y-auto px-4 py-1 space-y-1']"
     :variants="containerVariants"
     initial="hidden"
     animate="visible"

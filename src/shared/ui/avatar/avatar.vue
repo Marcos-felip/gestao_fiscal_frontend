@@ -22,7 +22,7 @@ interface Props {
   src?: string
   alt?: string
   initials?: string
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   shape?: 'circle' | 'rounded'
   variant?: 'primary' | 'secondary' | 'muted'
 }
@@ -38,6 +38,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const sizeClasses = computed(() => {
   const sizes = {
+    xs: 'h-6 w-6',
     sm: 'h-8 w-8',
     md: 'h-10 w-10',
     lg: 'h-12 w-12',
@@ -47,6 +48,7 @@ const sizeClasses = computed(() => {
 
 const textSizeClasses = computed(() => {
   const sizes = {
+    xs: 'text-[10px]',
     sm: 'text-sm',
     md: 'text-base',
     lg: 'text-lg',

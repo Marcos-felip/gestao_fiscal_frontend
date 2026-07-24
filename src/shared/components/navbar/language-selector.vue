@@ -1,6 +1,6 @@
 <template>
   <div :class="['language-selector']">
-    <NavbarButton tooltip="Idioma" @click="showMenu = !showMenu">
+    <NavbarButton :tone="tone" tooltip="Idioma" @click="showMenu = !showMenu">
       <Icon name="Globe" size="md" />
     </NavbarButton>
 
@@ -44,6 +44,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { NavbarButton, Icon } from '@/shared/ui'
+
+withDefaults(defineProps<{ tone?: 'default' | 'light' }>(), {
+  tone: 'default',
+})
 
 interface Language {
   code: string

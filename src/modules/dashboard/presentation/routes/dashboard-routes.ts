@@ -7,5 +7,6 @@ export const dashboardRoutes: RouteRecordRaw[] = [
     path: '',
     name: routeNames.DASHBOARD,
     component: DashboardPage,
+    meta: { title: 'Início', icon: 'LayoutDashboard' },
   },
 ]
