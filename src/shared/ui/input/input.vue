@@ -1,5 +1,5 @@
 <template>
-  <div class="ui-input-wrapper">
+  <div class="ui-input-wrapper" :class="attrs.class" :style="attrs.style">
     <!-- Slot de label (opcional, antes do input) -->
     <label
       v-if="$slots.label"
@@ -10,7 +10,16 @@
 
     <!-- Container do input com animação de erro -->
     <div :class="['ui-input-container relative', error && 'shake-error']">
+      <!-- Slot de prefixo (ícone à esquerda, opcional) -->
+      <div
+        v-if="$slots.prefix"
+        class="absolute left-0 top-1/2 flex -translate-y-1/2 items-center ps-3 text-foreground/60"
+      >
+        <slot name="prefix" />
+      </div>
+
       <input
+        v-bind="inputAttrs"
         :type="type"
         :value="modelValue"
         :placeholder="placeholder"
@@ -34,6 +43,7 @@
           disabled && 'opacity-50 cursor-not-allowed bg-background-2',
           // Estilo do placeholder
           'placeholder:text-foreground/70',
+          $slots.prefix && 'ps-10',
           (error || success || $slots.suffix) && 'pe-10',
           inputClass,
         ]"
@@ -108,11 +118,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed, useAttrs } from 'vue'
+
 /**
  * Componente Input
  *
  * Wrapper ao redor do input HTML com estilização do Preline, estados de validação
  * e funcionalidades de acessibilidade.
+ *
+ * Atributos não declarados (id, maxlength, inputmode, autocomplete, name...)
+ * são repassados diretamente ao <input> real; class/style permanecem no wrapper.
  *
  * Props:
  * - modelValue: vinculação v-model para valor do input
@@ -124,6 +139,8 @@
  *
  * Slots:
  * - label: conteúdo de label opcional (renderizado antes do input)
+ * - prefix: ícone/adorno à esquerda do input
+ * - suffix: ícone/adorno à direita do input
  *
  * Emits:
  * - update:modelValue: quando o valor do input muda
@@ -159,6 +176,8 @@ interface Emits {
   (e: 'focus'): void
 }
 
+defineOptions({ inheritAttrs: false })
+
 withDefaults(defineProps<Props>(), {
   type: 'text',
   placeholder: '',
@@ -170,6 +189,13 @@ withDefaults(defineProps<Props>(), {
 })
 
 defineEmits<Emits>()
+
+// class/style ficam no wrapper; o restante (id, maxlength, inputmode...) vai ao input.
+const attrs = useAttrs()
+const inputAttrs = computed(() => {
+  const { class: _class, style: _style, ...rest } = attrs
+  return rest
+})
 
 const helperId = `input-helper-${Math.random().toString(36).slice(2, 9)}`
 </script>
