@@ -26,20 +26,14 @@ const navigationItems = computed((): NavigationItem[] => {
       to: '/',
     },
     {
+      id: 'permissions',
+      label: 'Permissões',
+      to: '/users/permissions',
+    },
+    {
       id: 'users',
       label: 'Usuários',
-      children: [
-        {
-          id: 'users-list',
-          label: 'Listar',
-          to: '/users',
-        },
-        {
-          id: 'users-create',
-          label: 'Criar',
-          to: '/users/create',
-        },
-      ],
+      to: '/users',
     },
     {
       id: 'companies',
