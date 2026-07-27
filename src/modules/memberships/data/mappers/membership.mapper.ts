@@ -5,7 +5,7 @@ import { ContractError } from '@/core/errors/contract-error'
 import { toIssueList } from '@/core/utils/zod-errors'
 import type { MembershipRole } from '@/enums/membership-role.enum'
 import { Membership } from '@/modules/memberships/domain/entities/membership.entity'
-import type { InvitedUser } from '@/modules/memberships/domain/responses/invited-user'
+import type { CreatedUser } from '@/modules/memberships/domain/responses/created-user'
 import type { UpdatedUser } from '@/modules/memberships/domain/responses/updated-user'
 
 const membershipSchema = z.object({
@@ -66,7 +66,7 @@ export function toUpdatedUser(data: unknown): Either<DomainError, UpdatedUser> {
   return Either.right({ id: value.id, name: value.name, email: value.email })
 }
 
-const invitedUserSchema = z.object({
+const createdUserSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
@@ -74,8 +74,8 @@ const invitedUserSchema = z.object({
   temporaryPassword: z.string().nullable().default(null),
 })
 
-export function toInvitedUser(data: unknown): Either<DomainError, InvitedUser> {
-  const parsed = invitedUserSchema.safeParse(data)
+export function toCreatedUser(data: unknown): Either<DomainError, CreatedUser> {
+  const parsed = createdUserSchema.safeParse(data)
   if (!parsed.success) {
     return Either.left(new ContractError('memberships', toIssueList(parsed.error)))
   }

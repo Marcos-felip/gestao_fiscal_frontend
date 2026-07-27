@@ -1,6 +1,6 @@
 import { MembershipsRepository } from '@/modules/memberships/data/repositories/memberships-repository'
 import { ListMembershipsUseCase } from '@/modules/memberships/application/use-cases/list-memberships.use-case'
-import { InviteUserUseCase } from '@/modules/memberships/application/use-cases/invite-user.use-case'
+import { CreateUserUseCase } from '@/modules/memberships/application/use-cases/create-user.use-case'
 import { UpdateMemberRoleUseCase } from '@/modules/memberships/application/use-cases/update-member-role.use-case'
 import { EditUserUseCase } from '@/modules/memberships/application/use-cases/edit-user.use-case'
 import { RemoveMemberUseCase } from '@/modules/memberships/application/use-cases/remove-member.use-case'
@@ -11,7 +11,7 @@ export function makeMembershipsController(): MembershipsController {
 
   return new MembershipsController(
     new ListMembershipsUseCase(repository),
-    new InviteUserUseCase(repository),
+    new CreateUserUseCase(repository),
     new UpdateMemberRoleUseCase(repository),
     new EditUserUseCase(repository),
     new RemoveMemberUseCase(repository),

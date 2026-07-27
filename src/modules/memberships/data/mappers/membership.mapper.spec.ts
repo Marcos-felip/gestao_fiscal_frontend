@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   toMembership,
   toMembershipList,
-  toInvitedUser,
+  toCreatedUser,
 } from '@/modules/memberships/data/mappers/membership.mapper'
 import { ContractError } from '@/core/errors/contract-error'
 import { Membership } from '@/modules/memberships/domain/entities/membership.entity'
@@ -48,9 +48,9 @@ describe('toMembershipList', () => {
   })
 })
 
-describe('toInvitedUser', () => {
+describe('toCreatedUser', () => {
   it('lê a senha provisória quando presente', () => {
-    const result = toInvitedUser({
+    const result = toCreatedUser({
       id: 'u2',
       name: 'Beto',
       email: 'beto@ex.com',
@@ -62,7 +62,7 @@ describe('toInvitedUser', () => {
   })
 
   it('usa null quando a senha provisória está ausente', () => {
-    const result = toInvitedUser({
+    const result = toCreatedUser({
       id: 'u2',
       name: 'Beto',
       email: 'beto@ex.com',

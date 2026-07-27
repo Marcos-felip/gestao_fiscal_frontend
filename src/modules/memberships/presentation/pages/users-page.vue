@@ -4,7 +4,7 @@ import { motion } from 'motion-v'
 import { Avatar, Button, Dropdown, Icon, Skeleton } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import RoleBadge from '@/modules/memberships/presentation/components/role-badge.vue'
-import InviteMemberDialog from '@/modules/memberships/presentation/components/invite-member-dialog.vue'
+import CreateUserDialog from '@/modules/memberships/presentation/components/create-user-dialog.vue'
 import EditUserDialog from '@/modules/memberships/presentation/components/edit-user-dialog.vue'
 import { makeMembershipsController } from '@/modules/memberships/factories/memberships.factory'
 import type { Membership } from '@/modules/memberships/domain/entities/membership.entity'
@@ -22,11 +22,11 @@ const controller = makeMembershipsController()
 const progress = useProgress()
 const { role, isOwner, can, isAtLeast } = usePermissions()
 
-const canInvite = computed(() => can('users.create'))
+const canCreate = computed(() => can('users.create'))
 const canViewPermissions = computed(() => isAtLeast(MembershipRole.ADMIN))
 const assignable = computed(() => assignableRoles(role.value))
 
-const inviteOpen = ref(false)
+const createOpen = ref(false)
 const editOpen = ref(false)
 const editTarget = ref<Membership | null>(null)
 const confirmOpen = ref(false)
@@ -81,22 +81,22 @@ async function onEditSubmit(input: {
   }
 }
 
-function openInvite(): void {
-  controller.invited.value = null
-  inviteOpen.value = true
+function openCreate(): void {
+  controller.created.value = null
+  createOpen.value = true
 }
 
-function setInviteOpen(value: boolean): void {
-  inviteOpen.value = value
-  if (!value) controller.invited.value = null
+function setCreateOpen(value: boolean): void {
+  createOpen.value = value
+  if (!value) controller.created.value = null
 }
 
-async function onInviteSubmit(input: {
+async function onCreateSubmit(input: {
   name?: string
   email: string
   role: MembershipRole
 }): Promise<void> {
-  await progress.track(controller.invite(input))
+  await progress.track(controller.create(input))
 }
 
 async function onChangeRole(
@@ -158,10 +158,10 @@ const rowItem = {
         Permissões
       </Button>
       <Button
-        v-if="canInvite"
+        v-if="canCreate"
         variant="primary"
         text-class="text-white"
-        @click="openInvite"
+        @click="openCreate"
       >
         <template #icon><Icon name="UserPlus" size="sm" /></template>
         Novo usuário
@@ -296,13 +296,13 @@ const rowItem = {
   </motion.div>
 
   <!-- Cadastro -->
-  <InviteMemberDialog
-    :model-value="inviteOpen"
+  <CreateUserDialog
+    :model-value="createOpen"
     :loading="controller.isLoading"
-    :invited="controller.invited.value"
+    :created="controller.created.value"
     :assignable="assignable"
-    @update:model-value="setInviteOpen"
-    @submit="onInviteSubmit"
+    @update:model-value="setCreateOpen"
+    @submit="onCreateSubmit"
   />
 
   <!-- Edição -->

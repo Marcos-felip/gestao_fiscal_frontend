@@ -1,13 +1,13 @@
 import { ref } from 'vue'
 import { BaseController } from '@/core/controllers/base-controller'
 import type { ListMembershipsUseCase } from '@/modules/memberships/application/use-cases/list-memberships.use-case'
-import type { InviteUserUseCase } from '@/modules/memberships/application/use-cases/invite-user.use-case'
+import type { CreateUserUseCase } from '@/modules/memberships/application/use-cases/create-user.use-case'
 import type { UpdateMemberRoleUseCase } from '@/modules/memberships/application/use-cases/update-member-role.use-case'
 import type { EditUserUseCase } from '@/modules/memberships/application/use-cases/edit-user.use-case'
 import type { RemoveMemberUseCase } from '@/modules/memberships/application/use-cases/remove-member.use-case'
 import { Membership } from '@/modules/memberships/domain/entities/membership.entity'
-import type { InvitedUser } from '@/modules/memberships/domain/responses/invited-user'
-import { InviteUserDto } from '@/modules/memberships/domain/dto/invite-user-dto'
+import type { CreatedUser } from '@/modules/memberships/domain/responses/created-user'
+import { CreateUserDto } from '@/modules/memberships/domain/dto/create-user-dto'
 import { UpdateMemberRoleDto } from '@/modules/memberships/domain/dto/update-member-role-dto'
 import { UpdateUserDto } from '@/modules/memberships/domain/dto/update-user-dto'
 import type { MembershipRole } from '@/enums/membership-role.enum'
@@ -17,7 +17,7 @@ import { useToast } from '@/shared/composables'
 
 export class MembershipsController extends BaseController {
   private readonly listUseCase: ListMembershipsUseCase
-  private readonly inviteUseCase: InviteUserUseCase
+  private readonly createUseCase: CreateUserUseCase
   private readonly updateRoleUseCase: UpdateMemberRoleUseCase
   private readonly editUseCase: EditUserUseCase
   private readonly removeUseCase: RemoveMemberUseCase
@@ -28,19 +28,19 @@ export class MembershipsController extends BaseController {
   readonly members = ref<Membership[]>([])
   readonly loaded = ref(false)
   readonly actingId = ref<string | null>(null)
-  /** Resultado do último convite (mostra a senha provisória). */
-  readonly invited = ref<InvitedUser | null>(null)
+  /** Resultado do último cadastro (mostra a senha provisória). */
+  readonly created = ref<CreatedUser | null>(null)
 
   constructor(
     listUseCase: ListMembershipsUseCase,
-    inviteUseCase: InviteUserUseCase,
+    createUseCase: CreateUserUseCase,
     updateRoleUseCase: UpdateMemberRoleUseCase,
     editUseCase: EditUserUseCase,
     removeUseCase: RemoveMemberUseCase,
   ) {
     super()
     this.listUseCase = listUseCase
-    this.inviteUseCase = inviteUseCase
+    this.createUseCase = createUseCase
     this.updateRoleUseCase = updateRoleUseCase
     this.editUseCase = editUseCase
     this.removeUseCase = removeUseCase
@@ -63,8 +63,8 @@ export class MembershipsController extends BaseController {
     this.setLoading(false)
   }
 
-  /** Cria o usuário; em sucesso guarda `invited` (senha provisória) e recarrega. */
-  async invite(input: {
+  /** Cria o usuário; em sucesso guarda `created` (senha provisória) e recarrega. */
+  async create(input: {
     name?: string
     email: string
     role: MembershipRole
@@ -76,17 +76,17 @@ export class MembershipsController extends BaseController {
     }
 
     this.setLoading(true)
-    const dto = new InviteUserDto({
+    const dto = new CreateUserDto({
       name: input.name || undefined,
       email: input.email,
       role: input.role,
       companyId,
     })
-    const result = await this.inviteUseCase.execute(dto)
+    const result = await this.createUseCase.execute(dto)
 
     let ok = false
-    this.handleResult(result, (invitedUser) => {
-      this.invited.value = invitedUser
+    this.handleResult(result, (createdUser) => {
+      this.created.value = createdUser
       ok = true
       void this.loadList()
     })

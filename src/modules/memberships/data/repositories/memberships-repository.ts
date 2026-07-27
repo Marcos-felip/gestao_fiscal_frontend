@@ -3,15 +3,15 @@ import type { DomainError } from '@/core/errors/domain-error'
 import { httpClient } from '@/core/client/http-client'
 import type { IMembershipsRepository } from '@/modules/memberships/domain/interfaces/i-memberships-repository.interface'
 import type { Membership } from '@/modules/memberships/domain/entities/membership.entity'
-import type { InvitedUser } from '@/modules/memberships/domain/responses/invited-user'
+import type { CreatedUser } from '@/modules/memberships/domain/responses/created-user'
 import type { UpdatedUser } from '@/modules/memberships/domain/responses/updated-user'
-import type { InviteUserDto } from '@/modules/memberships/domain/dto/invite-user-dto'
+import type { CreateUserDto } from '@/modules/memberships/domain/dto/create-user-dto'
 import type { UpdateMemberRoleDto } from '@/modules/memberships/domain/dto/update-member-role-dto'
 import type { UpdateUserDto } from '@/modules/memberships/domain/dto/update-user-dto'
 import {
   toMembership,
   toMembershipList,
-  toInvitedUser,
+  toCreatedUser,
   toUpdatedUser,
 } from '@/modules/memberships/data/mappers/membership.mapper'
 
@@ -21,9 +21,9 @@ export class MembershipsRepository implements IMembershipsRepository {
     return result.flatMap(toMembershipList)
   }
 
-  async invite(dto: InviteUserDto): Promise<Either<DomainError, InvitedUser>> {
+  async create(dto: CreateUserDto): Promise<Either<DomainError, CreatedUser>> {
     const result = await httpClient.post<unknown>('/users', this.toPayload(dto))
-    return result.flatMap(toInvitedUser)
+    return result.flatMap(toCreatedUser)
   }
 
   async updateRole(

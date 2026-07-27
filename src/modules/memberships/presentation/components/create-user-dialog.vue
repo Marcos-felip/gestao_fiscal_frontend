@@ -8,16 +8,16 @@ import {
   MembershipRole,
   membershipRoleLabels,
 } from '@/enums/membership-role.enum'
-import type { InvitedUser } from '@/modules/memberships/domain/responses/invited-user'
+import type { CreatedUser } from '@/modules/memberships/domain/responses/created-user'
 import {
-  inviteSchema,
-  type InviteFormData,
-} from '@/modules/memberships/presentation/schemas/invite-schema'
+  createUserSchema,
+  type CreateUserFormData,
+} from '@/modules/memberships/presentation/schemas/create-user-schema'
 
 const props = defineProps<{
   modelValue: boolean
   loading: boolean
-  invited: InvitedUser | null
+  created: CreatedUser | null
   assignable: MembershipRole[]
 }>()
 
@@ -31,14 +31,14 @@ const toast = useToast()
 const name = ref('')
 const email = ref('')
 const role = ref<string>('')
-const errors = ref<Partial<Record<keyof InviteFormData, string>>>({})
+const errors = ref<Partial<Record<keyof CreateUserFormData, string>>>({})
 
 const roleOptions = computed(() =>
   props.assignable.map((r) => ({ value: r, label: membershipRoleLabels[r] })),
 )
 
-// Estado de sucesso: convite criado, exibindo a senha provisória.
-const success = computed(() => props.invited !== null)
+// Estado de sucesso: usuário criado, exibindo a senha provisória.
+const success = computed(() => props.created !== null)
 
 function resetForm(): void {
   name.value = ''
@@ -62,7 +62,7 @@ function close(): void {
 }
 
 function handleSubmit(): void {
-  const result = inviteSchema.safeParse({
+  const result = createUserSchema.safeParse({
     name: name.value,
     email: email.value,
     role: role.value,
@@ -80,9 +80,9 @@ function handleSubmit(): void {
 }
 
 async function copyPassword(): Promise<void> {
-  if (!props.invited?.temporaryPassword) return
+  if (!props.created?.temporaryPassword) return
   try {
-    await navigator.clipboard.writeText(props.invited.temporaryPassword)
+    await navigator.clipboard.writeText(props.created.temporaryPassword)
     toast.success('Senha copiada.')
   } catch {
     toast.error('Não foi possível copiar.')
@@ -142,15 +142,15 @@ async function copyPassword(): Promise<void> {
         </span>
         <div class="min-w-0">
           <p class="truncate font-medium text-foreground">
-            {{ invited?.name }}
+            {{ created?.name }}
           </p>
           <p class="truncate text-sm text-muted-foreground">
-            {{ invited?.email }}
+            {{ created?.email }}
           </p>
         </div>
       </div>
 
-      <div v-if="invited?.temporaryPassword">
+      <div v-if="created?.temporaryPassword">
         <span class="mb-1.5 block text-sm font-medium text-foreground">
           Senha provisória
         </span>
@@ -158,7 +158,7 @@ async function copyPassword(): Promise<void> {
           class="flex items-center gap-2 rounded-lg border border-line-2 bg-muted/40 px-3 py-2"
         >
           <code class="flex-1 truncate text-sm text-foreground">
-            {{ invited.temporaryPassword }}
+            {{ created.temporaryPassword }}
           </code>
           <button
             type="button"

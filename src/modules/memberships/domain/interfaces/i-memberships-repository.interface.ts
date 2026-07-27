@@ -1,15 +1,15 @@
 import type { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import type { Membership } from '@/modules/memberships/domain/entities/membership.entity'
-import type { InvitedUser } from '@/modules/memberships/domain/responses/invited-user'
+import type { CreatedUser } from '@/modules/memberships/domain/responses/created-user'
 import type { UpdatedUser } from '@/modules/memberships/domain/responses/updated-user'
-import type { InviteUserDto } from '@/modules/memberships/domain/dto/invite-user-dto'
+import type { CreateUserDto } from '@/modules/memberships/domain/dto/create-user-dto'
 import type { UpdateMemberRoleDto } from '@/modules/memberships/domain/dto/update-member-role-dto'
 import type { UpdateUserDto } from '@/modules/memberships/domain/dto/update-user-dto'
 
 export interface IMembershipsRepository {
   list(): Promise<Either<DomainError, Membership[]>>
-  invite(dto: InviteUserDto): Promise<Either<DomainError, InvitedUser>>
+  create(dto: CreateUserDto): Promise<Either<DomainError, CreatedUser>>
   updateRole(
     id: string,
     dto: UpdateMemberRoleDto,
