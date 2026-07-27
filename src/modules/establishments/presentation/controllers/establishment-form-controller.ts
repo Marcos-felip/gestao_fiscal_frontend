@@ -15,7 +15,9 @@ import { routeNames } from '@/router/route-names'
 function emptyValues(): EstablishmentFormValues {
   return {
     name: '',
-    type: '',
+    // A matriz é gerida na página de Empresa; este formulário cria/edita
+    // apenas filiais, então o tipo é sempre FILIAL.
+    type: 'FILIAL',
     cnpj: '',
     inscricaoEstadual: '',
     inscricaoMunicipal: '',
@@ -55,19 +57,24 @@ export class EstablishmentFormController extends BaseController {
     return this.editingId !== null
   }
 
-  /** Modo criação: começa com o formulário vazio. */
   prepareCreate(): void {
     this.editingId = null
     this.values.value = emptyValues()
     this.loaded.value = true
   }
 
-  /** Modo edição: carrega o estabelecimento e preenche o formulário. */
   async loadForEdit(id: string): Promise<void> {
     this.editingId = id
     this.setLoading(true)
     const result = await this.getUseCase.execute(id)
     this.handleResult(result, (establishment) => {
+      // A matriz é editada na página de Empresa. Se alguém acessar a URL de
+      // edição da matriz diretamente, redireciona para o lugar correto.
+      if (establishment.isMatriz) {
+        this.toast.info('A sede (matriz) é gerenciada na página de Empresa.')
+        this.router.push({ name: routeNames.COMPANY })
+        return
+      }
       this.values.value = this.toValues(establishment)
     })
     this.loaded.value = true
@@ -86,8 +93,8 @@ export class EstablishmentFormController extends BaseController {
     this.handleResult(result, () => {
       this.toast.success(
         this.editingId
-          ? 'Estabelecimento atualizado com sucesso.'
-          : 'Estabelecimento criado com sucesso.',
+          ? 'Filial atualizada com sucesso.'
+          : 'Filial criada com sucesso.',
       )
       this.router.push({ name: routeNames.ESTABLISHMENTS })
     })

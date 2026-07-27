@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Icon, Skeleton } from '@/shared/ui'
+import { Button, Icon, Skeleton } from '@/shared/ui'
 import EstablishmentForm from '@/modules/establishments/presentation/components/establishment-form.vue'
 import { makeEstablishmentFormController } from '@/modules/establishments/factories/establishments.factory'
 import type { EstablishmentFormValues } from '@/modules/establishments/presentation/schemas/establishment-schema'
@@ -35,18 +35,15 @@ function handleCancel(): void {
 
 <template>
   <!-- Cabeçalho -->
-  <header class="mb-6">
-    <button
-      type="button"
-      class="mb-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      @click="handleCancel"
-    >
-      <Icon name="ArrowLeft" size="sm" />
-      Estabelecimentos
-    </button>
+  <header class="mb-6 flex items-start justify-between gap-4">
     <h1 class="font-display text-2xl font-bold tracking-tight text-foreground">
-      {{ controller.isEditing ? 'Editar estabelecimento' : 'Novo estabelecimento' }}
+      {{ controller.isEditing ? 'Editar filial' : 'Nova filial' }}
     </h1>
+
+    <Button variant="ghost" @click="handleCancel">
+      <template #icon><Icon name="ArrowLeft" size="sm" /></template>
+      Voltar
+    </Button>
   </header>
 
   <!-- Erro -->
@@ -83,9 +80,7 @@ function handleCancel(): void {
     v-else
     :initial="controller.values.value"
     :loading="controller.isLoading"
-    :submit-label="
-      controller.isEditing ? 'Salvar alterações' : 'Criar estabelecimento'
-    "
+    :submit-label="controller.isEditing ? 'Salvar alterações' : 'Criar filial'"
     @submit="handleSubmit"
     @cancel="handleCancel"
   />

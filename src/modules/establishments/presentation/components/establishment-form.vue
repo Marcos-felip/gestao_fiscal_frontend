@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
 import { motion } from 'motion-v'
-import { Button, Icon, Input, Select, Spinner, Tooltip } from '@/shared/ui'
+import { Icon, Input, Select, Spinner, Tooltip } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
-import { establishmentTypeOptions } from '@/enums/establishment-type.enum'
+import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import { brazilianStateOptions } from '@/core/constants/brazilian-states'
 import { formatCnpj, formatCep, onlyDigits } from '@/shared/ui/utils/masks'
 import { fetchAddressByCep } from '@/core/services/via-cep'
@@ -29,7 +29,6 @@ const form = reactive<EstablishmentFormValues>({ ...props.initial })
 const errors = ref<Partial<Record<keyof EstablishmentFormData, string>>>({})
 const cepLoading = ref(false)
 
-// Re-semeia quando os dados carregados chegam (modo edição).
 watch(
   () => props.initial,
   (value) => Object.assign(form, value),
@@ -95,38 +94,34 @@ const item = {
           description="Identificação do estabelecimento."
         >
           <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div class="sm:col-span-2">
-              <Input
-                v-model="form.name"
-                maxlength="120"
-                placeholder="Nome do estabelecimento"
-                :error="errors.name"
-              >
-                <template #label>Nome</template>
-              </Input>
-            </div>
-
-            <Select
-              v-model="form.type"
-              :options="establishmentTypeOptions"
-              placeholder="Selecione o tipo"
-              :error="errors.type"
+            <Input
+              v-model="form.name"
+              maxlength="120"
+              placeholder="Nome do estabelecimento"
+              :error="errors.name"
             >
-              <template #label>
-                <span class="inline-flex items-center gap-1.5">
-                  Tipo
-                  <Tooltip
-                    text="Matriz é a sede; filiais são as demais unidades. Só pode existir uma matriz."
-                  >
-                    <Icon
-                      name="HelpCircle"
-                      size="sm"
-                      class="text-foreground/40"
-                    />
-                  </Tooltip>
-                </span>
-              </template>
-            </Select>
+              <template #label>Nome</template>
+            </Input>
+
+            <!-- Tipo fixo: a matriz é gerida na página de Empresa. -->
+            <div>
+              <span
+                class="mb-1.5 inline-flex items-center gap-1.5 text-sm font-medium text-foreground"
+              >
+                Tipo
+                <Tooltip
+                  text="A sede (matriz) é gerenciada na página de Empresa. Este cadastro cria apenas filiais."
+                >
+                  <Icon name="HelpCircle" size="sm" class="text-foreground/40" />
+                </Tooltip>
+              </span>
+              <div
+                class="flex h-11 items-center gap-2 rounded-lg border border-line-2 bg-muted/40 px-3 text-sm text-muted-foreground"
+              >
+                <Icon name="Store" size="sm" class="shrink-0" />
+                Filial
+              </div>
+            </div>
           </div>
         </FormSection>
       </motion.div>
@@ -244,30 +239,10 @@ const item = {
       </motion.div>
     </motion.div>
 
-    <!-- Barra de ações -->
-    <div class="sticky bottom-4 z-10 mt-6">
-      <div
-        class="ui-shadow-float flex items-center justify-end gap-2 rounded-xl border border-line-2 bg-background/90 px-4 py-3 backdrop-blur-md"
-      >
-        <Button
-          type="button"
-          variant="ghost"
-          :disabled="props.loading"
-          @click="emit('cancel')"
-        >
-          Cancelar
-        </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          text-class="text-white"
-          :loading="props.loading"
-          loading-text="Salvando…"
-        >
-          <template #icon><Icon name="Check" size="sm" /></template>
-          {{ props.submitLabel }}
-        </Button>
-      </div>
-    </div>
+    <FormActionBar
+      :submit-label="props.submitLabel"
+      :loading="props.loading"
+      @secondary="emit('cancel')"
+    />
   </form>
 </template>

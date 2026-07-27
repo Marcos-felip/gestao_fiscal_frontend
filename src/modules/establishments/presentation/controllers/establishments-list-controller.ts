@@ -10,7 +10,10 @@ export class EstablishmentsListController extends BaseController {
   private readonly deleteUseCase: DeleteEstablishmentUseCase
   private readonly toast = useToast()
 
+  /** Apenas filiais — a matriz (sede) é gerida na página de Empresa. */
   readonly establishments = ref<Establishment[]>([])
+  /** A sede da empresa, exibida como cartão read-only que leva a Empresa. */
+  readonly matriz = ref<Establishment | null>(null)
   readonly loaded = ref(false)
   readonly deletingId = ref<string | null>(null)
 
@@ -27,7 +30,8 @@ export class EstablishmentsListController extends BaseController {
     this.setLoading(true)
     const result = await this.listUseCase.execute()
     this.handleResult(result, (items) => {
-      this.establishments.value = items
+      this.matriz.value = items.find((e) => e.isMatriz) ?? null
+      this.establishments.value = items.filter((e) => !e.isMatriz)
     })
     this.loaded.value = true
     this.setLoading(false)
@@ -41,7 +45,7 @@ export class EstablishmentsListController extends BaseController {
       this.establishments.value = this.establishments.value.filter(
         (e) => e.id !== establishment.id,
       )
-      this.toast.success('Estabelecimento excluído.')
+      this.toast.success('Filial excluída.')
     })
     this.setLoading(false)
     this.deletingId.value = null

@@ -33,7 +33,6 @@ export const establishmentSchema = z.object({
 
 export type EstablishmentFormData = z.infer<typeof establishmentSchema>
 
-/** Valores do formulário como strings (o que os campos controlam). */
 export interface EstablishmentFormValues {
   name: string
   type: string
