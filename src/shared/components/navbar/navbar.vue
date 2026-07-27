@@ -37,17 +37,6 @@ const { toggle: toggleSidebar } = useSidebar()
 
 <style scoped lang="css">
 .navbar {
-  background:
-    radial-gradient(
-      120% 140% at 0% 0%,
-      var(--color-primary-700),
-      transparent 55%
-    ),
-    linear-gradient(
-      120deg,
-      var(--color-primary-900),
-      var(--color-primary-950) 60%,
-      var(--color-secondary-950)
-    );
+  background-color: var(--color-primary);
 }
 </style>

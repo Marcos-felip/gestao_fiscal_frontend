@@ -24,7 +24,7 @@ interface Props {
   initials?: string
   size?: 'xs' | 'sm' | 'md' | 'lg'
   shape?: 'circle' | 'rounded'
-  variant?: 'primary' | 'secondary' | 'muted'
+  variant?: 'primary' | 'secondary' | 'muted' | 'inverse'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -65,6 +65,7 @@ const variantClasses = computed(() => {
     primary: 'bg-primary text-white',
     secondary: 'bg-secondary text-secondary-foreground',
     muted: 'bg-muted text-foreground',
+    inverse: 'bg-white text-primary',
   }
   return variants[props.variant]
 })

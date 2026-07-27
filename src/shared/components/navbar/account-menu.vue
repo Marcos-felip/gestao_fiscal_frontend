@@ -7,7 +7,7 @@
       aria-haspopup="menu"
       @click="toggleMenu"
     >
-      <Avatar :initials="userInitials" size="sm" />
+      <Avatar :initials="userInitials" size="sm" variant="inverse" />
     </NavbarButton>
 
     <Transition name="dropdown-scale">
