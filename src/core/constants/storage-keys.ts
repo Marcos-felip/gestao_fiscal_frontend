@@ -7,4 +7,5 @@ export const StorageKeys = {
   REFRESH_TOKEN: 'refresh_token',
   ACTIVE_COMPANY: 'active_company',
   USER: 'user',
+  OPEN_TABS: 'open_tabs',
 } as const

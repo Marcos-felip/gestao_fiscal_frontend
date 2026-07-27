@@ -8,7 +8,7 @@
       <Sidebar />
 
       <!-- Main content -->
-      <main :class="['main-content', 'flex-1 pt-16 lg:ml-64']">
+      <main :class="['main-content', 'flex-1 pt-[80px] lg:ml-64']">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <RouterView />
         </div>
@@ -39,7 +39,7 @@ import Sidebar from '@/shared/components/sidebar/sidebar.vue'
 @media (max-width: 1024px) {
   .main-content {
     margin-left: 0;
-    padding-top: 4rem; /* height navbar */
+    padding-top: 5rem; /* altura do navbar (breadcrumb + abas) */
   }
 }
 </style>

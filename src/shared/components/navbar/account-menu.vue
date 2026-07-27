@@ -2,11 +2,12 @@
   <div ref="rootEl" :class="['account-menu']">
     <NavbarButton
       class="relative group"
+      :tone="tone"
       :aria-expanded="showMenu"
       aria-haspopup="menu"
       @click="toggleMenu"
     >
-      <Avatar :initials="userInitials" size="sm" />
+      <Avatar :initials="userInitials" size="sm" variant="inverse" />
     </NavbarButton>
 
     <Transition name="dropdown-scale">
@@ -145,6 +146,10 @@ import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import { useNavbar } from '@/shared/composables'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
 import { routeNames } from '@/router/route-names'
+
+withDefaults(defineProps<{ tone?: 'default' | 'light' }>(), {
+  tone: 'default',
+})
 
 const { isDarkMode, toggleDarkMode } = useNavbar()
 const authStore = useAuthStore()

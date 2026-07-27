@@ -1,0 +1,16 @@
+import type { IEstablishmentRepository } from '@/modules/establishments/domain/interfaces/i-establishment-repository.interface'
+import type { Either } from '@/core/either/either'
+import type { DomainError } from '@/core/errors/domain-error'
+import type { Establishment } from '@/modules/establishments/domain/entities/establishment.entity'
+
+export class ListEstablishmentsUseCase {
+  private readonly repository: IEstablishmentRepository
+
+  constructor(repository: IEstablishmentRepository) {
+    this.repository = repository
+  }
+
+  async execute(): Promise<Either<DomainError, Establishment[]>> {
+    return this.repository.list()
+  }
+}

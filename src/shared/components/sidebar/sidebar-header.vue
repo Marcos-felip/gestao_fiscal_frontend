@@ -2,7 +2,7 @@
   <div
     :class="[
       'sidebar-header',
-      'flex items-center justify-between gap-3 px-4 py-2',
+      'flex items-center justify-between gap-3 px-4 py-4',
     ]"
   >
     <!-- Logo with text -->

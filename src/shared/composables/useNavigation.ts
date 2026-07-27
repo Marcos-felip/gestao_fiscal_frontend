@@ -43,19 +43,13 @@ const navigationItems = computed((): NavigationItem[] => {
     },
     {
       id: 'companies',
-      label: 'Empresas',
-      children: [
-        {
-          id: 'companies-list',
-          label: 'Listar',
-          to: '/companies',
-        },
-        {
-          id: 'companies-create',
-          label: 'Criar',
-          to: '/companies/create',
-        },
-      ],
+      label: 'Empresa',
+      to: '/companies',
+    },
+    {
+      id: 'establishments',
+      label: 'Estabelecimentos',
+      to: '/establishments',
     },
     {
       id: 'account',

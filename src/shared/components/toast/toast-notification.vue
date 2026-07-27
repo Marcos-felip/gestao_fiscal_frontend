@@ -24,11 +24,22 @@ function removeToast(id: number): void {
 function typeClasses(type: Toast['type']): string {
   switch (type) {
     case 'success':
-      return 'bg-primary text-primary-foreground'
+      return 'bg-success text-white'
     case 'error':
       return 'bg-destructive text-destructive-foreground'
     case 'info':
-      return 'bg-surface text-surface-foreground'
+      return 'bg-primary text-primary-foreground'
+  }
+}
+
+function typeIcon(type: Toast['type']): string {
+  switch (type) {
+    case 'success':
+      return 'CircleCheck'
+    case 'error':
+      return 'CircleAlert'
+    case 'info':
+      return 'Info'
   }
 }
 
@@ -50,12 +61,14 @@ onMounted(() => {
           'flex items-center gap-3 rounded-lg px-4 py-3 shadow-lg min-w-[300px] max-w-[400px]',
         ]"
       >
+        <Icon :name="typeIcon(toast.type)" size="sm" class="shrink-0" />
         <span class="flex-1 text-sm font-medium">{{ toast.message }}</span>
         <button
           class="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+          aria-label="Fechar"
           @click="removeToast(toast.id)"
         >
-          <Icon name="close" class="h-4 w-4" />
+          <Icon name="X" size="sm" />
         </button>
       </div>
     </TransitionGroup>

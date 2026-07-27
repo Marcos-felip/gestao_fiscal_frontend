@@ -1,6 +1,6 @@
 <template>
   <motion.nav
-    :class="['sidebar-nav', 'flex-1 overflow-y-auto px-4 py-4 space-y-1']"
+    :class="['sidebar-nav', 'flex-1 overflow-y-auto px-4 py-1 space-y-1']"
     :variants="containerVariants"
     initial="hidden"
     animate="visible"
@@ -32,6 +32,7 @@ const links: NavLink[] = [
   { to: '/partners', label: 'Parceiros', icon: 'Users' },
   { to: '/stock', label: 'Estoque', icon: 'Layers' },
   { to: '/purchases', label: 'Compras', icon: 'ShoppingCart' },
+  { to: '/establishments', label: 'Estabelecimentos', icon: 'Store' },
   { to: '/companies', label: 'Empresa', icon: 'Building' },
 ]
 

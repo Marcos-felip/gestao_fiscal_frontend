@@ -203,6 +203,7 @@ src/
 - **Lógica:** ZERO — apenas apresentação
 - **Quando usar:** Em formulários, listas, cards, headers
 - **Exemplo:** `import { ButtonUi, InputUi, CardUi } from '@/shared/ui'`
+- **Disponíveis (destaques):** `Button`, `Input` (repassa `maxlength`/`inputmode`/`id` ao `<input>` real; slots `#prefix`/`#suffix`), `PasswordInput`, `Select` (campos de enum, API igual à do Input), `Tooltip` (dica por hover/foco), `Card`, `Icon`, `Span`, `Badge`, `Switch`, `Spinner`, `Skeleton`. Utilitários de máscara/validação BR em `@/shared/ui/utils/masks` (`formatCnpj`, `formatCep`, `formatPhone`, `onlyDigits`, `isValidCnpj`).
 
 ### `@/shared/components/` — Componentes Inteligentes
 
@@ -212,7 +213,7 @@ src/
 - **Lógica:** Apresentação + comportamento específico
 - **Quando usar:** Em múltiplas páginas, layouts, notificações
 - **Exemplo:** `import Toast from '@/shared/components/toast/toast-notification.vue'`
-- **Disponíveis:** `toast/`, `layouts/`, `navbar/`, `sidebar/`, `dialog/confirm-dialog.vue` (modal de confirmação reutilizável — usado, ex., no logout).
+- **Disponíveis:** `toast/`, `layouts/`, `navbar/`, `sidebar/`, `dialog/confirm-dialog.vue` (modal de confirmação reutilizável — usado, ex., no logout), `form/form-section.vue` (seção de formulário em Card com ícone/título/descrição — usada no form de empresa).
 
 ### Decisão: UI vs Component
 
@@ -286,6 +287,13 @@ stateDiagram-v2
   - **Barra de progresso global** no topo: `useProgress()` (`@/shared/composables`) com `start()`/`done()`/`track(promise)`. Já ligada ao router; envolva requests com `progress.track(...)`. Renderizada por `ProgressBar` no `App.vue`.
   - **Botão:** `:loading` mostra o `Spinner` (herda a cor do texto); use `loading-text` para trocar o rótulo (ex: `Entrando…`).
   - **Skeleton** (`@/shared/ui`): prefira skeleton a spinner central ao carregar dados de tela. Tamanho/raio via utilities (`<Skeleton class="h-4 w-24 rounded" />`).
+  - **Toast** de sucesso/erro: `useToast()` (`@/shared/composables`) com `.success()`/`.error()`/`.info()` — encapsula o evento escutado por `ToastNotification` no `App.vue`.
+- **Formulários:** agrupe campos por assunto em `FormSection` (Card com ícone/título). Use `Select` para enums, `Tooltip` (ícone `HelpCircle`) para ajuda contextual, `maxlength`/`inputmode` e as máscaras de `@/shared/ui/utils/masks` aplicadas no `@update:model-value`. Validação client-side com `safeParse` + `toFormErrors` (padrão dos forms de auth, empresa e estabelecimentos). Barra de ações fixa embaixo via `FormActionBar` (`@/shared/components/form`): botão secundário (`secondary-label` + evento `secondary`) + submit (`type="submit"`, dispara o `@submit` do form pai). Com `show-status` + `:dirty` funciona como "save bar" — só aparece (com transição) quando há alterações não salvas; sem `show-status` fica sempre visível (fluxos de criar/editar). NÃO reimplemente essa barra por form.
+- **Endereço:** UF via `Select` com `brazilianStateOptions` (`@/core/constants/brazilian-states`). Autopreenchimento por CEP com `fetchAddressByCep` (`@/core/services/via-cep`, API pública ViaCEP) — dispare no `@update:model-value` do CEP (não em `watch`, para não sobrescrever dados carregados na edição).
+- **CRUD em lista:** o módulo `establishments` é a referência de CRUD completo — lista em **cards** (grade), criar/editar em **página separada** (`/new`, `/:id/edit`) reusando `FormSection`, e exclusão com `ConfirmDialog`.
+- **Empresa ⇄ Sede (matriz):** no backend, **empresa** (PJ) e **matriz** (estabelecimento sede) são entidades separadas que compartilham CNPJ + Inscrição Estadual e nascem juntas no onboarding. Para evitar dois formulários confusos e divergência de dados, a **página de Empresa absorve a sede**: além das seções da PJ, tem a seção **"Sede / Matriz"** (endereço + inscrição municipal). No `save`, o controller faz **dois PATCH** (`/companies/:id` e `/establishments/:matrizId`) e **propaga CNPJ/IE da empresa para a matriz** (fonte única). A composição vive em `companies.factory.ts`, que injeta `ListEstablishmentsUseCase` + `UpdateEstablishmentUseCase` de estabelecimentos no `CompanyController` (permitido: `factories/` é o único ponto sem restrição de import). Consequência: o **módulo `establishments` cuida só de FILIAIS** — o form tem tipo fixo `FILIAL` (matriz gerida em Empresa), a lista mostra as filiais + um **card "Sede" read-only** que leva a `/companies`, e acessar a URL de edição da matriz redireciona para Empresa.
+- **Shell / Navbar:** header **escuro da marca** (gradiente `primary-900/950` + `secondary-950`) com duas linhas — breadcrumb (`NavbarBreadcrumb`, derivado de `useNavigation().breadcrumbs`) + ações à direita, e uma faixa de **abas** por página (`NavbarTabs`). Botões da navbar usam `NavbarButton` com `tone="light"` sobre o fundo escuro. A busca é um **ícone** que abre o `SearchModal` (não há mais barra de busca fixa).
+- **Abas de páginas (`useTabs`):** cada rota com `meta: { title, icon }` vira uma aba; a lista persiste em `localStorage` e a aba "Início" é fixa. Ao criar uma página navegável, adicione `meta.title` (rótulo da aba) e `meta.icon` (nome Lucide) na rota. Aba ativa = rota atual; fechar (`✕`) navega para a vizinha.
 
 ---
 
