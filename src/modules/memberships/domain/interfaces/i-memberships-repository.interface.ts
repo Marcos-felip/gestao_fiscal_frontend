@@ -2,8 +2,10 @@ import type { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import type { Membership } from '@/modules/memberships/domain/entities/membership.entity'
 import type { InvitedUser } from '@/modules/memberships/domain/responses/invited-user'
+import type { UpdatedUser } from '@/modules/memberships/domain/responses/updated-user'
 import type { InviteUserDto } from '@/modules/memberships/domain/dto/invite-user-dto'
 import type { UpdateMemberRoleDto } from '@/modules/memberships/domain/dto/update-member-role-dto'
+import type { UpdateUserDto } from '@/modules/memberships/domain/dto/update-user-dto'
 
 export interface IMembershipsRepository {
   list(): Promise<Either<DomainError, Membership[]>>
@@ -12,5 +14,9 @@ export interface IMembershipsRepository {
     id: string,
     dto: UpdateMemberRoleDto,
   ): Promise<Either<DomainError, Membership>>
+  update(
+    userId: string,
+    dto: UpdateUserDto,
+  ): Promise<Either<DomainError, UpdatedUser>>
   remove(id: string): Promise<Either<DomainError, void>>
 }

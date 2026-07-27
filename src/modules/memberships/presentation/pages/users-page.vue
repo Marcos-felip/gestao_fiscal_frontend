@@ -5,6 +5,7 @@ import { Avatar, Button, Dropdown, Icon, Skeleton } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import RoleBadge from '@/modules/memberships/presentation/components/role-badge.vue'
 import InviteMemberDialog from '@/modules/memberships/presentation/components/invite-member-dialog.vue'
+import EditUserDialog from '@/modules/memberships/presentation/components/edit-user-dialog.vue'
 import { makeMembershipsController } from '@/modules/memberships/factories/memberships.factory'
 import type { Membership } from '@/modules/memberships/domain/entities/membership.entity'
 import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
@@ -12,20 +13,22 @@ import {
   MembershipRole,
   assignableRoles,
   membershipRoleLabels,
+  roleRank,
 } from '@/enums/membership-role.enum'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 
 const controller = makeMembershipsController()
 const progress = useProgress()
-const { role, can, isAtLeast } = usePermissions()
+const { role, isOwner, can, isAtLeast } = usePermissions()
 
 const canInvite = computed(() => can('users.create'))
-const canManage = computed(() => isAtLeast(MembershipRole.OWNER))
 const canViewPermissions = computed(() => isAtLeast(MembershipRole.ADMIN))
 const assignable = computed(() => assignableRoles(role.value))
 
 const inviteOpen = ref(false)
+const editOpen = ref(false)
+const editTarget = ref<Membership | null>(null)
 const confirmOpen = ref(false)
 const target = ref<Membership | null>(null)
 
@@ -33,6 +36,49 @@ onMounted(() => progress.track(controller.loadList()))
 
 function rolesFor(member: Membership): MembershipRole[] {
   return assignable.value.filter((r) => r !== member.role)
+}
+
+// Não é possível gerenciar quem tem papel superior ao seu (regra do backend).
+function canActOn(member: Membership): boolean {
+  const current = role.value
+  if (!current) return false
+  return roleRank[current] >= roleRank[member.role]
+}
+
+function canEditMember(member: Membership): boolean {
+  return !member.isOwner && can('users.edit') && canActOn(member)
+}
+
+function canDeleteMember(member: Membership): boolean {
+  return !member.isOwner && can('users.delete') && canActOn(member)
+}
+
+// Alterar papel continua exclusivo do OWNER (backend).
+function canChangeRole(member: Membership): boolean {
+  return isOwner.value && !member.isOwner
+}
+
+function hasActions(member: Membership): boolean {
+  return (
+    canChangeRole(member) || canEditMember(member) || canDeleteMember(member)
+  )
+}
+
+function openEdit(member: Membership): void {
+  editTarget.value = member
+  editOpen.value = true
+}
+
+async function onEditSubmit(input: {
+  name: string
+  email: string
+}): Promise<void> {
+  if (!editTarget.value) return
+  const ok = await progress.track(controller.editUser(editTarget.value, input))
+  if (ok) {
+    editOpen.value = false
+    editTarget.value = null
+  }
 }
 
 function openInvite(): void {
@@ -196,33 +242,52 @@ const rowItem = {
       <RoleBadge :role="member.role" />
 
       <div class="flex w-9 justify-end">
-        <Dropdown v-if="canManage && !member.isOwner" align="right">
+        <Dropdown v-if="hasActions(member)" align="right">
           <template #trigger>
             <Icon name="EllipsisVertical" size="sm" />
           </template>
           <template #default="{ close }">
             <div class="py-1">
+              <!-- Alterar papel (OWNER) -->
+              <template v-if="canChangeRole(member)">
+                <button
+                  v-for="r in rolesFor(member)"
+                  :key="r"
+                  type="button"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                  @click="onChangeRole(member, r), close()"
+                >
+                  <Icon name="Shield" size="sm" class="text-muted-foreground" />
+                  Definir como {{ membershipRoleLabels[r] }}
+                </button>
+              </template>
+
+              <!-- Editar -->
               <button
-                v-for="r in rolesFor(member)"
-                :key="r"
+                v-if="canEditMember(member)"
                 type="button"
                 class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                @click="onChangeRole(member, r), close()"
+                @click="openEdit(member), close()"
               >
-                <Icon name="Shield" size="sm" class="text-muted-foreground" />
-                Definir como {{ membershipRoleLabels[r] }}
+                <Icon name="Pencil" size="sm" class="text-muted-foreground" />
+                Editar
               </button>
 
-              <div class="my-1 border-t border-line-2" />
-
-              <button
-                type="button"
-                class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
-                @click="askRemove(member), close()"
-              >
-                <Icon name="Trash2" size="sm" />
-                Remover
-              </button>
+              <!-- Remover -->
+              <template v-if="canDeleteMember(member)">
+                <div
+                  v-if="canChangeRole(member) || canEditMember(member)"
+                  class="my-1 border-t border-line-2"
+                />
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
+                  @click="askRemove(member), close()"
+                >
+                  <Icon name="Trash2" size="sm" />
+                  Remover
+                </button>
+              </template>
             </div>
           </template>
         </Dropdown>
@@ -230,7 +295,7 @@ const rowItem = {
     </motion.div>
   </motion.div>
 
-  <!-- Convite -->
+  <!-- Cadastro -->
   <InviteMemberDialog
     :model-value="inviteOpen"
     :loading="controller.isLoading"
@@ -238,6 +303,15 @@ const rowItem = {
     :assignable="assignable"
     @update:model-value="setInviteOpen"
     @submit="onInviteSubmit"
+  />
+
+  <!-- Edição -->
+  <EditUserDialog
+    :model-value="editOpen"
+    :loading="controller.isLoading"
+    :member="editTarget"
+    @update:model-value="editOpen = $event"
+    @submit="onEditSubmit"
   />
 
   <!-- Remover -->

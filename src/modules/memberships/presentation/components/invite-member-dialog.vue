@@ -96,7 +96,7 @@ async function copyPassword(): Promise<void> {
     :title="success ? 'Usuário criado' : 'Novo usuário'"
     :description="
       success
-        ? 'Compartilhe a senha provisória — ela não será exibida de novo.'
+        ? 'Compartilhe a senha provisória ela não será exibida de novo.'
         : 'O usuário é criado e vinculado a esta empresa com uma senha provisória.'
     "
     @update:model-value="emit('update:modelValue', $event)"

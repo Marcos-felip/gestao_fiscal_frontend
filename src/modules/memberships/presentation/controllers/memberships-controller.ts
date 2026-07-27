@@ -3,11 +3,13 @@ import { BaseController } from '@/core/controllers/base-controller'
 import type { ListMembershipsUseCase } from '@/modules/memberships/application/use-cases/list-memberships.use-case'
 import type { InviteUserUseCase } from '@/modules/memberships/application/use-cases/invite-user.use-case'
 import type { UpdateMemberRoleUseCase } from '@/modules/memberships/application/use-cases/update-member-role.use-case'
+import type { EditUserUseCase } from '@/modules/memberships/application/use-cases/edit-user.use-case'
 import type { RemoveMemberUseCase } from '@/modules/memberships/application/use-cases/remove-member.use-case'
-import type { Membership } from '@/modules/memberships/domain/entities/membership.entity'
+import { Membership } from '@/modules/memberships/domain/entities/membership.entity'
 import type { InvitedUser } from '@/modules/memberships/domain/responses/invited-user'
 import { InviteUserDto } from '@/modules/memberships/domain/dto/invite-user-dto'
 import { UpdateMemberRoleDto } from '@/modules/memberships/domain/dto/update-member-role-dto'
+import { UpdateUserDto } from '@/modules/memberships/domain/dto/update-user-dto'
 import type { MembershipRole } from '@/enums/membership-role.enum'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
 import { StorageService } from '@/core/utils/storage'
@@ -17,6 +19,7 @@ export class MembershipsController extends BaseController {
   private readonly listUseCase: ListMembershipsUseCase
   private readonly inviteUseCase: InviteUserUseCase
   private readonly updateRoleUseCase: UpdateMemberRoleUseCase
+  private readonly editUseCase: EditUserUseCase
   private readonly removeUseCase: RemoveMemberUseCase
 
   private readonly authStore = useAuthStore()
@@ -32,12 +35,14 @@ export class MembershipsController extends BaseController {
     listUseCase: ListMembershipsUseCase,
     inviteUseCase: InviteUserUseCase,
     updateRoleUseCase: UpdateMemberRoleUseCase,
+    editUseCase: EditUserUseCase,
     removeUseCase: RemoveMemberUseCase,
   ) {
     super()
     this.listUseCase = listUseCase
     this.inviteUseCase = inviteUseCase
     this.updateRoleUseCase = updateRoleUseCase
+    this.editUseCase = editUseCase
     this.removeUseCase = removeUseCase
   }
 
@@ -104,6 +109,40 @@ export class MembershipsController extends BaseController {
     })
     this.setLoading(false)
     this.actingId.value = null
+  }
+
+  async editUser(
+    member: Membership,
+    input: { name?: string; email?: string },
+  ): Promise<boolean> {
+    this.actingId.value = member.id
+    this.setLoading(true)
+    const dto = new UpdateUserDto({
+      name: input.name || undefined,
+      email: input.email || undefined,
+    })
+    const result = await this.editUseCase.execute(member.userId, dto)
+
+    let ok = false
+    this.handleResult(result, (updated) => {
+      this.members.value = this.members.value.map((m) =>
+        m.id === member.id
+          ? new Membership(
+              m.id,
+              m.userId,
+              m.role,
+              updated.name,
+              updated.email,
+              m.createdAt,
+            )
+          : m,
+      )
+      this.toast.success('Usuário atualizado.')
+      ok = true
+    })
+    this.setLoading(false)
+    this.actingId.value = null
+    return ok
   }
 
   async remove(member: Membership): Promise<void> {
