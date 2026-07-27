@@ -28,7 +28,7 @@ const navigationItems = computed((): NavigationItem[] => {
     {
       id: 'permissions',
       label: 'Permissões',
-      to: '/users/permissions',
+      to: '/permissions',
     },
     {
       id: 'users',

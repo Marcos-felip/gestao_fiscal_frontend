@@ -45,7 +45,7 @@ const links: NavLink[] = [
     permission: 'users.list',
   },
   {
-    to: '/users/permissions',
+    to: '/permissions',
     label: 'Permissões',
     icon: 'ShieldCheck',
     role: MembershipRole.ADMIN,

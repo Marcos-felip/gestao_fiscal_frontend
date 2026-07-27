@@ -5,7 +5,7 @@ import PermissionsPage from '../pages/permissions-page.vue'
 
 export const permissionsRoutes: RouteRecordRaw[] = [
   {
-    path: 'users/permissions',
+    path: 'permissions',
     name: routeNames.PERMISSIONS,
     component: PermissionsPage,
     meta: {
