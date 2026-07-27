@@ -1,74 +1,107 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { motion } from 'motion-v'
-import { Button, Icon, Input, Select, Tooltip } from '@/shared/ui'
+import { Icon, Input, Select, Spinner, Tooltip } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
+import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import { companyTypeOptions } from '@/enums/company-type.enum'
 import { taxRegimeOptions } from '@/enums/tax-regime.enum'
-import { formatCnpj, formatPhone, onlyDigits } from '@/shared/ui/utils/masks'
+import { brazilianStateOptions } from '@/core/constants/brazilian-states'
+import { formatCnpj, formatPhone, formatCep, onlyDigits } from '@/shared/ui/utils/masks'
+import { fetchAddressByCep } from '@/core/services/via-cep'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {
   companySchema,
+  sedeSchema,
   type CompanyFormData,
   type CompanyFormValues,
+  type SedeFormData,
+  type SedeFormValues,
 } from '@/modules/companies/presentation/schemas/company-schema'
 
 const props = defineProps<{
-  initial: CompanyFormValues
+  company: CompanyFormValues
+  sede: SedeFormValues
+  hasSede: boolean
   loading: boolean
 }>()
 
 const emit = defineEmits<{
-  submit: [values: CompanyFormValues]
+  submit: [values: { company: CompanyFormValues; sede: SedeFormValues }]
 }>()
 
-const form = reactive<CompanyFormValues>({
-  name: '',
-  type: '',
-  cnpj: '',
-  stateRegistration: '',
-  phone: '',
-  taxRegime: '',
-})
+const form = reactive<CompanyFormValues>({ ...props.company })
+const sedeForm = reactive<SedeFormValues>({ ...props.sede })
 
 const errors = ref<Partial<Record<keyof CompanyFormData, string>>>({})
+const sedeErrors = ref<Partial<Record<keyof SedeFormData, string>>>({})
+const cepLoading = ref(false)
 
-// Semeia o formulário com os dados carregados (e re-semeia após salvar).
+// Semeia os formulários com os dados carregados (e re-semeia após salvar).
 watch(
-  () => props.initial,
+  () => props.company,
   (value) => Object.assign(form, value),
+  { immediate: true, deep: true },
+)
+watch(
+  () => props.sede,
+  (value) => Object.assign(sedeForm, value),
   { immediate: true, deep: true },
 )
 
 // Há alterações não salvas em relação ao estado carregado?
-const isDirty = computed(() =>
-  (Object.keys(form) as (keyof CompanyFormValues)[]).some(
-    (key) => form[key] !== props.initial[key],
-  ),
-)
+const isDirty = computed(() => {
+  const companyDirty = (Object.keys(form) as (keyof CompanyFormValues)[]).some(
+    (key) => form[key] !== props.company[key],
+  )
+  const sedeDirty =
+    props.hasSede &&
+    (Object.keys(sedeForm) as (keyof SedeFormValues)[]).some(
+      (key) => sedeForm[key] !== props.sede[key],
+    )
+  return companyDirty || sedeDirty
+})
+
+// Autofill por CEP: dispara só na digitação do usuário (não ao semear).
+async function onCepInput(value: string): Promise<void> {
+  const masked = formatCep(value)
+  const changed = masked !== sedeForm.cep
+  sedeForm.cep = masked
+  if (!changed || onlyDigits(masked).length !== 8) return
+
+  cepLoading.value = true
+  const address = await fetchAddressByCep(masked)
+  cepLoading.value = false
+  if (!address) return
+
+  if (address.street) sedeForm.street = address.street
+  if (address.neighborhood) sedeForm.neighborhood = address.neighborhood
+  if (address.city) sedeForm.city = address.city
+  if (address.state) sedeForm.state = address.state
+}
 
 function handleSubmit(): void {
-  const result = companySchema.safeParse({
-    name: form.name,
-    type: form.type,
-    cnpj: form.cnpj,
-    stateRegistration: form.stateRegistration,
-    phone: form.phone,
-    taxRegime: form.taxRegime,
-  })
+  const companyResult = companySchema.safeParse({ ...form })
+  const sedeResult = props.hasSede
+    ? sedeSchema.safeParse({ ...sedeForm })
+    : null
 
-  if (!result.success) {
-    errors.value = toFormErrors(result.error)
-    return
-  }
+  errors.value = companyResult.success
+    ? {}
+    : toFormErrors(companyResult.error)
+  sedeErrors.value =
+    sedeResult && !sedeResult.success ? toFormErrors(sedeResult.error) : {}
 
-  errors.value = {}
-  emit('submit', { ...form })
+  if (!companyResult.success || (sedeResult && !sedeResult.success)) return
+
+  emit('submit', { company: { ...form }, sede: { ...sedeForm } })
 }
 
 function discard(): void {
-  Object.assign(form, props.initial)
+  Object.assign(form, props.company)
+  Object.assign(sedeForm, props.sede)
   errors.value = {}
+  sedeErrors.value = {}
 }
 
 // Entrada em cascata das seções.
@@ -181,7 +214,7 @@ const item = {
               maxlength="18"
               inputmode="numeric"
               placeholder="00.000.000/0000-00"
-              hint="Usado nas notas fiscais."
+              hint="Compartilhado com a sede (matriz)."
               :error="errors.cnpj"
               @update:model-value="form.cnpj = formatCnpj($event)"
             >
@@ -192,7 +225,7 @@ const item = {
                 <span class="inline-flex items-center gap-1.5">
                   CNPJ
                   <Tooltip
-                    text="Cadastro Nacional da Pessoa Jurídica, no formato 00.000.000/0000-00."
+                    text="Cadastro Nacional da Pessoa Jurídica, no formato 00.000.000/0000-00. Aplicado também à matriz."
                   >
                     <Icon
                       name="HelpCircle"
@@ -220,7 +253,7 @@ const item = {
                 <span class="inline-flex items-center gap-1.5">
                   Inscrição Estadual
                   <Tooltip
-                    text="Registro estadual da empresa. Mínimo de 11 dígitos."
+                    text="Registro estadual da empresa. Mínimo de 11 dígitos. Aplicado também à matriz."
                   >
                     <Icon
                       name="HelpCircle"
@@ -260,47 +293,130 @@ const item = {
           </div>
         </FormSection>
       </motion.div>
+
+      <!-- Seção 4: Sede / Matriz -->
+      <motion.div :variants="item">
+        <FormSection
+          icon="MapPin"
+          title="Sede / Matriz"
+          description="Endereço e dados da unidade sede da empresa."
+        >
+          <div
+            v-if="!props.hasSede"
+            class="flex items-start gap-2 rounded-lg border border-line-2 bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
+          >
+            <Icon name="Info" size="sm" class="mt-0.5 shrink-0" />
+            <span>
+              A matriz ainda não foi configurada. Conclua o cadastro da empresa
+              para gerenciar a sede aqui.
+            </span>
+          </div>
+
+          <template v-else>
+            <Input
+              v-model="sedeForm.name"
+              maxlength="120"
+              placeholder="Nome da unidade sede"
+            >
+              <template #label>
+                <span class="inline-flex items-center gap-1.5">
+                  Nome da sede
+                  <Tooltip
+                    text="Nome do estabelecimento matriz. Pode diferir do nome da empresa."
+                  >
+                    <Icon
+                      name="HelpCircle"
+                      size="sm"
+                      class="text-foreground/40"
+                    />
+                  </Tooltip>
+                </span>
+              </template>
+            </Input>
+
+            <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-6">
+              <div class="sm:col-span-2">
+                <Input
+                  :model-value="sedeForm.cep"
+                  maxlength="9"
+                  inputmode="numeric"
+                  placeholder="00000-000"
+                  :error="sedeErrors.cep"
+                  @update:model-value="onCepInput($event)"
+                >
+                  <template #prefix><Icon name="MapPin" size="sm" /></template>
+                  <template #suffix>
+                    <Spinner v-if="cepLoading" size="sm" class="text-primary" />
+                  </template>
+                  <template #label>CEP</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-4">
+                <Input v-model="sedeForm.street" placeholder="Rua / Logradouro">
+                  <template #label>Logradouro</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-2">
+                <Input v-model="sedeForm.number" placeholder="Número">
+                  <template #label>Número</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-2">
+                <Input v-model="sedeForm.complement" placeholder="Sala, andar…">
+                  <template #label>Complemento</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-2">
+                <Input v-model="sedeForm.neighborhood" placeholder="Bairro">
+                  <template #label>Bairro</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-3">
+                <Input v-model="sedeForm.city" placeholder="Cidade">
+                  <template #label>Cidade</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-3">
+                <Select
+                  v-model="sedeForm.state"
+                  :options="brazilianStateOptions"
+                  placeholder="UF"
+                  :error="sedeErrors.state"
+                >
+                  <template #label>Estado</template>
+                </Select>
+              </div>
+
+              <div class="sm:col-span-3">
+                <Input
+                  v-model="sedeForm.inscricaoMunicipal"
+                  maxlength="20"
+                  inputmode="numeric"
+                  placeholder="Inscrição Municipal"
+                >
+                  <template #prefix><Icon name="Hash" size="sm" /></template>
+                  <template #label>Inscrição Municipal</template>
+                </Input>
+              </div>
+            </div>
+          </template>
+        </FormSection>
+      </motion.div>
     </motion.div>
 
-    <!-- Barra de ações flutuante com estado de alterações -->
-    <div class="sticky bottom-4 z-10 mt-6">
-      <div
-        class="ui-shadow-float flex items-center justify-between gap-3 rounded-xl border border-line-2 bg-background/90 px-4 py-3 backdrop-blur-md"
-      >
-        <p class="flex items-center gap-2 text-sm text-muted-foreground">
-          <span
-            :class="[
-              'size-2 rounded-full transition-colors',
-              isDirty ? 'bg-warning' : 'bg-success',
-            ]"
-          />
-          {{ isDirty ? 'Alterações não salvas' : 'Tudo salvo' }}
-        </p>
-
-        <div class="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            :disabled="props.loading || !isDirty"
-            @click="discard"
-          >
-            Descartar
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            text-class="text-white"
-            :loading="props.loading"
-            :disabled="!isDirty"
-            loading-text="Salvando…"
-          >
-            <template #icon>
-              <Icon name="Check" size="sm" />
-            </template>
-            Salvar alterações
-          </Button>
-        </div>
-      </div>
-    </div>
+    <FormActionBar
+      submit-label="Salvar alterações"
+      secondary-label="Descartar"
+      show-status
+      :dirty="isDirty"
+      :loading="props.loading"
+      @secondary="discard"
+    />
   </form>
 </template>

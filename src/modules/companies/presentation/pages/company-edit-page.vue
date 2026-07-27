@@ -3,7 +3,10 @@ import { onMounted } from 'vue'
 import { Skeleton } from '@/shared/ui'
 import CompanyForm from '@/modules/companies/presentation/components/company-form.vue'
 import { makeCompanyController } from '@/modules/companies/factories/companies.factory'
-import type { CompanyFormValues } from '@/modules/companies/presentation/schemas/company-schema'
+import type {
+  CompanyFormValues,
+  SedeFormValues,
+} from '@/modules/companies/presentation/schemas/company-schema'
 import { useProgress } from '@/shared/composables'
 
 const controller = makeCompanyController()
@@ -13,7 +16,10 @@ onMounted(() => {
   progress.track(controller.loadCompany())
 })
 
-async function handleSubmit(values: CompanyFormValues): Promise<void> {
+async function handleSubmit(values: {
+  company: CompanyFormValues
+  sede: SedeFormValues
+}): Promise<void> {
   await progress.track(controller.save(values))
 }
 </script>
@@ -51,7 +57,9 @@ async function handleSubmit(values: CompanyFormValues): Promise<void> {
   <!-- Formulário -->
   <CompanyForm
     v-else
-    :initial="controller.values.value"
+    :company="controller.values.value"
+    :sede="controller.sede.value"
+    :has-sede="controller.hasMatriz.value"
     :loading="controller.isLoading"
     @submit="handleSubmit"
   />

@@ -38,3 +38,40 @@ export interface CompanyFormValues {
   phone: string
   taxRegime: string
 }
+
+/**
+ * Dados da sede (estabelecimento MATRIZ) editados dentro da página de Empresa.
+ * CNPJ e Inscrição Estadual NÃO entram aqui — são governados pela empresa
+ * (fonte única) e propagados para a matriz ao salvar.
+ */
+export const sedeSchema = z.object({
+  name: z.string().optional(),
+  inscricaoMunicipal: z.string().optional(),
+  cep: z
+    .string()
+    .optional()
+    .refine((v) => !v || onlyDigits(v).length === 8, 'CEP inválido'),
+  street: z.string().optional(),
+  number: z.string().optional(),
+  complement: z.string().optional(),
+  neighborhood: z.string().optional(),
+  city: z.string().optional(),
+  state: z
+    .string()
+    .optional()
+    .refine((v) => !v || v.length === 2, 'UF inválida'),
+})
+
+export type SedeFormData = z.infer<typeof sedeSchema>
+
+export interface SedeFormValues {
+  name: string
+  inscricaoMunicipal: string
+  cep: string
+  street: string
+  number: string
+  complement: string
+  neighborhood: string
+  city: string
+  state: string
+}
