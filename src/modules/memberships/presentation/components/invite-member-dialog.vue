@@ -93,11 +93,11 @@ async function copyPassword(): Promise<void> {
 <template>
   <Modal
     :model-value="modelValue"
-    :title="success ? 'Usuário criado' : 'Convidar usuário'"
+    :title="success ? 'Usuário criado' : 'Novo usuário'"
     :description="
       success
         ? 'Compartilhe a senha provisória — ela não será exibida de novo.'
-        : 'O usuário receberá uma senha provisória para o primeiro acesso.'
+        : 'O usuário é criado e vinculado a esta empresa com uma senha provisória.'
     "
     @update:model-value="emit('update:modelValue', $event)"
   >
@@ -198,7 +198,7 @@ async function copyPassword(): Promise<void> {
           @click="handleSubmit"
         >
           <template #icon><Icon name="UserPlus" size="sm" /></template>
-          Convidar
+          Cadastrar
         </Button>
       </template>
       <Button

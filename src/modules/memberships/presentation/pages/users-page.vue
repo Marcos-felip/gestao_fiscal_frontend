@@ -118,7 +118,7 @@ const rowItem = {
         @click="openInvite"
       >
         <template #icon><Icon name="UserPlus" size="sm" /></template>
-        Convidar
+        Novo usuário
       </Button>
     </div>
   </header>
@@ -164,7 +164,7 @@ const rowItem = {
       Nenhum usuário
     </h2>
     <p class="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-      Convide pessoas para colaborar nesta empresa.
+      Cadastre usuários para colaborar nesta empresa.
     </p>
   </div>
 
