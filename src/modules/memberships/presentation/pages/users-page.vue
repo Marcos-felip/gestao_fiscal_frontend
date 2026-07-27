@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { motion } from 'motion-v'
-import { Avatar, Button, Dropdown, Icon, Skeleton } from '@/shared/ui'
+import { Avatar, Button, Icon, Skeleton } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import RoleBadge from '@/modules/memberships/presentation/components/role-badge.vue'
 import CreateUserDialog from '@/modules/memberships/presentation/components/create-user-dialog.vue'
@@ -122,17 +122,15 @@ function goPermissions(): void {
   controller.router.push({ name: routeNames.PERMISSIONS })
 }
 
-const container = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.05, delayChildren: 0.03 } },
+// Menu de ações da linha (id da linha aberta).
+const openMenuId = ref<string | null>(null)
+
+function toggleMenu(member: Membership): void {
+  openMenuId.value = openMenuId.value === member.id ? null : member.id
 }
-const rowItem = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: 'spring', stiffness: 340, damping: 30 },
-  },
+
+function closeMenu(): void {
+  openMenuId.value = null
 }
 </script>
 
@@ -217,15 +215,14 @@ const rowItem = {
   <!-- Lista -->
   <motion.div
     v-else
-    class="overflow-hidden rounded-xl border border-line-2 bg-background"
-    :variants="container"
-    initial="hidden"
-    animate="visible"
+    class="rounded-xl border border-line-2 bg-background"
+    :initial="{ opacity: 0, y: 8 }"
+    :animate="{ opacity: 1, y: 0 }"
+    :transition="{ duration: 0.25 }"
   >
-    <motion.div
+    <div
       v-for="member in controller.members.value"
       :key="member.id"
-      :variants="rowItem"
       class="flex items-center gap-4 border-b border-line-2 px-4 py-3 last:border-b-0"
     >
       <Avatar :initials="member.initials" size="sm" />
@@ -241,13 +238,24 @@ const rowItem = {
 
       <RoleBadge :role="member.role" />
 
-      <div class="flex w-9 justify-end">
-        <Dropdown v-if="hasActions(member)" align="right">
-          <template #trigger>
+      <div class="relative flex w-9 justify-end">
+        <template v-if="hasActions(member)">
+          <button
+            type="button"
+            class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Ações"
+            @click="toggleMenu(member)"
+          >
             <Icon name="EllipsisVertical" size="sm" />
-          </template>
-          <template #default="{ close }">
-            <div class="py-1">
+          </button>
+
+          <template v-if="openMenuId === member.id">
+            <!-- Fecha ao clicar fora -->
+            <div class="fixed inset-0 z-40" @click="closeMenu" />
+
+            <div
+              class="ui-shadow-float absolute top-full right-0 z-50 mt-1 min-w-52 rounded-lg border border-line-2 bg-background py-1"
+            >
               <!-- Alterar papel (OWNER) -->
               <template v-if="canChangeRole(member)">
                 <button
@@ -255,7 +263,7 @@ const rowItem = {
                   :key="r"
                   type="button"
                   class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                  @click="onChangeRole(member, r), close()"
+                  @click="onChangeRole(member, r), closeMenu()"
                 >
                   <Icon name="Shield" size="sm" class="text-muted-foreground" />
                   Definir como {{ membershipRoleLabels[r] }}
@@ -267,7 +275,7 @@ const rowItem = {
                 v-if="canEditMember(member)"
                 type="button"
                 class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                @click="openEdit(member), close()"
+                @click="openEdit(member), closeMenu()"
               >
                 <Icon name="Pencil" size="sm" class="text-muted-foreground" />
                 Editar
@@ -282,7 +290,7 @@ const rowItem = {
                 <button
                   type="button"
                   class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
-                  @click="askRemove(member), close()"
+                  @click="askRemove(member), closeMenu()"
                 >
                   <Icon name="Trash2" size="sm" />
                   Remover
@@ -290,9 +298,9 @@ const rowItem = {
               </template>
             </div>
           </template>
-        </Dropdown>
+        </template>
       </div>
-    </motion.div>
+    </div>
   </motion.div>
 
   <!-- Cadastro -->
