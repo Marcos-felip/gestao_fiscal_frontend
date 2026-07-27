@@ -1,0 +1,16 @@
+import type { RouteRecordRaw } from 'vue-router'
+import { routeNames } from '@/router/route-names'
+import UsersPage from '../pages/users-page.vue'
+
+export const membershipsRoutes: RouteRecordRaw[] = [
+  {
+    path: 'users',
+    name: routeNames.USERS,
+    component: UsersPage,
+    meta: {
+      title: 'Usuários',
+      icon: 'Users',
+      requiresPermission: 'users.list',
+    },
+  },
+]
