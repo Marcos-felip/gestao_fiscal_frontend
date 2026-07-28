@@ -1,17 +1,24 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { motion } from 'motion-v'
 import { Button, Icon, Skeleton } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import EstablishmentCard from '@/modules/establishments/presentation/components/establishment-card.vue'
 import { makeEstablishmentsListController } from '@/modules/establishments/factories/establishments.factory'
 import type { Establishment } from '@/modules/establishments/domain/entities/establishment.entity'
+import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
 import { formatCnpj } from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 
 const controller = makeEstablishmentsListController()
 const progress = useProgress()
+const { can } = usePermissions()
+
+const canCreate = computed(() => can('establishments.create'))
+const canEdit = computed(() => can('establishments.edit'))
+const canDelete = computed(() => can('establishments.delete'))
+const canView = computed(() => can('establishments.read'))
 
 const confirmOpen = ref(false)
 const target = ref<Establishment | null>(null)
@@ -72,7 +79,12 @@ const cardItem = {
       </p>
     </div>
 
-    <Button variant="primary" text-class="text-white" @click="goNew">
+    <Button
+      v-if="canCreate"
+      variant="primary"
+      text-class="text-white"
+      @click="goNew"
+    >
       <template #icon><Icon name="Plus" size="sm" /></template>
       Nova filial
     </Button>
@@ -171,7 +183,7 @@ const cardItem = {
         Cadastre as filiais da sua empresa. A sede (matriz) é gerenciada em
         Empresa.
       </p>
-      <div class="mt-5">
+      <div v-if="canCreate" class="mt-5">
         <Button variant="primary" text-class="text-white" @click="goNew">
           <template #icon><Icon name="Plus" size="sm" /></template>
           Nova filial
@@ -195,6 +207,9 @@ const cardItem = {
         <EstablishmentCard
           :establishment="establishment"
           :deleting="controller.deletingId.value === establishment.id"
+          :can-edit="canEdit"
+          :can-delete="canDelete"
+          :can-view="canView"
           @edit="goEdit(establishment)"
           @delete="askDelete(establishment)"
         />

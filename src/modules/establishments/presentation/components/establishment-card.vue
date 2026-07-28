@@ -4,10 +4,16 @@ import { Icon, Tooltip } from '@/shared/ui'
 import { formatCnpj } from '@/shared/ui/utils/masks'
 import type { Establishment } from '@/modules/establishments/domain/entities/establishment.entity'
 
-const props = defineProps<{
-  establishment: Establishment
-  deleting?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    establishment: Establishment
+    deleting?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
+    canView?: boolean
+  }>(),
+  { deleting: false, canEdit: true, canDelete: true, canView: true },
+)
 
 const emit = defineEmits<{
   edit: []
@@ -69,17 +75,20 @@ const cnpjDisplay = computed(() =>
     <div
       class="mt-4 flex items-center justify-end gap-1 border-t border-line-2 pt-3"
     >
+      <!-- Editar (com permissão) ou apenas Ver (somente leitura) -->
       <button
+        v-if="canEdit || canView"
         type="button"
         class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        aria-label="Editar"
+        :aria-label="canEdit ? 'Editar' : 'Ver'"
         @click="emit('edit')"
       >
-        <Icon name="Pencil" size="sm" />
+        <Icon :name="canEdit ? 'Pencil' : 'Eye'" size="sm" />
       </button>
 
+      <!-- Excluir: só quem pode e nunca a matriz -->
       <Tooltip
-        v-if="establishment.isMatriz"
+        v-if="canDelete && establishment.isMatriz"
         text="A matriz não pode ser excluída."
       >
         <button
@@ -92,7 +101,7 @@ const cnpjDisplay = computed(() =>
         </button>
       </Tooltip>
       <button
-        v-else
+        v-else-if="canDelete"
         type="button"
         :disabled="deleting"
         class="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"

@@ -4,6 +4,7 @@ import { motion } from 'motion-v'
 import { Icon, Input, Select, Spinner, Tooltip } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
 import FormActionBar from '@/shared/components/form/form-action-bar.vue'
+import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
 import { brazilianStateOptions } from '@/core/constants/brazilian-states'
 import { formatCnpj, formatCep, onlyDigits } from '@/shared/ui/utils/masks'
 import { fetchAddressByCep } from '@/core/services/via-cep'
@@ -14,11 +15,15 @@ import {
   type EstablishmentFormValues,
 } from '@/modules/establishments/presentation/schemas/establishment-schema'
 
-const props = defineProps<{
-  initial: EstablishmentFormValues
-  loading: boolean
-  submitLabel: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    initial: EstablishmentFormValues
+    loading: boolean
+    submitLabel: string
+    readonly?: boolean
+  }>(),
+  { readonly: false },
+)
 
 const emit = defineEmits<{
   submit: [values: EstablishmentFormValues]
@@ -80,166 +85,175 @@ const item = {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <motion.div
-      class="space-y-6"
-      :variants="container"
-      initial="hidden"
-      animate="visible"
-    >
-      <!-- Seção 1: Informações básicas -->
-      <motion.div :variants="item">
-        <FormSection
-          icon="Store"
-          title="Informações básicas"
-          description="Identificação do estabelecimento."
-        >
-          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <Input
-              v-model="form.name"
-              maxlength="120"
-              placeholder="Nome do estabelecimento"
-              :error="errors.name"
-            >
-              <template #label>Nome</template>
-            </Input>
+    <ReadOnlyNotice v-if="props.readonly" />
 
-            <!-- Tipo fixo: a matriz é gerida na página de Empresa. -->
-            <div>
-              <span
-                class="mb-1.5 inline-flex items-center gap-1.5 text-sm font-medium text-foreground"
+    <fieldset :disabled="props.readonly" class="min-w-0">
+      <motion.div
+        class="space-y-6"
+        :variants="container"
+        initial="hidden"
+        animate="visible"
+      >
+        <!-- Seção 1: Informações básicas -->
+        <motion.div :variants="item">
+          <FormSection
+            icon="Store"
+            title="Informações básicas"
+            description="Identificação do estabelecimento."
+          >
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <Input
+                v-model="form.name"
+                maxlength="120"
+                placeholder="Nome do estabelecimento"
+                :error="errors.name"
               >
-                Tipo
-                <Tooltip
-                  text="A sede (matriz) é gerenciada na página de Empresa. Este cadastro cria apenas filiais."
+                <template #label>Nome</template>
+              </Input>
+
+              <!-- Tipo fixo: a matriz é gerida na página de Empresa. -->
+              <div>
+                <span
+                  class="mb-1.5 inline-flex items-center gap-1.5 text-sm font-medium text-foreground"
                 >
-                  <Icon name="HelpCircle" size="sm" class="text-foreground/40" />
-                </Tooltip>
-              </span>
-              <div
-                class="flex h-11 items-center gap-2 rounded-lg border border-line-2 bg-muted/40 px-3 text-sm text-muted-foreground"
-              >
-                <Icon name="Store" size="sm" class="shrink-0" />
-                Filial
+                  Tipo
+                  <Tooltip
+                    text="A sede (matriz) é gerenciada na página de Empresa. Este cadastro cria apenas filiais."
+                  >
+                    <Icon
+                      name="HelpCircle"
+                      size="sm"
+                      class="text-foreground/40"
+                    />
+                  </Tooltip>
+                </span>
+                <div
+                  class="flex h-11 items-center gap-2 rounded-lg border border-line-2 bg-muted/40 px-3 text-sm text-muted-foreground"
+                >
+                  <Icon name="Store" size="sm" class="shrink-0" />
+                  Filial
+                </div>
               </div>
             </div>
-          </div>
-        </FormSection>
-      </motion.div>
+          </FormSection>
+        </motion.div>
 
-      <!-- Seção 2: Dados fiscais -->
-      <motion.div :variants="item">
-        <FormSection
-          icon="FileText"
-          title="Dados fiscais"
-          description="Documentos de identificação fiscal."
-        >
-          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <Input
-              :model-value="form.cnpj"
-              maxlength="18"
-              inputmode="numeric"
-              placeholder="00.000.000/0000-00"
-              :error="errors.cnpj"
-              @update:model-value="form.cnpj = formatCnpj($event)"
-            >
-              <template #prefix><Icon name="Landmark" size="sm" /></template>
-              <template #label>CNPJ</template>
-            </Input>
-
-            <Input
-              v-model="form.inscricaoEstadual"
-              maxlength="20"
-              inputmode="numeric"
-              placeholder="Inscrição Estadual"
-            >
-              <template #prefix><Icon name="Hash" size="sm" /></template>
-              <template #label>Inscrição Estadual</template>
-            </Input>
-
-            <Input
-              v-model="form.inscricaoMunicipal"
-              maxlength="20"
-              inputmode="numeric"
-              placeholder="Inscrição Municipal"
-            >
-              <template #prefix><Icon name="Hash" size="sm" /></template>
-              <template #label>Inscrição Municipal</template>
-            </Input>
-          </div>
-        </FormSection>
-      </motion.div>
-
-      <!-- Seção 3: Endereço -->
-      <motion.div :variants="item">
-        <FormSection
-          icon="MapPin"
-          title="Endereço"
-          description="Digite o CEP para preencher o endereço automaticamente."
-        >
-          <div class="grid grid-cols-1 gap-5 sm:grid-cols-6">
-            <div class="sm:col-span-2">
+        <!-- Seção 2: Dados fiscais -->
+        <motion.div :variants="item">
+          <FormSection
+            icon="FileText"
+            title="Dados fiscais"
+            description="Documentos de identificação fiscal."
+          >
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Input
-                :model-value="form.cep"
-                maxlength="9"
+                :model-value="form.cnpj"
+                maxlength="18"
                 inputmode="numeric"
-                placeholder="00000-000"
-                :error="errors.cep"
-                @update:model-value="onCepInput($event)"
+                placeholder="00.000.000/0000-00"
+                :error="errors.cnpj"
+                @update:model-value="form.cnpj = formatCnpj($event)"
               >
-                <template #prefix><Icon name="MapPin" size="sm" /></template>
-                <template #suffix>
-                  <Spinner v-if="cepLoading" size="sm" class="text-primary" />
-                </template>
-                <template #label>CEP</template>
+                <template #prefix><Icon name="Landmark" size="sm" /></template>
+                <template #label>CNPJ</template>
               </Input>
-            </div>
 
-            <div class="sm:col-span-4">
-              <Input v-model="form.street" placeholder="Rua / Logradouro">
-                <template #label>Logradouro</template>
-              </Input>
-            </div>
-
-            <div class="sm:col-span-2">
-              <Input v-model="form.number" placeholder="Número">
-                <template #label>Número</template>
-              </Input>
-            </div>
-
-            <div class="sm:col-span-2">
-              <Input v-model="form.complement" placeholder="Sala, andar…">
-                <template #label>Complemento</template>
-              </Input>
-            </div>
-
-            <div class="sm:col-span-2">
-              <Input v-model="form.neighborhood" placeholder="Bairro">
-                <template #label>Bairro</template>
-              </Input>
-            </div>
-
-            <div class="sm:col-span-3">
-              <Input v-model="form.city" placeholder="Cidade">
-                <template #label>Cidade</template>
-              </Input>
-            </div>
-
-            <div class="sm:col-span-3">
-              <Select
-                v-model="form.state"
-                :options="brazilianStateOptions"
-                placeholder="UF"
-                :error="errors.state"
+              <Input
+                v-model="form.inscricaoEstadual"
+                maxlength="20"
+                inputmode="numeric"
+                placeholder="Inscrição Estadual"
               >
-                <template #label>Estado</template>
-              </Select>
+                <template #prefix><Icon name="Hash" size="sm" /></template>
+                <template #label>Inscrição Estadual</template>
+              </Input>
+
+              <Input
+                v-model="form.inscricaoMunicipal"
+                maxlength="20"
+                inputmode="numeric"
+                placeholder="Inscrição Municipal"
+              >
+                <template #prefix><Icon name="Hash" size="sm" /></template>
+                <template #label>Inscrição Municipal</template>
+              </Input>
             </div>
-          </div>
-        </FormSection>
+          </FormSection>
+        </motion.div>
+
+        <!-- Seção 3: Endereço -->
+        <motion.div :variants="item">
+          <FormSection
+            icon="MapPin"
+            title="Endereço"
+            description="Digite o CEP para preencher o endereço automaticamente."
+          >
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-6">
+              <div class="sm:col-span-2">
+                <Input
+                  :model-value="form.cep"
+                  maxlength="9"
+                  inputmode="numeric"
+                  placeholder="00000-000"
+                  :error="errors.cep"
+                  @update:model-value="onCepInput($event)"
+                >
+                  <template #prefix><Icon name="MapPin" size="sm" /></template>
+                  <template #suffix>
+                    <Spinner v-if="cepLoading" size="sm" class="text-primary" />
+                  </template>
+                  <template #label>CEP</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-4">
+                <Input v-model="form.street" placeholder="Rua / Logradouro">
+                  <template #label>Logradouro</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-2">
+                <Input v-model="form.number" placeholder="Número">
+                  <template #label>Número</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-2">
+                <Input v-model="form.complement" placeholder="Sala, andar…">
+                  <template #label>Complemento</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-2">
+                <Input v-model="form.neighborhood" placeholder="Bairro">
+                  <template #label>Bairro</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-3">
+                <Input v-model="form.city" placeholder="Cidade">
+                  <template #label>Cidade</template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-3">
+                <Select
+                  v-model="form.state"
+                  :options="brazilianStateOptions"
+                  placeholder="UF"
+                  :error="errors.state"
+                >
+                  <template #label>Estado</template>
+                </Select>
+              </div>
+            </div>
+          </FormSection>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </fieldset>
 
     <FormActionBar
+      v-if="!props.readonly"
       :submit-label="props.submitLabel"
       :loading="props.loading"
       @secondary="emit('cancel')"

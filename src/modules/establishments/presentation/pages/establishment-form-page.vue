@@ -5,15 +5,22 @@ import { Button, Icon, Skeleton } from '@/shared/ui'
 import EstablishmentForm from '@/modules/establishments/presentation/components/establishment-form.vue'
 import { makeEstablishmentFormController } from '@/modules/establishments/factories/establishments.factory'
 import type { EstablishmentFormValues } from '@/modules/establishments/presentation/schemas/establishment-schema'
+import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 
 const route = useRoute()
 const controller = makeEstablishmentFormController()
 const progress = useProgress()
+const { can } = usePermissions()
 
 const editId = computed(() =>
   typeof route.params.id === 'string' ? route.params.id : null,
+)
+
+// Ao editar sem permissão de edição, a tela abre em somente leitura.
+const readonly = computed(
+  () => Boolean(editId.value) && !can('establishments.edit'),
 )
 
 onMounted(() => {
@@ -37,7 +44,13 @@ function handleCancel(): void {
   <!-- Cabeçalho -->
   <header class="mb-6 flex items-start justify-between gap-4">
     <h1 class="font-display text-2xl font-bold tracking-tight text-foreground">
-      {{ controller.isEditing ? 'Editar filial' : 'Nova filial' }}
+      {{
+        readonly
+          ? 'Filial'
+          : controller.isEditing
+            ? 'Editar filial'
+            : 'Nova filial'
+      }}
     </h1>
 
     <Button variant="ghost" @click="handleCancel">
@@ -80,6 +93,7 @@ function handleCancel(): void {
     v-else
     :initial="controller.values.value"
     :loading="controller.isLoading"
+    :readonly="readonly"
     :submit-label="controller.isEditing ? 'Salvar alterações' : 'Criar filial'"
     @submit="handleSubmit"
     @cancel="handleCancel"
