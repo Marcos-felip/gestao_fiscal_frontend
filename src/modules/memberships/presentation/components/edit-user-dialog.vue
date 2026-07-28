@@ -59,6 +59,7 @@ function handleSubmit(): void {
   <Modal
     :model-value="modelValue"
     title="Editar usuário"
+    size="lg"
     description="Atualize os dados cadastrais. O papel é alterado à parte."
     @update:model-value="emit('update:modelValue', $event)"
   >

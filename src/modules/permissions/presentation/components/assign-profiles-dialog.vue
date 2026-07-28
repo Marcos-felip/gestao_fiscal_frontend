@@ -47,6 +47,7 @@ function handleSubmit(): void {
   <Modal
     :model-value="modelValue"
     title="Perfis do usuário"
+    size="lg"
     :description="`Defina os perfis de permissão de ${memberName}.`"
     @update:model-value="emit('update:modelValue', $event)"
   >

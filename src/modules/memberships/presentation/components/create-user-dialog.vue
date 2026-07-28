@@ -120,6 +120,7 @@ async function copyPassword(): Promise<void> {
   <Modal
     :model-value="modelValue"
     :title="success ? 'Usuário criado' : 'Novo usuário'"
+    size="lg"
     :description="
       success
         ? 'Compartilhe a senha provisória ela não será exibida de novo.'
