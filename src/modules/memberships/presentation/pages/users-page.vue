@@ -23,10 +23,9 @@ import { useProgress } from '@/shared/composables'
 const controller = makeMembershipsController()
 const memberProfiles = makeMemberProfilesController()
 const progress = useProgress()
-const { role, isOwner, can, isAtLeast } = usePermissions()
+const { role, isOwner, can } = usePermissions()
 
 const canCreate = computed(() => can('users.create'))
-const canViewPermissions = computed(() => isAtLeast(MembershipRole.ADMIN))
 const canManageProfiles = computed(() => can('permissions.manage'))
 const assignable = computed(() => assignableRoles(role.value))
 
@@ -156,10 +155,6 @@ async function confirmRemove(): Promise<void> {
   target.value = null
 }
 
-function goPermissions(): void {
-  controller.router.push({ name: routeNames.PERMISSIONS })
-}
-
 function goProfiles(): void {
   controller.router.push({ name: routeNames.PERMISSION_PROFILES })
 }
@@ -196,14 +191,6 @@ function closeMenu(): void {
       >
         <template #icon><Icon name="ShieldPlus" size="sm" /></template>
         Perfis
-      </Button>
-      <Button
-        v-if="canViewPermissions"
-        variant="ghost"
-        @click="goPermissions"
-      >
-        <template #icon><Icon name="ShieldCheck" size="sm" /></template>
-        Permissões
       </Button>
       <Button
         v-if="canCreate"

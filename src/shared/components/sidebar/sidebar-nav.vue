@@ -24,7 +24,7 @@ import { computed } from 'vue'
 import { motion } from 'motion-v'
 import { SidebarLink, Icon } from '@/shared/ui'
 import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
-import { MembershipRole } from '@/enums/membership-role.enum'
+import type { MembershipRole } from '@/enums/membership-role.enum'
 
 interface NavLink {
   to: string
@@ -43,12 +43,6 @@ const links: NavLink[] = [
     label: 'Usuários',
     icon: 'Users',
     permission: 'users.list',
-  },
-  {
-    to: '/permissions',
-    label: 'Permissões',
-    icon: 'ShieldCheck',
-    role: MembershipRole.ADMIN,
   },
   {
     to: '/permission-profiles',

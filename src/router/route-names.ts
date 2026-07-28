@@ -5,7 +5,6 @@ export const routeNames = {
   DASHBOARD: 'dashboard',
   COMPANY: 'company',
   USERS: 'users',
-  PERMISSIONS: 'permissions',
   PERMISSION_PROFILES: 'permission-profiles',
   ESTABLISHMENTS: 'establishments',
   ESTABLISHMENT_NEW: 'establishment-new',
