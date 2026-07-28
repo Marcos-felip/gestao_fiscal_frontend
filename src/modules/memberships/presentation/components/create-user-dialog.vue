@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Modal from '@/shared/components/dialog/modal.vue'
-import { Button, Icon, Input, Select } from '@/shared/ui'
+import { Button, Icon, Input, Select, Switch } from '@/shared/ui'
 import { useToast } from '@/shared/composables'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {
@@ -9,6 +9,7 @@ import {
   membershipRoleLabels,
 } from '@/enums/membership-role.enum'
 import type { CreatedUser } from '@/modules/memberships/domain/responses/created-user'
+import type { PermissionProfile } from '@/modules/permissions/domain/entities/permission-profile.entity'
 import {
   createUserSchema,
   type CreateUserFormData,
@@ -19,11 +20,20 @@ const props = defineProps<{
   loading: boolean
   created: CreatedUser | null
   assignable: MembershipRole[]
+  profiles: PermissionProfile[]
+  canAssignProfiles: boolean
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
-  submit: [input: { name?: string; email: string; role: MembershipRole }]
+  submit: [
+    input: {
+      name?: string
+      email: string
+      role: MembershipRole
+      profileIds: string[]
+    },
+  ]
 }>()
 
 const toast = useToast()
@@ -31,11 +41,23 @@ const toast = useToast()
 const name = ref('')
 const email = ref('')
 const role = ref<string>('')
+const selectedProfiles = ref<Set<string>>(new Set())
 const errors = ref<Partial<Record<keyof CreateUserFormData, string>>>({})
 
 const roleOptions = computed(() =>
   props.assignable.map((r) => ({ value: r, label: membershipRoleLabels[r] })),
 )
+
+// Perfis só fazem sentido para MEMBER e só se quem cadastra pode gerenciá-los.
+const isMember = computed(() => role.value === MembershipRole.MEMBER)
+const showProfiles = computed(() => props.canAssignProfiles && isMember.value)
+
+function toggleProfile(id: string): void {
+  const next = new Set(selectedProfiles.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selectedProfiles.value = next
+}
 
 // Estado de sucesso: usuário criado, exibindo a senha provisória.
 const success = computed(() => props.created !== null)
@@ -46,6 +68,7 @@ function resetForm(): void {
   role.value = props.assignable.includes(MembershipRole.MEMBER)
     ? MembershipRole.MEMBER
     : (props.assignable[0] ?? '')
+  selectedProfiles.value = new Set()
   errors.value = {}
 }
 
@@ -72,10 +95,13 @@ function handleSubmit(): void {
     return
   }
   errors.value = {}
+  const chosenRole = result.data.role as MembershipRole
   emit('submit', {
     name: result.data.name || undefined,
     email: result.data.email,
-    role: result.data.role as MembershipRole,
+    role: chosenRole,
+    profileIds:
+      chosenRole === MembershipRole.MEMBER ? [...selectedProfiles.value] : [],
   })
 }
 
@@ -104,6 +130,14 @@ async function copyPassword(): Promise<void> {
     <!-- Estado: formulário -->
     <form v-if="!success" class="space-y-4" @submit.prevent="handleSubmit">
       <Input
+        v-model="name"
+        placeholder="Opcional"
+        maxlength="120"
+        :error="errors.name"
+      >
+        <template #label>Nome</template>
+      </Input>
+      <Input
         v-model="email"
         type="email"
         placeholder="usuario@empresa.com"
@@ -111,15 +145,6 @@ async function copyPassword(): Promise<void> {
         :error="errors.email"
       >
         <template #label>E-mail</template>
-      </Input>
-
-      <Input
-        v-model="name"
-        placeholder="Opcional"
-        maxlength="120"
-        :error="errors.name"
-      >
-        <template #label>Nome</template>
       </Input>
 
       <Select
@@ -130,6 +155,49 @@ async function copyPassword(): Promise<void> {
       >
         <template #label>Papel</template>
       </Select>
+
+      <!-- Perfis (só para MEMBER; define o acesso, que nasce vazio) -->
+      <div v-if="showProfiles">
+        <span class="mb-1.5 block text-sm font-medium text-foreground"
+          >Perfis</span
+        >
+        <div v-if="profiles.length" class="max-h-52 space-y-2 overflow-y-auto">
+          <label
+            v-for="profile in profiles"
+            :key="profile.id"
+            class="flex cursor-pointer items-center gap-3 rounded-lg border border-line-2 px-3 py-2 transition-colors hover:bg-muted/40"
+          >
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium text-foreground">
+                {{ profile.name }}
+              </p>
+              <p class="truncate text-xs text-muted-foreground">
+                {{ profile.description || 'Sem descrição' }}
+              </p>
+            </div>
+            <Switch
+              size="sm"
+              :model-value="selectedProfiles.has(profile.id)"
+              :aria-label="`Vincular perfil ${profile.name}`"
+              @update:model-value="toggleProfile(profile.id)"
+            />
+          </label>
+        </div>
+        <p
+          v-else
+          class="rounded-lg border border-dashed border-line-3 px-3 py-3 text-xs text-muted-foreground"
+        >
+          Nenhum perfil cadastrado ainda — o membro nascerá sem acesso. Crie
+          perfis em Perfis de permissão.
+        </p>
+        <p
+          v-if="profiles.length"
+          class="mt-1.5 flex items-start gap-1.5 text-xs text-muted-foreground"
+        >
+          <Icon name="Info" size="xs" class="mt-0.5 shrink-0" />
+          Sem nenhum perfil, o membro não terá acesso a nada.
+        </p>
+      </div>
     </form>
 
     <!-- Estado: sucesso (senha provisória) -->
@@ -197,7 +265,9 @@ async function copyPassword(): Promise<void> {
           loading-text="Criando…"
           @click="handleSubmit"
         >
-          <template #icon><Icon name="UserPlus" size="sm" /></template>
+          <template #icon>
+            <Icon name="UserPlus" size="sm" />
+          </template>
           Cadastrar
         </Button>
       </template>

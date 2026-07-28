@@ -132,8 +132,26 @@ async function onCreateSubmit(input: {
   name?: string
   email: string
   role: MembershipRole
+  profileIds: string[]
 }): Promise<void> {
-  await progress.track(controller.create(input))
+  const ok = await progress.track(controller.create(input))
+  if (!ok) return
+
+  // MEMBER nasce sem acesso: vincula os perfis escolhidos logo após criar.
+  const createdId = controller.created.value?.id
+  if (
+    input.role === MembershipRole.MEMBER &&
+    input.profileIds.length &&
+    createdId
+  ) {
+    const member = controller.findByUserId(createdId)
+    if (member) {
+      const refs = await progress.track(
+        memberProfiles.assign(member.id, input.profileIds),
+      )
+      if (refs) controller.applyProfiles(member, refs)
+    }
+  }
 }
 
 async function onChangeRole(
@@ -374,6 +392,8 @@ function closeMenu(): void {
     :loading="controller.isLoading"
     :created="controller.created.value"
     :assignable="assignable"
+    :profiles="memberProfiles.profiles.value"
+    :can-assign-profiles="canManageProfiles"
     @update:model-value="setCreateOpen"
     @submit="onCreateSubmit"
   />

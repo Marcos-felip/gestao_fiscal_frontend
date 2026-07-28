@@ -88,10 +88,15 @@ export class MembershipsController extends BaseController {
     this.handleResult(result, (createdUser) => {
       this.created.value = createdUser
       ok = true
-      void this.loadList()
     })
+    if (ok) await this.loadList()
     this.setLoading(false)
     return ok
+  }
+
+  /** Localiza o membership recém-criado pelo id do usuário retornado no cadastro. */
+  findByUserId(userId: string): Membership | undefined {
+    return this.members.value.find((m) => m.userId === userId)
   }
 
   async changeRole(member: Membership, role: MembershipRole): Promise<void> {
