@@ -189,9 +189,6 @@ function handleSubmit(): void {
                   <p class="truncate text-sm text-foreground">
                     {{ perm.description || perm.code }}
                   </p>
-                  <p class="truncate font-mono text-xs text-muted-foreground">
-                    {{ perm.code }}
-                  </p>
                 </div>
                 <Switch
                   size="sm"
