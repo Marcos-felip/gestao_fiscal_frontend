@@ -7,6 +7,7 @@ import { authRoutes } from '@/modules/auth/presentation/routes/auth-routes'
 import { dashboardRoutes } from '@/modules/dashboard/presentation/routes/dashboard-routes'
 import { companiesRoutes } from '@/modules/companies/presentation/routes/companies-routes'
 import { establishmentsRoutes } from '@/modules/establishments/presentation/routes/establishments-routes'
+import { partnersRoutes } from '@/modules/partners/presentation/routes/partners-routes'
 import { membershipsRoutes } from '@/modules/memberships/presentation/routes/memberships-routes'
 import { permissionsRoutes } from '@/modules/permissions/presentation/routes/permissions-routes'
 import { errorRoutes } from '@/modules/errors/presentation/routes/error-routes'
@@ -24,6 +25,7 @@ const router = createRouter({
         ...dashboardRoutes,
         ...companiesRoutes,
         ...establishmentsRoutes,
+        ...partnersRoutes,
         ...membershipsRoutes,
         ...permissionsRoutes,
       ],
