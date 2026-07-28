@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { Skeleton } from '@/shared/ui'
 import CompanyForm from '@/modules/companies/presentation/components/company-form.vue'
 import { makeCompanyController } from '@/modules/companies/factories/companies.factory'
@@ -7,10 +7,15 @@ import type {
   CompanyFormValues,
   SedeFormValues,
 } from '@/modules/companies/presentation/schemas/company-schema'
+import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
 import { useProgress } from '@/shared/composables'
 
 const controller = makeCompanyController()
 const progress = useProgress()
+const { can } = usePermissions()
+
+// Sem permissão de edição, a empresa abre em somente leitura.
+const readonly = computed(() => !can('company.edit'))
 
 onMounted(() => {
   progress.track(controller.loadCompany())
@@ -61,6 +66,7 @@ async function handleSubmit(values: {
     :sede="controller.sede.value"
     :has-sede="controller.hasMatriz.value"
     :loading="controller.isLoading"
+    :readonly="readonly"
     @submit="handleSubmit"
   />
 </template>
