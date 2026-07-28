@@ -322,7 +322,7 @@ function closeMenu(): void {
             <div class="fixed inset-0 z-40" @click="closeMenu" />
 
             <div
-              class="ui-shadow-float absolute top-full right-0 z-50 mt-1 min-w-52 rounded-lg border border-line-2 bg-background py-1"
+              class="ui-shadow-float absolute top-full right-0 z-50 mt-1 min-w-52 whitespace-nowrap rounded-lg border border-line-2 bg-background py-1"
             >
               <!-- Alterar papel (OWNER) -->
               <template v-if="canChangeRole(member)">
