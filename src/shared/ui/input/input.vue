@@ -39,8 +39,9 @@
             '!border-error-500 focus:!border-error-500 focus:!ring-error-500',
           success &&
             '!border-success-500 focus:!border-success-500 focus:!ring-success-500',
-          // Estado desabilitado
+          // Estado desabilitado (prop ou <fieldset disabled> ancestral)
           disabled && 'opacity-50 cursor-not-allowed bg-background-2',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-background-2',
           // Estilo do placeholder
           'placeholder:text-foreground/70',
           $slots.prefix && 'ps-10',

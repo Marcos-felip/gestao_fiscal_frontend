@@ -5,8 +5,11 @@ import type { AuthResponse } from '@/modules/auth/domain/responses/auth-response
 import type { LoginDto } from '@/modules/auth/domain/dto/login-dto'
 import type { RegisterDto } from '@/modules/auth/domain/dto/register-dto'
 import type { RefreshTokenDto } from '@/modules/auth/domain/dto/refresh-token-dto'
+import type { ChangePasswordDto } from '@/modules/auth/domain/dto/change-password-dto'
+import type { ChangePasswordResult } from '@/modules/auth/domain/responses/change-password-response'
 import { httpClient } from '@/core/client/http-client'
 import { toAuthResponse } from '@/modules/auth/data/mappers/auth.mapper'
+import { toChangePasswordResult } from '@/modules/auth/data/mappers/change-password.mapper'
 
 export class AuthRepository implements IAuthRepository {
   async login(dto: LoginDto): Promise<Either<DomainError, AuthResponse>> {
@@ -37,5 +40,19 @@ export class AuthRepository implements IAuthRepository {
 
   async logout(): Promise<Either<DomainError, void>> {
     return httpClient.post<void>('/auth/logout')
+  }
+
+  async changePasswordFirstLogin(
+    dto: ChangePasswordDto,
+  ): Promise<Either<DomainError, ChangePasswordResult>> {
+    const result = await httpClient.post<unknown>(
+      '/auth/change-password-first-login',
+      {
+        currentPassword: dto.currentPassword,
+        newPassword: dto.newPassword,
+        confirmPassword: dto.confirmPassword,
+      },
+    )
+    return result.flatMap(toChangePasswordResult)
   }
 }

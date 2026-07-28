@@ -7,6 +7,10 @@ export const companiesRoutes: RouteRecordRaw[] = [
     path: 'companies',
     name: routeNames.COMPANY,
     component: CompanyEditPage,
-    meta: { title: 'Empresa', icon: 'Building2' },
+    meta: {
+      title: 'Empresa',
+      icon: 'Building2',
+      requiresPermission: 'company.read',
+    },
   },
 ]

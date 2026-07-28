@@ -64,6 +64,14 @@ export class HttpClient {
     return this.request<T>(() => this.axiosInstance.patch<T>(url, data, config))
   }
 
+  async put<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig,
+  ): Promise<Either<DomainError, T>> {
+    return this.request<T>(() => this.axiosInstance.put<T>(url, data, config))
+  }
+
   async delete<T>(
     url: string,
     config?: AxiosRequestConfig,

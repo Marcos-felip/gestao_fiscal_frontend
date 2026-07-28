@@ -1,0 +1,19 @@
+import { MembershipsRepository } from '@/modules/memberships/data/repositories/memberships-repository'
+import { ListMembershipsUseCase } from '@/modules/memberships/application/use-cases/list-memberships.use-case'
+import { CreateUserUseCase } from '@/modules/memberships/application/use-cases/create-user.use-case'
+import { UpdateMemberRoleUseCase } from '@/modules/memberships/application/use-cases/update-member-role.use-case'
+import { EditUserUseCase } from '@/modules/memberships/application/use-cases/edit-user.use-case'
+import { RemoveMemberUseCase } from '@/modules/memberships/application/use-cases/remove-member.use-case'
+import { MembershipsController } from '@/modules/memberships/presentation/controllers/memberships-controller'
+
+export function makeMembershipsController(): MembershipsController {
+  const repository = new MembershipsRepository()
+
+  return new MembershipsController(
+    new ListMembershipsUseCase(repository),
+    new CreateUserUseCase(repository),
+    new UpdateMemberRoleUseCase(repository),
+    new EditUserUseCase(repository),
+    new RemoveMemberUseCase(repository),
+  )
+}

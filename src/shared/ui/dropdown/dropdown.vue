@@ -1,19 +1,12 @@
 <template>
-  <div
-    ref="dropdownRef"
-    :class="['dropdown', 'relative']"
-    @click.stop
-    @keydown.escape="close"
-  >
-    <!-- Trigger -->
+  <div class="dropdown relative" @keydown.escape="close">
+    <!-- Gatilho -->
     <button
-      :class="[
-        'dropdown-trigger',
-        'inline-flex items-center justify-center gap-2 rounded-lg p-2.5 text-sm font-medium',
-        'transition-colors duration-200',
-        'hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/40',
-        isOpen && 'bg-muted',
-      ]"
+      type="button"
+      :class="[triggerClass, isOpen && 'bg-muted']"
+      :aria-label="triggerLabel || undefined"
+      :aria-expanded="isOpen"
+      aria-haspopup="menu"
       @click="toggle"
     >
       <slot name="trigger" :open="isOpen">
@@ -21,46 +14,56 @@
       </slot>
     </button>
 
-    <!-- Content -->
-    <Teleport to="body">
-      <Transition name="dropdown-fade">
-        <div
-          v-if="isOpen"
-          :class="['dropdown-backdrop', 'fixed inset-0 z-40']"
-          @click="close"
-        />
-      </Transition>
-      <Transition name="dropdown-scale">
-        <div
-          v-if="isOpen"
-          :class="[
-            'dropdown-content',
-            'absolute top-full right-0 mt-2 z-50',
-            'rounded-lg border border-border bg-background shadow-lg',
-            'min-w-56 max-h-96 overflow-y-auto',
-            positionClass,
-          ]"
-        >
-          <slot :close="close" />
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- Backdrop: fecha ao clicar fora -->
+    <Transition name="dropdown-fade">
+      <div
+        v-if="isOpen && closeOnClickOutside"
+        class="fixed inset-0 z-40"
+        @click="close"
+      />
+    </Transition>
+
+    <!-- Conteúdo -->
+    <Transition name="dropdown-scale">
+      <div
+        v-if="isOpen"
+        role="menu"
+        :class="[
+          'dropdown-content ui-shadow-float absolute top-full z-50 mt-2 min-w-56 whitespace-nowrap rounded-lg border border-line-2 bg-background py-1',
+          alignClass,
+          menuClass,
+        ]"
+      >
+        <slot :close="close" />
+      </div>
+    </Transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 interface Props {
   modelValue?: boolean
+  /** Alinhamento do menu em relação ao gatilho. */
   align?: 'left' | 'right'
   closeOnClickOutside?: boolean
+  /** Classes do botão-gatilho (permite um gatilho discreto, ex.: ícone). */
+  triggerClass?: string
+  /** Rótulo acessível do gatilho. */
+  triggerLabel?: string
+  /** Classes extras do menu (ex.: largura mínima ou `max-h`). */
+  menuClass?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
   align: 'right',
   closeOnClickOutside: true,
+  triggerClass:
+    'inline-flex items-center justify-center gap-2 rounded-lg p-2.5 text-sm font-medium transition-colors duration-200 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/40',
+  triggerLabel: '',
+  menuClass: '',
 })
 
 const emit = defineEmits<{
@@ -68,54 +71,29 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = ref(props.modelValue)
-const dropdownRef = ref<HTMLDivElement>()
 
-const positionClass = computed(() => {
-  return props.align === 'left' ? 'left-0' : 'right-0'
-})
+const alignClass = computed(() =>
+  props.align === 'left' ? 'left-0' : 'right-0',
+)
 
 watch(
   () => props.modelValue,
-  (newVal) => {
-    isOpen.value = newVal
+  (value) => {
+    isOpen.value = value
   },
 )
 
-watch(isOpen, (newVal) => {
-  emit('update:modelValue', newVal)
+watch(isOpen, (value) => {
+  emit('update:modelValue', value)
 })
 
-const toggle = () => {
+function toggle(): void {
   isOpen.value = !isOpen.value
 }
 
-const close = () => {
+function close(): void {
   isOpen.value = false
 }
-
-const handleClickOutside = (event: MouseEvent) => {
-  if (
-    props.closeOnClickOutside &&
-    dropdownRef.value &&
-    !dropdownRef.value.contains(event.target as Node)
-  ) {
-    close()
-  }
-}
-
-onMounted(() => {
-  if (props.closeOnClickOutside) {
-    document.addEventListener('click', handleClickOutside)
-  }
-})
-
-onUnmounted(() => {
-  if (props.closeOnClickOutside) {
-    document.removeEventListener('click', handleClickOutside)
-  }
-})
-
-import { computed } from 'vue'
 </script>
 
 <style scoped lang="css">

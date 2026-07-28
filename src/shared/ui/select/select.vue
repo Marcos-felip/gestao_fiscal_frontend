@@ -26,6 +26,7 @@
             '!border-error-500 focus:!border-error-500 focus:!ring-error-500',
           disabled && 'cursor-not-allowed bg-background-2 opacity-50',
           !disabled && 'cursor-pointer',
+          'disabled:cursor-not-allowed disabled:bg-background-2 disabled:opacity-50',
         ]"
         @click="toggle"
         @keydown="onKeydown"

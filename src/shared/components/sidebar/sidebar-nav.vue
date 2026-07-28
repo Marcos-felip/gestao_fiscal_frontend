@@ -5,7 +5,11 @@
     initial="hidden"
     animate="visible"
   >
-    <motion.div v-for="link in links" :key="link.to" :variants="itemVariants">
+    <motion.div
+      v-for="link in visibleLinks"
+      :key="link.to"
+      :variants="itemVariants"
+    >
       <SidebarLink :to="link.to" :label="link.label">
         <template #icon>
           <Icon :name="link.icon" size="md" />
@@ -16,25 +20,79 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { motion } from 'motion-v'
 import { SidebarLink, Icon } from '@/shared/ui'
+import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import type { MembershipRole } from '@/enums/membership-role.enum'
 
 interface NavLink {
   to: string
   label: string
   icon: string
+  /** Exige esta permissão para aparecer. */
+  permission?: string
+  /** Exige este papel (mínimo) para aparecer. */
+  role?: MembershipRole
 }
 
 const links: NavLink[] = [
   { to: '/', label: 'Dashboard', icon: 'LayoutDashboard' },
-  { to: '/users', label: 'Usuários', icon: 'Users' },
-  { to: '/products', label: 'Produtos', icon: 'Package' },
-  { to: '/partners', label: 'Parceiros', icon: 'Users' },
-  { to: '/stock', label: 'Estoque', icon: 'Layers' },
-  { to: '/purchases', label: 'Compras', icon: 'ShoppingCart' },
-  { to: '/establishments', label: 'Estabelecimentos', icon: 'Store' },
-  { to: '/companies', label: 'Empresa', icon: 'Building' },
+  {
+    to: '/users',
+    label: 'Usuários',
+    icon: 'Users',
+    permission: 'users.list',
+  },
+  {
+    to: '/permission-profiles',
+    label: 'Perfis',
+    icon: 'ShieldPlus',
+    permission: 'permissions.manage',
+  },
+  {
+    to: '/products',
+    label: 'Produtos',
+    icon: 'Package',
+    permission: 'products.list',
+  },
+  {
+    to: '/partners',
+    label: 'Parceiros',
+    icon: 'Users',
+    permission: 'partners.list',
+  },
+  { to: '/stock', label: 'Estoque', icon: 'Layers', permission: 'stock.list' },
+  {
+    to: '/purchases',
+    label: 'Compras',
+    icon: 'ShoppingCart',
+    permission: 'purchases.list',
+  },
+  {
+    to: '/establishments',
+    label: 'Estabelecimentos',
+    icon: 'Store',
+    permission: 'establishments.list',
+  },
+  {
+    to: '/companies',
+    label: 'Empresa',
+    icon: 'Building',
+    permission: 'company.read',
+  },
 ]
+
+const { can, isAtLeast } = usePermissions()
+
+// Esconde itens sem permissão/papel; itens sem restrição sempre aparecem.
+const visibleLinks = computed(() =>
+  links.filter((link) => {
+    if (link.permission && !can(link.permission)) return false
+    if (link.role && !isAtLeast(link.role)) return false
+    return true
+  }),
+)
 
 // Entrada encenada: os itens surgem em cascata a partir da esquerda.
 const containerVariants = {
