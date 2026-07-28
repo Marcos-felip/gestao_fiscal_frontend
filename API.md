@@ -14,15 +14,22 @@ A API combina dois mecanismos:
 |-----------|-----------------|--------------|
 | **Papel (role)** | `@TenantProtected(OWNER, ADMIN, ...)` — compara `membership.role` | Onboarding, gestão de papéis, gestão de permissões |
 | **Permissão granular** | `@RequirePermission('products.create')` — consulta `company_role_permissions` da empresa ativa | Maioria dos endpoints de CRUD |
-| **Perfil de permissão** | Conjunto nomeado de permissões vinculado a um membro | Permissões extras de um MEMBER específico |
+| **Perfil de permissão** | Conjunto nomeado de permissões vinculado a um membro | **Todo** o acesso de um MEMBER |
 
 Três regras valem para todo o sistema:
 
 1. **OWNER tem acesso total.** O papel OWNER nunca é barrado por permissão — o guard o libera sem consultar o banco. Ele só não faz o que a API não oferece (não existe exclusão de empresa) e não pode alterar as próprias permissões.
 2. **ADMIN opera tudo abaixo do OWNER.** Recebe todas as permissões por padrão — inclusive editar e remover usuários, exceto o OWNER. O que o separa do OWNER são os endpoints travados por papel (onboarding, alterar papel, gerenciar permissões).
-3. **MEMBER é configurável.** É o único papel cujas permissões o OWNER pode editar, e a configuração vale **apenas dentro da empresa ativa**.
+3. **MEMBER nasce sem nenhuma permissão.** O acesso de um MEMBER vem **exclusivamente** dos perfis vinculados a ele — sem perfil, sem acesso. Perfis são por empresa e não se aplicam a OWNER nem a ADMIN.
 
-As permissões efetivas de um MEMBER são a **união** do conjunto do papel MEMBER na empresa com as permissões de **todos os perfis** vinculados a ele. Perfis não se aplicam a OWNER nem a ADMIN — ver [Perfis de permissão](#perfis-de-permissão).
+```
+efetivas(OWNER)  = catálogo completo (o guard nem consulta o banco)
+efetivas(ADMIN)  = company_role_permissions[ADMIN]
+efetivas(MEMBER) = company_role_permissions[MEMBER] ∪ perfis vinculados
+                   └─ vazio por padrão ─┘
+```
+
+Ver [Perfis de permissão](#perfis-de-permissão).
 
 O erro de permissão granular retorna:
 
@@ -588,7 +595,12 @@ Substitui **todo** o conjunto de perfis do membro. Enviar `[]` desvincula todos.
 ## Permissões
 
 > Todos requerem empresa ativa. As permissões são **por empresa**: cada empresa tem seu próprio
-> conjunto, criado a partir do padrão do sistema quando a empresa é criada.
+> conjunto, criado a partir do padrão do sistema quando a empresa é criada — **exceto MEMBER, que
+> nasce vazio**.
+>
+> Os endpoints `GET /permissions/:role` e `PATCH /permissions/:role` foram mantidos, mas **o frontend
+> não os usa mais**: o acesso do MEMBER é configurado por [perfis](#perfis-de-permissão). Ver a nota
+> em cada um.
 
 ### GET /permissions/me — Listar as permissões do usuário autenticado
 
@@ -607,7 +619,10 @@ Como a resposta é montada:
 |-------|----------|
 | OWNER | catálogo completo, refletindo o acesso total do papel |
 | ADMIN | conjunto do papel ADMIN na empresa ativa |
-| MEMBER | conjunto do papel MEMBER **∪** permissões de todos os perfis vinculados |
+| MEMBER | união das permissões dos perfis vinculados — **`[]` enquanto não tiver nenhum perfil** |
+
+> Trate `[]` como estado normal, não como erro: um MEMBER recém-criado não tem acesso a nada até
+> receber um perfil. A tela deve mostrar isso de forma clara em vez de parecer quebrada.
 
 ---
 
@@ -644,6 +659,8 @@ Os grupos vêm ordenados alfabeticamente por `domain`, e as permissões por `cod
 ```
 
 > Para `:role = OWNER` a resposta é o catálogo completo (acesso total), independentemente do que estiver gravado.
+> Para `:role = MEMBER` a resposta é `[]` por padrão — o papel não tem baseline. Para saber o que um
+> MEMBER específico pode fazer, use `GET /memberships/:id/profiles`.
 
 **Erros:** `400` Papel inválido. Valores aceitos: OWNER, ADMIN, MEMBER
 
@@ -669,7 +686,10 @@ Substitui **todo** o conjunto de permissões do papel MEMBER **dentro da empresa
 - `400` Papel inválido. Valores aceitos: OWNER, ADMIN, MEMBER
 - `404` Permissão não encontrada: `<código>` (código inexistente na tabela `permissions`)
 
-> Este endpoint define o **baseline** do papel MEMBER, que vale para todos os membros da empresa. Para dar permissões a um membro específico, use um [perfil de permissão](#perfis-de-permissão).
+> ⚠️ **Endpoint legado.** O baseline do papel MEMBER é vazio por padrão e o frontend não o usa mais —
+> conceda acesso por [perfil de permissão](#perfis-de-permissão). Este `PATCH` continua funcionando e
+> é o único jeito de dar uma permissão a **todos** os MEMBERs da empresa de uma vez; use com cuidado,
+> porque ela passa a valer para quem não tem perfil nenhum.
 
 ---
 
@@ -677,8 +697,9 @@ Substitui **todo** o conjunto de permissões do papel MEMBER **dentro da empresa
 
 > Todos requerem empresa ativa e a permissão `permissions.manage` (por padrão OWNER e ADMIN).
 
-Um **perfil** é um conjunto nomeado de permissões, escopado por empresa. Um MEMBER pode ter
-vários perfis ao mesmo tempo, e as permissões se **somam** ao baseline do papel MEMBER.
+Um **perfil** é um conjunto nomeado de permissões, escopado por empresa. Um MEMBER pode ter vários
+perfis ao mesmo tempo, e as permissões se **somam**. Como o papel MEMBER nasce sem nenhuma permissão,
+**perfil é a única forma de dar acesso a um MEMBER**: sem perfil vinculado, ele não consegue fazer nada.
 
 Regras que valem para todo o recurso:
 
@@ -763,11 +784,40 @@ as permissões atuais; enviar `[]` remove todas. Enviar `description` vazia limp
 ### DELETE /permission-profiles/:id — Excluir perfil
 
 Exclusão **definitiva** (não é soft delete — perfil é configuração, não dado de negócio). O vínculo
-com os membros cai junto por cascade; as permissões do papel MEMBER não são afetadas.
+com os membros cai junto por cascade; os demais perfis de cada membro continuam valendo.
 
 **Resposta 204:** sem corpo
 
 **Erros:** `404` Perfil de permissão não encontrado
+
+---
+
+### Migração para o modelo de perfis
+
+A migration `20260728150000_empty_member_baseline` **apagou todas as linhas de `company_role_permissions`
+com `role = 'MEMBER'`**, em todas as empresas. Consequência imediata:
+
+- Todo MEMBER que já existia passou a receber `403` em qualquer endpoint protegido por permissão
+- `GET /permissions/me` passou a devolver `[]` para esses usuários
+- OWNER e ADMIN não foram afetados
+
+Para restabelecer o acesso, cada empresa precisa criar ao menos um perfil e vinculá-lo aos membros:
+
+```
+POST /permission-profiles       { "name": "Operação", "permissionCodes": [ ...ver "Perfil sugerido"... ] }
+GET  /memberships               → lista os membros; filtrar os de papel MEMBER
+PUT  /memberships/:id/profiles  { "profileIds": ["<id do perfil>"] }   (um por membro)
+```
+
+O conjunto que o MEMBER tinha antes continua registrado na tabela `role_permissions` (que deixou de
+ser copiada para MEMBER, mas foi preservada de propósito). Para consultá-lo e usar como base do
+primeiro perfil:
+
+```sql
+SELECT permission_code FROM role_permissions WHERE role = 'MEMBER' ORDER BY permission_code;
+```
+
+Os mesmos códigos estão marcados com 🔹 na coluna **Perfil sugerido** do [catálogo](#catálogo-de-permissões).
 
 ---
 
@@ -1086,93 +1136,103 @@ Todos os endpoints de listagem suportam paginação:
 
 ## Catálogo de permissões
 
-Códigos no formato `dominio.acao`, armazenados na tabela `permissions` e vinculados aos papéis de cada empresa pela tabela `company_role_permissions`. As colunas OWNER/ADMIN/MEMBER abaixo mostram o **padrão** com que uma empresa nasce — o conjunto do MEMBER pode ser alterado depois, por empresa.
+Códigos no formato `dominio.acao`, armazenados na tabela `permissions`.
 
-Legenda: ✅ concedida por padrão · ❌ não concedida · **Endpoint** = endpoint que exige a permissão (— = código cadastrado mas ainda não usado por nenhuma rota).
+- **OWNER** nunca é barrado — não depende de cadastro
+- **ADMIN** recebe todas as permissões quando a empresa é criada (`company_role_permissions`)
+- **MEMBER nasce sem nenhuma permissão.** Todo o acesso dele vem dos [perfis](#perfis-de-permissão) vinculados
+
+Por isso as tabelas abaixo não têm coluna MEMBER: para qualquer código, um MEMBER só tem acesso se
+algum perfil vinculado a ele contiver aquele código.
+
+Legenda: ✅ concedida por padrão à empresa nova · **Perfil sugerido** = 🔹 marca os códigos que
+compunham o antigo conjunto padrão do MEMBER, útil como ponto de partida ao montar o primeiro perfil ·
+**Endpoint** = endpoint que exige a permissão (— = código cadastrado mas ainda não usado por nenhuma rota).
 
 ### Empresa (`company`)
 
-| Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
-|--------|-----------|:-----:|:-----:|:------:|----------|
-| `company.read` | Ler dados da empresa | ✅ | ✅ | ✅ | `GET /companies/:id` |
-| `company.edit` | Editar dados da empresa | ✅ | ✅ | ❌ | `PATCH /companies/:id` |
+| Código | Descrição | OWNER | ADMIN | Perfil sugerido | Endpoint |
+|--------|-----------|:-----:|:-----:|:---------------:|----------|
+| `company.read` | Ler dados da empresa | ✅ | ✅ | 🔹 | `GET /companies/:id` |
+| `company.edit` | Editar dados da empresa | ✅ | ✅ | | `PATCH /companies/:id` |
 
 ### Usuários (`users`)
 
-| Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
-|--------|-----------|:-----:|:-----:|:------:|----------|
-| `users.list` | Listar usuários | ✅ | ✅ | ✅ | `GET /memberships` |
-| `users.create` | Criar novo usuário | ✅ | ✅ | ❌ | `POST /memberships`, `POST /users`, `POST /users/:id/memberships` |
-| `users.read` | Ler dados do usuário | ✅ | ✅ | ❌ | — |
-| `users.edit` | Editar dados do usuário | ✅ | ✅ | ❌ | `PATCH /users/:id` |
-| `users.delete` | Deletar usuário | ✅ | ✅ | ❌ | `DELETE /memberships/:id` |
+| Código | Descrição | OWNER | ADMIN | Perfil sugerido | Endpoint |
+|--------|-----------|:-----:|:-----:|:---------------:|----------|
+| `users.list` | Listar usuários | ✅ | ✅ | 🔹 | `GET /memberships` |
+| `users.create` | Criar novo usuário | ✅ | ✅ | | `POST /memberships`, `POST /users`, `POST /users/:id/memberships` |
+| `users.read` | Ler dados do usuário | ✅ | ✅ | | — |
+| `users.edit` | Editar dados do usuário | ✅ | ✅ | | `PATCH /users/:id` |
+| `users.delete` | Deletar usuário | ✅ | ✅ | | `DELETE /memberships/:id` |
 
 > Mesmo com `users.create`, o papel atribuído obedece à [hierarquia de papéis](#hierarquia-de-papéis).
 > `users.edit` e `users.delete` obedecem à mesma hierarquia: ninguém edita ou remove um usuário de papel superior ao seu.
 
 ### Permissões (`permissions`)
 
-| Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
-|--------|-----------|:-----:|:-----:|:------:|----------|
-| `permissions.manage` | Gerenciar perfis de permissão | ✅ | ✅ | ❌ | `GET/POST/PATCH/DELETE /permission-profiles`, `GET/PUT /memberships/:id/profiles` |
+| Código | Descrição | OWNER | ADMIN | Perfil sugerido | Endpoint |
+|--------|-----------|:-----:|:-----:|:---------------:|----------|
+| `permissions.manage` | Gerenciar perfis de permissão | ✅ | ✅ | | `GET/POST/PATCH/DELETE /permission-profiles`, `GET/PUT /memberships/:id/profiles` |
 
-> Alterar o baseline de um papel (`PATCH /permissions/:role`) continua travado por **papel** (só OWNER), não por esta permissão.
+> Nada impede colocar `permissions.manage` em um perfil, mas pense duas vezes: um MEMBER com essa
+> permissão passa a criar perfis e a se auto-conceder acesso.
 
 ### Estabelecimentos (`establishments`)
 
-| Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
-|--------|-----------|:-----:|:-----:|:------:|----------|
-| `establishments.list` | Listar estabelecimentos | ✅ | ✅ | ✅ | `GET /establishments` |
-| `establishments.create` | Criar estabelecimento | ✅ | ✅ | ❌ | `POST /establishments` |
-| `establishments.read` | Ler dados do estabelecimento | ✅ | ✅ | ✅ | `GET /establishments/:id` |
-| `establishments.edit` | Editar estabelecimento | ✅ | ✅ | ❌ | `PATCH /establishments/:id` |
-| `establishments.delete` | Deletar estabelecimento | ✅ | ✅ | ❌ | `DELETE /establishments/:id` |
+| Código | Descrição | OWNER | ADMIN | Perfil sugerido | Endpoint |
+|--------|-----------|:-----:|:-----:|:---------------:|----------|
+| `establishments.list` | Listar estabelecimentos | ✅ | ✅ | 🔹 | `GET /establishments` |
+| `establishments.create` | Criar estabelecimento | ✅ | ✅ | | `POST /establishments` |
+| `establishments.read` | Ler dados do estabelecimento | ✅ | ✅ | 🔹 | `GET /establishments/:id` |
+| `establishments.edit` | Editar estabelecimento | ✅ | ✅ | | `PATCH /establishments/:id` |
+| `establishments.delete` | Deletar estabelecimento | ✅ | ✅ | | `DELETE /establishments/:id` |
 
 ### Produtos (`products`)
 
-| Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
-|--------|-----------|:-----:|:-----:|:------:|----------|
-| `products.list` | Listar produtos | ✅ | ✅ | ✅ | `GET /products` |
-| `products.create` | Criar produto | ✅ | ✅ | ✅ | `POST /products` |
-| `products.read` | Ler dados do produto | ✅ | ✅ | ✅ | `GET /products/:id` |
-| `products.edit` | Editar produto | ✅ | ✅ | ✅ | `PATCH /products/:id` |
-| `products.delete` | Deletar produto | ✅ | ✅ | ✅ | `DELETE /products/:id` |
+| Código | Descrição | OWNER | ADMIN | Perfil sugerido | Endpoint |
+|--------|-----------|:-----:|:-----:|:---------------:|----------|
+| `products.list` | Listar produtos | ✅ | ✅ | 🔹 | `GET /products` |
+| `products.create` | Criar produto | ✅ | ✅ | 🔹 | `POST /products` |
+| `products.read` | Ler dados do produto | ✅ | ✅ | 🔹 | `GET /products/:id` |
+| `products.edit` | Editar produto | ✅ | ✅ | 🔹 | `PATCH /products/:id` |
+| `products.delete` | Deletar produto | ✅ | ✅ | 🔹 | `DELETE /products/:id` |
 
 ### Compras (`purchases`)
 
-| Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
-|--------|-----------|:-----:|:-----:|:------:|----------|
-| `purchases.list` | Listar compras | ✅ | ✅ | ✅ | `GET /purchases` |
-| `purchases.create` | Criar compra | ✅ | ✅ | ✅ | `POST /purchases` |
-| `purchases.read` | Ler dados da compra | ✅ | ✅ | ✅ | `GET /purchases/:id` |
-| `purchases.edit` | Editar compra | ✅ | ✅ | ✅ | `PATCH /purchases/:id` |
-| `purchases.confirm` | Confirmar compra | ✅ | ✅ | ✅ | `POST /purchases/:id/confirm` |
-| `purchases.cancel` | Cancelar compra | ✅ | ✅ | ❌ | `POST /purchases/:id/cancel` |
-| `purchases.delete` | Deletar compra | ✅ | ✅ | ❌ | `DELETE /purchases/:id` |
+| Código | Descrição | OWNER | ADMIN | Perfil sugerido | Endpoint |
+|--------|-----------|:-----:|:-----:|:---------------:|----------|
+| `purchases.list` | Listar compras | ✅ | ✅ | 🔹 | `GET /purchases` |
+| `purchases.create` | Criar compra | ✅ | ✅ | 🔹 | `POST /purchases` |
+| `purchases.read` | Ler dados da compra | ✅ | ✅ | 🔹 | `GET /purchases/:id` |
+| `purchases.edit` | Editar compra | ✅ | ✅ | 🔹 | `PATCH /purchases/:id` |
+| `purchases.confirm` | Confirmar compra | ✅ | ✅ | 🔹 | `POST /purchases/:id/confirm` |
+| `purchases.cancel` | Cancelar compra | ✅ | ✅ | | `POST /purchases/:id/cancel` |
+| `purchases.delete` | Deletar compra | ✅ | ✅ | | `DELETE /purchases/:id` |
 
 ### Estoque (`stock`)
 
-| Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
-|--------|-----------|:-----:|:-----:|:------:|----------|
-| `stock.list` | Listar movimentações de estoque | ✅ | ✅ | ✅ | `GET /stock/movements` |
-| `stock.create` | Criar movimentação de estoque | ✅ | ✅ | ✅ | `POST /stock/movements` |
-| `stock.read` | Ler dados da movimentação | ✅ | ✅ | ✅ | — |
-| `stock.edit` | Editar movimentação | ✅ | ✅ | ✅ | — |
-| `stock.delete` | Deletar movimentação | ✅ | ✅ | ❌ | — |
+| Código | Descrição | OWNER | ADMIN | Perfil sugerido | Endpoint |
+|--------|-----------|:-----:|:-----:|:---------------:|----------|
+| `stock.list` | Listar movimentações de estoque | ✅ | ✅ | 🔹 | `GET /stock/movements` |
+| `stock.create` | Criar movimentação de estoque | ✅ | ✅ | 🔹 | `POST /stock/movements` |
+| `stock.read` | Ler dados da movimentação | ✅ | ✅ | 🔹 | — |
+| `stock.edit` | Editar movimentação | ✅ | ✅ | 🔹 | — |
+| `stock.delete` | Deletar movimentação | ✅ | ✅ | | — |
 
 ### Parceiros (`partners`)
 
-| Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
-|--------|-----------|:-----:|:-----:|:------:|----------|
-| `partners.list` | Listar parceiros | ✅ | ✅ | ✅ | `GET /partners` |
-| `partners.create` | Criar parceiro | ✅ | ✅ | ✅ | `POST /partners` |
-| `partners.read` | Ler dados do parceiro | ✅ | ✅ | ✅ | `GET /partners/:id` |
-| `partners.edit` | Editar parceiro | ✅ | ✅ | ✅ | `PATCH /partners/:id` |
-| `partners.delete` | Deletar parceiro | ✅ | ✅ | ✅ | `DELETE /partners/:id` |
+| Código | Descrição | OWNER | ADMIN | Perfil sugerido | Endpoint |
+|--------|-----------|:-----:|:-----:|:---------------:|----------|
+| `partners.list` | Listar parceiros | ✅ | ✅ | 🔹 | `GET /partners` |
+| `partners.create` | Criar parceiro | ✅ | ✅ | 🔹 | `POST /partners` |
+| `partners.read` | Ler dados do parceiro | ✅ | ✅ | 🔹 | `GET /partners/:id` |
+| `partners.edit` | Editar parceiro | ✅ | ✅ | 🔹 | `PATCH /partners/:id` |
+| `partners.delete` | Deletar parceiro | ✅ | ✅ | 🔹 | `DELETE /partners/:id` |
 
 ### Vendas (`sales`) — legado
 
-O módulo de vendas foi removido do código, mas os 6 códigos `sales.*` (`list`, `create`, `read`, `edit`, `confirm`, `cancel`) **permanecem** na tabela `permissions` e continuam vinculados aos papéis. Consequência: `GET /permissions` retorna um grupo `sales` (sem label traduzido) que o frontend deve ignorar até a limpeza ser feita por migration.
+O módulo de vendas foi removido do código, mas os 6 códigos `sales.*` (`list`, `create`, `read`, `edit`, `confirm`, `cancel`) **permanecem** na tabela `permissions` e continuam concedidos a OWNER e ADMIN. Consequência: `GET /permissions` retorna um grupo `sales` (sem label traduzido) que o frontend deve ignorar até a limpeza ser feita por migration.
 
 ---
 
@@ -1189,7 +1249,7 @@ Vale em `POST /memberships`, `POST /users`, `POST /users/:id/memberships` e `PAT
 |-------------|---------------|
 | OWNER | ADMIN, MEMBER |
 | ADMIN | ADMIN, MEMBER |
-| MEMBER (se receber `users.create`) | MEMBER |
+| MEMBER (se um perfil conceder `users.create`) | MEMBER |
 
 **Erros:**
 - `403` Não é possível atribuir o papel OWNER a um usuário
@@ -1207,7 +1267,7 @@ Vale em `PATCH /users/:id`, `DELETE /memberships/:id` e `PUT /memberships/:id/pr
 |-------------|---------------------|
 | OWNER | ADMIN, MEMBER (e editar outro OWNER) |
 | ADMIN | ADMIN, MEMBER |
-| MEMBER (se receber `users.edit`/`users.delete`) | MEMBER |
+| MEMBER (se um perfil conceder `users.edit`/`users.delete`) | MEMBER |
 
 **Erros:**
 - `403` Não é possível gerenciar um usuário de papel superior ao seu
@@ -1219,6 +1279,7 @@ Vale em `PATCH /users/:id`, `DELETE /memberships/:id` e `PUT /memberships/:id/pr
 
 | # | Comportamento | Impacto |
 |---|---------------|---------|
+| 0 | **A migration `20260728150000_empty_member_baseline` apagou o baseline do papel MEMBER de todas as empresas.** Todo MEMBER que já existia ficou **sem acesso a nada** até receber um perfil. | **Alto** — ver [Migração para o modelo de perfis](#migração-para-o-modelo-de-perfis) |
 | 1 | `PATCH /companies/:id` ignora o `:id` e atualiza sempre a empresa ativa. | Baixo — enviar o ID da empresa ativa para evitar confusão |
 | 2 | Permissões `sales.*` remanescentes do módulo de vendas removido continuam no catálogo e são copiadas para cada empresa nova. | Baixo — ruído em `GET /permissions`; nenhum endpoint as utiliza |
 | 3 | Código de permissão inexistente devolve `404` em `PATCH /permissions/:role` e `422` nos perfis. | Baixo — tratar os dois status ao validar o formulário de permissões |
@@ -1296,14 +1357,7 @@ POST /auth/login                        → resposta traz forcePasswordChange: t
 POST /auth/change-password-first-login  → troca a senha; forcePasswordChange vira false
 ```
 
-### 7. Ajustar permissões do papel MEMBER (por empresa)
-```
-GET   /permissions           → catálogo agrupado por domínio (OWNER/ADMIN)
-GET   /permissions/MEMBER    → códigos concedidos na empresa ativa
-PATCH /permissions/MEMBER    → substitui o conjunto completo na empresa ativa (apenas OWNER)
-```
-
-### 8. Dar permissões extras a um membro específico
+### 7. Dar acesso a um MEMBER (único caminho)
 ```
 GET  /permissions                     → catálogo agrupado, para montar a seleção de códigos
 POST /permission-profiles             → cria o perfil (ex: "Estoquista") com os códigos escolhidos
@@ -1311,10 +1365,12 @@ PUT  /memberships/:id/profiles        → vincula o perfil ao membro (apenas pap
 GET  /memberships                     → a listagem já devolve os perfis de cada membro
 ```
 
-### 9. Montar a interface conforme as permissões
+> Enquanto o passo `PUT` não acontecer, o MEMBER não tem acesso a nada.
+
+### 8. Montar a interface conforme as permissões
 ```
 GET /permissions/me          → códigos efetivos do usuário na empresa ativa
-                               (para MEMBER: papel + perfis vinculados)
+                               (para MEMBER: união dos perfis vinculados, ou [] se não tiver nenhum)
 ```
 
 ---

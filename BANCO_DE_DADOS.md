@@ -257,6 +257,10 @@ Estrutura com `purchase_number` (numeracao sequencial por empresa) e `supplier_i
 - Tabela **global** e **sem soft delete**
 - **Não é consultada em tempo de requisição.** Serve apenas de molde: é copiada para
   `company_role_permissions` quando uma empresa é criada (`CompaniesService.create`, dentro da transação)
+- A cópia **exclui o papel MEMBER** (`where: { role: { not: MEMBER } }`) — o papel nasce com baseline
+  vazio e recebe acesso apenas por perfis
+- As linhas de MEMBER foram **preservadas** mesmo tendo deixado de ser copiadas: são o registro do
+  antigo conjunto padrão e servem de base para montar o primeiro perfil de cada empresa
 
 ### `company_role_permissions` — Permissões efetivas por empresa
 
@@ -269,8 +273,11 @@ Estrutura com `purchase_number` (numeracao sequencial por empresa) e `supplier_i
 - **PK composta:** `(company_id, role, permission_code)` · **Índice:** `(company_id, role)`
 - **FKs:** `company_id → companies(id)` e `permission_code → permissions(code)`, ambas `ON DELETE CASCADE ON UPDATE CASCADE`
 - Sem soft delete
-- É **esta** tabela que o `RequirePermissionGuard` consulta. O papel OWNER não é verificado aqui:
-  tem acesso total por definição
+- É **esta** tabela que o `RequirePermissionGuard` consulta primeiro. O papel OWNER não é verificado
+  aqui: tem acesso total por definição
+- **Não contém linhas de MEMBER por padrão.** Empresas novas não recebem nenhuma, e a migration
+  `20260728150000_empty_member_baseline` apagou as das empresas existentes. O acesso do MEMBER vem de
+  `permission_profiles` / `membership_profiles`
 - A atualização é feita por substituição total (`deleteMany` + `createMany` dentro de `$transaction`),
   sempre filtrando por `company_id`
 
@@ -314,6 +321,8 @@ Estrutura com `purchase_number` (numeracao sequencial por empresa) e `supplier_i
 - As permissões efetivas de um MEMBER são a **união** de `company_role_permissions[MEMBER]` com as
   permissões de todos os perfis vinculados aqui. É a segunda consulta do `RequirePermissionGuard`,
   executada apenas quando o papel não concedeu a permissão
+- Como o baseline do MEMBER é vazio, na prática **é esta tabela que decide** o acesso de um MEMBER:
+  sem linha aqui, ele recebe `403` em tudo
 
 ---
 
@@ -401,6 +410,7 @@ As migrations ficam em `prisma/migrations/`.
 | `20260525191254` | Recria a FK de `role_permissions` com `ON UPDATE CASCADE` |
 | `20260727120000_company_scoped_permissions` | Cria `company_role_permissions`; adiciona `purchases.delete` ao catálogo; concede `users.create` e `purchases.delete` ao ADMIN no padrão; faz o backfill do padrão para todas as empresas existentes |
 | `20260728120000_permission_profiles` | Cria `permission_profiles`, `permission_profile_permissions` e `membership_profiles`; adiciona `permissions.manage` ao catálogo, concede a OWNER e ADMIN no padrão e faz o backfill das empresas existentes |
+| `20260728150000_empty_member_baseline` | **Apaga todas as linhas de `company_role_permissions` com `role = 'MEMBER'`**, em todas as empresas. A partir daqui o MEMBER só tem acesso por perfil — os MEMBERs existentes ficam sem acesso até receberem um. As linhas de MEMBER em `role_permissions` são preservadas como referência |
 
 > As permissões são semeadas **por migration SQL**, não por script de seed do Prisma. Ao criar um módulo novo, a migration precisa fazer **três coisas**:
 >
@@ -422,6 +432,8 @@ As migrations ficam em `prisma/migrations/`.
 > Sem o passo 3 as empresas existentes ficam sem a permissão e o endpoint retorna `403`.
 > O passo 2 sozinho não afeta ninguém, porque `role_permissions` não é lida em runtime.
 > OWNER não precisa de nenhum dos passos: tem acesso total por definição.
+> **Nunca conceda ao papel MEMBER** nos passos 2 e 3 — o baseline dele é vazio de propósito. Para dar
+> o código novo a um MEMBER, inclua-o em um perfil (`permission_profile_permissions`).
 
 ```bash
 # Criar nova migration
