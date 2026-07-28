@@ -22,6 +22,16 @@ export function formatCnpj(value: string): string {
     .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5')
 }
 
+/** Formata CPF progressivamente: `000.000.000-00` (até 11 dígitos). */
+export function formatCpf(value: string): string {
+  const digits = onlyDigits(value).slice(0, 11)
+
+  return digits
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4')
+}
+
 /** Formata CEP: `00000-000` (até 8 dígitos). */
 export function formatCep(value: string): string {
   return onlyDigits(value)
