@@ -6,6 +6,7 @@ export const routeNames = {
   COMPANY: 'company',
   USERS: 'users',
   PERMISSIONS: 'permissions',
+  PERMISSION_PROFILES: 'permission-profiles',
   ESTABLISHMENTS: 'establishments',
   ESTABLISHMENT_NEW: 'establishment-new',
   ESTABLISHMENT_EDIT: 'establishment-edit',

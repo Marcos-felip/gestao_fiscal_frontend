@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 import { AnimatePresence, motion } from 'motion-v'
 import { Icon } from '@/shared/ui'
 
@@ -13,12 +13,19 @@ const props = withDefaults(
     title?: string
     description?: string
     closeOnBackdrop?: boolean
+    size?: 'sm' | 'md' | 'lg'
   }>(),
   {
     title: '',
     description: '',
     closeOnBackdrop: true,
+    size: 'md',
   },
+)
+
+const maxWidthClass = computed(
+  () =>
+    ({ sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-2xl' })[props.size],
 )
 
 const emit = defineEmits<{
@@ -67,7 +74,10 @@ watch(
           key="modal-card"
           role="dialog"
           aria-modal="true"
-          class="ui-shadow-float relative w-full max-w-md overflow-hidden rounded-3xl border border-line-2 bg-background"
+          :class="[
+            'ui-shadow-float relative w-full overflow-hidden rounded-3xl border border-line-2 bg-background',
+            maxWidthClass,
+          ]"
           :initial="{ opacity: 0, scale: 0.92, y: 16 }"
           :animate="{ opacity: 1, scale: 1, y: 0 }"
           :exit="{ opacity: 0, scale: 0.96, y: 8 }"

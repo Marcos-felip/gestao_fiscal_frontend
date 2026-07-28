@@ -50,6 +50,12 @@ const links: NavLink[] = [
     icon: 'ShieldCheck',
     role: MembershipRole.ADMIN,
   },
+  {
+    to: '/permission-profiles',
+    label: 'Perfis',
+    icon: 'ShieldPlus',
+    permission: 'permissions.manage',
+  },
   { to: '/products', label: 'Produtos', icon: 'Package' },
   { to: '/partners', label: 'Parceiros', icon: 'Users' },
   { to: '/stock', label: 'Estoque', icon: 'Layers' },
