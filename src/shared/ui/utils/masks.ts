@@ -58,6 +58,54 @@ export function formatPhone(value: string): string {
 }
 
 /**
+ * Sanitiza a digitação de um valor decimal: mantém apenas dígitos e um único
+ * separador (vírgula ou ponto). Não formata — só evita caracteres inválidos.
+ */
+export function formatDecimalInput(value: string): string {
+  const cleaned = value.replace(/[^\d.,]/g, '')
+  // Preserva apenas o primeiro separador encontrado.
+  const match = cleaned.match(/[.,]/)
+  if (!match) return cleaned
+  const sep = match[0]
+  const [head, ...tail] = cleaned.split(sep)
+  return tail.length ? `${head}${sep}${tail.join('')}` : cleaned
+}
+
+/**
+ * Converte uma string decimal (pt-BR ou "en") em número.
+ * - Com vírgula: trata vírgula como decimal e pontos como milhar (`1.234,56`).
+ * - Sem vírgula: trata ponto como decimal (`1234.56`).
+ * Retorna `undefined` quando vazio ou inválido.
+ */
+export function parseDecimal(value: string): number | undefined {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+
+  const normalized = trimmed.includes(',')
+    ? trimmed.replace(/\./g, '').replace(',', '.')
+    : trimmed
+
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+/** Formata um número como moeda pt-BR sem símbolo (ex.: `1.234,56`). */
+export function formatMoney(value: number): string {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+/** Formata um número como quantidade, removendo zeros à direita (ex.: `1,5`). */
+export function formatQuantity(value: number): string {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
+  })
+}
+
+/**
  * Valida um CNPJ pelos dígitos verificadores (algoritmo módulo 11).
  * Aceita valor com ou sem máscara. Rejeita sequências repetidas (ex.: 111...).
  */
