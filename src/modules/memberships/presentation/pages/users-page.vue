@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { motion } from 'motion-v'
-import { Avatar, Button, Icon, Skeleton } from '@/shared/ui'
+import { Avatar, Button, Dropdown, Icon, Skeleton } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import RoleBadge from '@/modules/memberships/presentation/components/role-badge.vue'
 import CreateUserDialog from '@/modules/memberships/presentation/components/create-user-dialog.vue'
@@ -176,17 +176,6 @@ async function confirmRemove(): Promise<void> {
 function goProfiles(): void {
   controller.router.push({ name: routeNames.PERMISSION_PROFILES })
 }
-
-// Menu de ações da linha (id da linha aberta).
-const openMenuId = ref<string | null>(null)
-
-function toggleMenu(member: Membership): void {
-  openMenuId.value = openMenuId.value === member.id ? null : member.id
-}
-
-function closeMenu(): void {
-  openMenuId.value = null
-}
 </script>
 
 <template>
@@ -306,82 +295,75 @@ function closeMenu(): void {
 
       <RoleBadge :role="member.role" />
 
-      <div class="relative flex w-9 justify-end">
-        <template v-if="hasActions(member)">
-          <button
-            type="button"
-            class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Ações"
-            @click="toggleMenu(member)"
-          >
+      <div class="flex w-9 justify-end">
+        <Dropdown
+          v-if="hasActions(member)"
+          align="right"
+          trigger-label="Ações"
+          trigger-class="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <template #trigger>
             <Icon name="EllipsisVertical" size="sm" />
-          </button>
-
-          <template v-if="openMenuId === member.id">
-            <!-- Fecha ao clicar fora -->
-            <div class="fixed inset-0 z-40" @click="closeMenu" />
-
-            <div
-              class="ui-shadow-float absolute top-full right-0 z-50 mt-1 min-w-52 whitespace-nowrap rounded-lg border border-line-2 bg-background py-1"
-            >
-              <!-- Alterar papel (OWNER) -->
-              <template v-if="canChangeRole(member)">
-                <button
-                  v-for="r in rolesFor(member)"
-                  :key="r"
-                  type="button"
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                  @click="onChangeRole(member, r), closeMenu()"
-                >
-                  <Icon name="Shield" size="sm" class="text-muted-foreground" />
-                  Definir como {{ membershipRoleLabels[r] }}
-                </button>
-              </template>
-
-              <!-- Editar -->
-              <button
-                v-if="canEditMember(member)"
-                type="button"
-                class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                @click="openEdit(member), closeMenu()"
-              >
-                <Icon name="Pencil" size="sm" class="text-muted-foreground" />
-                Editar
-              </button>
-
-              <!-- Perfis (só MEMBER) -->
-              <button
-                v-if="canManageMemberProfiles(member)"
-                type="button"
-                class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                @click="openAssign(member), closeMenu()"
-              >
-                <Icon name="ShieldPlus" size="sm" class="text-muted-foreground" />
-                Perfis
-              </button>
-
-              <!-- Remover -->
-              <template v-if="canDeleteMember(member)">
-                <div
-                  v-if="
-                    canChangeRole(member) ||
-                    canEditMember(member) ||
-                    canManageMemberProfiles(member)
-                  "
-                  class="my-1 border-t border-line-2"
-                />
-                <button
-                  type="button"
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
-                  @click="askRemove(member), closeMenu()"
-                >
-                  <Icon name="Trash2" size="sm" />
-                  Remover
-                </button>
-              </template>
-            </div>
           </template>
-        </template>
+
+          <template #default="{ close }">
+            <!-- Alterar papel (OWNER) -->
+            <template v-if="canChangeRole(member)">
+              <button
+                v-for="r in rolesFor(member)"
+                :key="r"
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                @click="onChangeRole(member, r), close()"
+              >
+                <Icon name="Shield" size="sm" class="text-muted-foreground" />
+                Definir como {{ membershipRoleLabels[r] }}
+              </button>
+            </template>
+
+            <!-- Editar -->
+            <button
+              v-if="canEditMember(member)"
+              type="button"
+              class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+              @click="openEdit(member), close()"
+            >
+              <Icon name="Pencil" size="sm" class="text-muted-foreground" />
+              Editar
+            </button>
+
+            <!-- Perfis (só MEMBER) -->
+            <button
+              v-if="canManageMemberProfiles(member)"
+              type="button"
+              class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+              @click="openAssign(member), close()"
+            >
+              <Icon name="ShieldPlus" size="sm" class="text-muted-foreground" />
+              Perfis
+            </button>
+
+            <!-- Remover -->
+            <template v-if="canDeleteMember(member)">
+              <div
+                v-if="
+                  canChangeRole(member) ||
+                  canEditMember(member) ||
+                  canManageMemberProfiles(member)
+                "
+                class="my-1 border-t border-line-2"
+              />
+              <button
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive transition-colors hover:bg-destructive/10"
+                @click="askRemove(member), close()"
+              >
+                <Icon name="Trash2" size="sm" />
+                Remover
+              </button>
+            </template>
+          </template>
+        </Dropdown>
       </div>
     </div>
   </motion.div>
