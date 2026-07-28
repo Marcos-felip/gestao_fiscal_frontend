@@ -50,12 +50,37 @@ const links: NavLink[] = [
     icon: 'ShieldPlus',
     permission: 'permissions.manage',
   },
-  { to: '/products', label: 'Produtos', icon: 'Package' },
-  { to: '/partners', label: 'Parceiros', icon: 'Users' },
-  { to: '/stock', label: 'Estoque', icon: 'Layers' },
-  { to: '/purchases', label: 'Compras', icon: 'ShoppingCart' },
-  { to: '/establishments', label: 'Estabelecimentos', icon: 'Store' },
-  { to: '/companies', label: 'Empresa', icon: 'Building' },
+  {
+    to: '/products',
+    label: 'Produtos',
+    icon: 'Package',
+    permission: 'products.list',
+  },
+  {
+    to: '/partners',
+    label: 'Parceiros',
+    icon: 'Users',
+    permission: 'partners.list',
+  },
+  { to: '/stock', label: 'Estoque', icon: 'Layers', permission: 'stock.list' },
+  {
+    to: '/purchases',
+    label: 'Compras',
+    icon: 'ShoppingCart',
+    permission: 'purchases.list',
+  },
+  {
+    to: '/establishments',
+    label: 'Estabelecimentos',
+    icon: 'Store',
+    permission: 'establishments.list',
+  },
+  {
+    to: '/companies',
+    label: 'Empresa',
+    icon: 'Building',
+    permission: 'company.read',
+  },
 ]
 
 const { can, isAtLeast } = usePermissions()
