@@ -1,5 +1,11 @@
 import { MembershipRole } from '@/enums/membership-role.enum'
 
+/** Perfil de permissão vinculado ao membro (apenas id e nome). */
+export interface MembershipProfile {
+  id: string
+  name: string
+}
+
 /**
  * Vínculo de um usuário com a empresa ativa (`GET /memberships`).
  * Os dados do usuário vêm achatados a partir de `user`.
@@ -11,6 +17,8 @@ export class Membership {
   readonly userName: string
   readonly userEmail: string
   readonly createdAt: string | null
+  /** Perfis vinculados — só MEMBER possui; demais papéis vêm com `[]`. */
+  readonly profiles: MembershipProfile[]
 
   constructor(
     id: string,
@@ -19,6 +27,7 @@ export class Membership {
     userName: string,
     userEmail: string,
     createdAt: string | null,
+    profiles: MembershipProfile[] = [],
   ) {
     this.id = id
     this.userId = userId
@@ -26,6 +35,7 @@ export class Membership {
     this.userName = userName
     this.userEmail = userEmail
     this.createdAt = createdAt
+    this.profiles = profiles
   }
 
   /** OWNER não pode ter o papel alterado nem ser removido. */

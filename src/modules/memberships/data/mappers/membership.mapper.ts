@@ -18,6 +18,9 @@ const membershipSchema = z.object({
     name: z.string(),
     email: z.string(),
   }),
+  profiles: z
+    .array(z.object({ id: z.string(), name: z.string() }))
+    .default([]),
 })
 
 type MembershipPayload = z.infer<typeof membershipSchema>
@@ -30,6 +33,7 @@ function build(value: MembershipPayload): Membership {
     value.user.name,
     value.user.email,
     value.createdAt,
+    value.profiles,
   )
 }
 

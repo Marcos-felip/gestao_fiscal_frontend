@@ -134,6 +134,7 @@ export class MembershipsController extends BaseController {
               updated.name,
               updated.email,
               m.createdAt,
+              m.profiles,
             )
           : m,
       )
@@ -143,6 +144,26 @@ export class MembershipsController extends BaseController {
     this.setLoading(false)
     this.actingId.value = null
     return ok
+  }
+
+  /** Atualiza os perfis exibidos de um membro após gravar o vínculo. */
+  applyProfiles(
+    member: Membership,
+    profiles: { id: string; name: string }[],
+  ): void {
+    this.members.value = this.members.value.map((m) =>
+      m.id === member.id
+        ? new Membership(
+            m.id,
+            m.userId,
+            m.role,
+            m.userName,
+            m.userEmail,
+            m.createdAt,
+            profiles,
+          )
+        : m,
+    )
   }
 
   async remove(member: Membership): Promise<void> {

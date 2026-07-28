@@ -6,7 +6,9 @@ import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import RoleBadge from '@/modules/memberships/presentation/components/role-badge.vue'
 import CreateUserDialog from '@/modules/memberships/presentation/components/create-user-dialog.vue'
 import EditUserDialog from '@/modules/memberships/presentation/components/edit-user-dialog.vue'
+import AssignProfilesDialog from '@/modules/permissions/presentation/components/assign-profiles-dialog.vue'
 import { makeMembershipsController } from '@/modules/memberships/factories/memberships.factory'
+import { makeMemberProfilesController } from '@/modules/permissions/factories/permissions.factory'
 import type { Membership } from '@/modules/memberships/domain/entities/membership.entity'
 import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
 import {
@@ -19,11 +21,13 @@ import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 
 const controller = makeMembershipsController()
+const memberProfiles = makeMemberProfilesController()
 const progress = useProgress()
 const { role, isOwner, can, isAtLeast } = usePermissions()
 
 const canCreate = computed(() => can('users.create'))
 const canViewPermissions = computed(() => isAtLeast(MembershipRole.ADMIN))
+const canManageProfiles = computed(() => can('permissions.manage'))
 const assignable = computed(() => assignableRoles(role.value))
 
 const createOpen = ref(false)
@@ -31,8 +35,13 @@ const editOpen = ref(false)
 const editTarget = ref<Membership | null>(null)
 const confirmOpen = ref(false)
 const target = ref<Membership | null>(null)
+const assignOpen = ref(false)
+const assignTarget = ref<Membership | null>(null)
 
-onMounted(() => progress.track(controller.loadList()))
+onMounted(() => {
+  progress.track(controller.loadList())
+  if (canManageProfiles.value) void memberProfiles.loadProfiles()
+})
 
 function rolesFor(member: Membership): MembershipRole[] {
   return assignable.value.filter((r) => r !== member.role)
@@ -58,9 +67,21 @@ function canChangeRole(member: Membership): boolean {
   return isOwner.value && !member.isOwner
 }
 
+// Perfis só se aplicam a MEMBER e exigem permissions.manage + hierarquia.
+function canManageMemberProfiles(member: Membership): boolean {
+  return (
+    member.role === MembershipRole.MEMBER &&
+    canManageProfiles.value &&
+    canActOn(member)
+  )
+}
+
 function hasActions(member: Membership): boolean {
   return (
-    canChangeRole(member) || canEditMember(member) || canDeleteMember(member)
+    canChangeRole(member) ||
+    canEditMember(member) ||
+    canManageMemberProfiles(member) ||
+    canDeleteMember(member)
   )
 }
 
@@ -78,6 +99,23 @@ async function onEditSubmit(input: {
   if (ok) {
     editOpen.value = false
     editTarget.value = null
+  }
+}
+
+function openAssign(member: Membership): void {
+  assignTarget.value = member
+  assignOpen.value = true
+}
+
+async function onAssignSubmit(profileIds: string[]): Promise<void> {
+  if (!assignTarget.value) return
+  const refs = await progress.track(
+    memberProfiles.assign(assignTarget.value.id, profileIds),
+  )
+  if (refs) {
+    controller.applyProfiles(assignTarget.value, refs)
+    assignOpen.value = false
+    assignTarget.value = null
   }
 }
 
@@ -122,6 +160,10 @@ function goPermissions(): void {
   controller.router.push({ name: routeNames.PERMISSIONS })
 }
 
+function goProfiles(): void {
+  controller.router.push({ name: routeNames.PERMISSION_PROFILES })
+}
+
 // Menu de ações da linha (id da linha aberta).
 const openMenuId = ref<string | null>(null)
 
@@ -147,6 +189,14 @@ function closeMenu(): void {
     </div>
 
     <div class="flex items-center gap-2">
+      <Button
+        v-if="canManageProfiles"
+        variant="ghost"
+        @click="goProfiles"
+      >
+        <template #icon><Icon name="ShieldPlus" size="sm" /></template>
+        Perfis
+      </Button>
       <Button
         v-if="canViewPermissions"
         variant="ghost"
@@ -234,6 +284,19 @@ function closeMenu(): void {
         <p class="truncate text-sm text-muted-foreground">
           {{ member.userEmail }}
         </p>
+        <div
+          v-if="member.profiles.length"
+          class="mt-1.5 flex flex-wrap items-center gap-1"
+        >
+          <span
+            v-for="profile in member.profiles"
+            :key="profile.id"
+            class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+          >
+            <Icon name="ShieldCheck" size="xs" />
+            {{ profile.name }}
+          </span>
+        </div>
       </div>
 
       <RoleBadge :role="member.role" />
@@ -281,10 +344,25 @@ function closeMenu(): void {
                 Editar
               </button>
 
+              <!-- Perfis (só MEMBER) -->
+              <button
+                v-if="canManageMemberProfiles(member)"
+                type="button"
+                class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                @click="openAssign(member), closeMenu()"
+              >
+                <Icon name="ShieldPlus" size="sm" class="text-muted-foreground" />
+                Perfis
+              </button>
+
               <!-- Remover -->
               <template v-if="canDeleteMember(member)">
                 <div
-                  v-if="canChangeRole(member) || canEditMember(member)"
+                  v-if="
+                    canChangeRole(member) ||
+                    canEditMember(member) ||
+                    canManageMemberProfiles(member)
+                  "
                   class="my-1 border-t border-line-2"
                 />
                 <button
@@ -320,6 +398,16 @@ function closeMenu(): void {
     :member="editTarget"
     @update:model-value="editOpen = $event"
     @submit="onEditSubmit"
+  />
+
+  <!-- Perfis do membro -->
+  <AssignProfilesDialog
+    v-model="assignOpen"
+    :loading="memberProfiles.isLoading"
+    :member-name="assignTarget?.userName ?? ''"
+    :profiles="memberProfiles.profiles.value"
+    :current-profile-ids="assignTarget?.profiles.map((p) => p.id) ?? []"
+    @submit="onAssignSubmit"
   />
 
   <!-- Remover -->
