@@ -64,10 +64,11 @@ O sistema exige um fluxo obrigatório de 3 etapas para que o usuário possa oper
 
 ## 4. Papéis e Permissões
 
-A autorização acontece em **duas camadas**:
+A autorização acontece em **três camadas**:
 
 1. **Papel (`MembershipRole`)** — `OWNER`, `ADMIN` ou `MEMBER`, definido no membership do usuário naquela empresa. Usado diretamente em operações estruturais (onboarding, gestão de papéis, exclusão de estabelecimento, gestão de permissões).
 2. **Permissão granular (`dominio.acao`)** — códigos como `products.create`, guardados na tabela `permissions` e vinculados aos papéis **de cada empresa** em `company_role_permissions`. Usado na maioria dos endpoints de CRUD.
+3. **Perfil de permissão** — conjunto nomeado de permissões vinculado a um membro específico, para dar acesso extra a um MEMBER sem mexer no baseline de todos os MEMBERs.
 
 Na prática o papel não concede acesso por si só: ele define **qual conjunto de permissões** o usuário carrega.
 
@@ -87,6 +88,7 @@ Na prática o papel não concede acesso por si só: ele define **qual conjunto d
 ### MEMBER
 - Único papel **configurável**, e é para isso que existe o módulo de permissões
 - Por padrão: opera produtos, parceiros, estoque e compras; confirma compras mas **não as cancela nem exclui**; lê estabelecimentos mas não os cria/edita; não edita dados da empresa; **não cadastra usuários**
+- Único papel que aceita **perfis de permissão**, que somam acesso individualmente
 
 ### Tabela resumida (configuração padrão)
 
@@ -99,7 +101,9 @@ Na prática o papel não concede acesso por si só: ele define **qual conjunto d
 | Editar dados de outro usuário | ✅ | ✅ (menos o OWNER) | ❌ | `users.edit` |
 | Remover membros | ✅ | ✅ (menos o OWNER) | ❌ | `users.delete` |
 | Alterar papéis | ✅ | ❌ | ❌ | Papel |
-| Gerenciar permissões | ✅ | somente leitura | ❌ | Papel |
+| Gerenciar permissões do papel MEMBER | ✅ | somente leitura | ❌ | Papel |
+| Gerenciar perfis de permissão | ✅ | ✅ | ❌ | `permissions.manage` |
+| Vincular perfis a um membro | ✅ | ✅ | ❌ | `permissions.manage` |
 | Ver as próprias permissões | ✅ | ✅ | ✅ | — (`GET /permissions/me`) |
 | Criar/editar estabelecimentos | ✅ | ✅ | ❌ | `establishments.create` / `.edit` |
 | Excluir estabelecimento | ✅ | ✅ | ❌ | `establishments.delete` |
@@ -121,6 +125,31 @@ Na prática o papel não concede acesso por si só: ele define **qual conjunto d
 - Códigos inexistentes na tabela `permissions` são rejeitados com `404`
 - Qualquer membro consulta as próprias permissões em `GET /permissions/me` — é assim que o frontend decide o que exibir
 
+### Perfis de permissão
+
+Um **perfil** é um conjunto nomeado de permissões (ex: "Estoquista", "Comprador"). Serve para dar
+acesso extra a um membro específico sem alterar o baseline do papel MEMBER, que vale para todos.
+
+- Perfis são **da empresa**: o `name` é único por empresa e só é possível vincular perfis da própria empresa
+- Um membro pode ter **vários perfis ao mesmo tempo** (N-N)
+- **Só se aplicam a MEMBER.** Vincular perfil a OWNER ou ADMIN é rejeitado com `409` — eles já têm
+  acesso amplo e fixo, então um perfil não mudaria nada
+- Gerenciar e vincular perfis exige a permissão `permissions.manage` (por padrão OWNER e ADMIN)
+- Vincular perfis obedece à mesma hierarquia de gerenciar usuário: ninguém mexe em quem tem papel superior ao seu
+- Atualizar as permissões de um perfil, ou os perfis de um membro, é sempre **substituição total** da lista
+- Excluir um perfil é **definitivo** (não é soft delete) e o desvincula de todos os membros
+- Códigos inexistentes no catálogo são rejeitados com `422`
+
+**Permissões efetivas de um MEMBER:**
+
+```
+efetivas(MEMBER) = company_role_permissions[MEMBER] ∪ (permissões de todos os perfis vinculados)
+```
+
+A união é o modelo escolhido em vez de substituição: o perfil **soma** acesso, nunca tira. Assim,
+o que já valia para todos os MEMBERs continua valendo, e o perfil só acrescenta. OWNER (catálogo
+completo) e ADMIN (conjunto do papel) não passam por essa etapa.
+
 ### Hierarquia de papéis
 
 **Ao atribuir papel** (`POST /memberships`, `POST /users`, `POST /users/:id/memberships`, `PATCH /memberships/:id/role`):
@@ -128,7 +157,7 @@ Na prática o papel não concede acesso por si só: ele define **qual conjunto d
 - O papel **OWNER nunca é atribuível pela API** — ele nasce com a criação da empresa
 - Ninguém pode atribuir um papel **superior ao seu**: OWNER atribui ADMIN/MEMBER, ADMIN atribui ADMIN/MEMBER, MEMBER (se receber `users.create`) atribui apenas MEMBER
 
-**Ao editar ou remover usuário** (`PATCH /users/:id`, `DELETE /memberships/:id`):
+**Ao editar ou remover usuário** (`PATCH /users/:id`, `DELETE /memberships/:id`, `PUT /memberships/:id/profiles`):
 
 - Ninguém gerencia um usuário de papel **superior ao seu** — um ADMIN não edita nem remove o OWNER
 - Papéis de mesmo nível podem se gerenciar (ADMIN edita/remove outro ADMIN)
@@ -248,6 +277,8 @@ RASCUNHO → CANCELADO
 - Registros "excluídos" **não são apagados do banco** — recebem `deleted_at = data/hora`
 - Registros com `deleted_at != null` **não aparecem em nenhuma consulta**
 - Permite auditoria e recuperação de dados históricos
+- Vale para dados de **negócio**. As tabelas de autorização (permissões, perfis e vínculos) são
+  configuração e usam exclusão física
 
 ### O que NÃO pode ser excluído
 | Entidade | Restrição |

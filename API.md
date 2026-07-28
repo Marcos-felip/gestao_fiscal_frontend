@@ -14,12 +14,15 @@ A API combina dois mecanismos:
 |-----------|-----------------|--------------|
 | **Papel (role)** | `@TenantProtected(OWNER, ADMIN, ...)` — compara `membership.role` | Onboarding, gestão de papéis, gestão de permissões |
 | **Permissão granular** | `@RequirePermission('products.create')` — consulta `company_role_permissions` da empresa ativa | Maioria dos endpoints de CRUD |
+| **Perfil de permissão** | Conjunto nomeado de permissões vinculado a um membro | Permissões extras de um MEMBER específico |
 
 Três regras valem para todo o sistema:
 
 1. **OWNER tem acesso total.** O papel OWNER nunca é barrado por permissão — o guard o libera sem consultar o banco. Ele só não faz o que a API não oferece (não existe exclusão de empresa) e não pode alterar as próprias permissões.
 2. **ADMIN opera tudo abaixo do OWNER.** Recebe todas as permissões por padrão — inclusive editar e remover usuários, exceto o OWNER. O que o separa do OWNER são os endpoints travados por papel (onboarding, alterar papel, gerenciar permissões).
 3. **MEMBER é configurável.** É o único papel cujas permissões o OWNER pode editar, e a configuração vale **apenas dentro da empresa ativa**.
+
+As permissões efetivas de um MEMBER são a **união** do conjunto do papel MEMBER na empresa com as permissões de **todos os perfis** vinculados a ele. Perfis não se aplicam a OWNER nem a ADMIN — ver [Perfis de permissão](#perfis-de-permissão).
 
 O erro de permissão granular retorna:
 
@@ -490,7 +493,22 @@ Cria usuário + membership na **empresa ativa** em uma transação atômica. A s
 
 > **Permissão:** `users.list`
 
-**Resposta 200:** array de memberships com dados do usuário
+**Resposta 200:** array de memberships com os dados do usuário e os perfis vinculados
+
+```json
+[
+  {
+    "id": "uuid",
+    "userId": "uuid",
+    "companyId": "uuid",
+    "role": "MEMBER",
+    "user": { "id": "uuid", "name": "string", "email": "string" },
+    "profiles": [{ "id": "uuid", "name": "Estoquista" }]
+  }
+]
+```
+
+> `profiles` vem sempre presente (`[]` quando não há vínculo) para a tela de usuários não precisar de uma chamada por linha. Só MEMBER tem perfis.
 
 ---
 
@@ -528,6 +546,45 @@ O OWNER nunca pode ser removido, e não é possível remover quem tem papel **su
 
 ---
 
+### GET /memberships/:id/profiles — Perfis vinculados ao membro
+
+> **Permissão:** `permissions.manage`
+
+**Resposta 200:**
+```json
+[
+  { "id": "uuid", "name": "Estoquista", "description": "Acesso ao estoque" }
+]
+```
+
+**Erros:** `404` Associação não encontrada
+
+---
+
+### PUT /memberships/:id/profiles — Substituir os perfis do membro
+
+> **Permissão:** `permissions.manage` · aceita **apenas** membros com papel `MEMBER`
+
+Substitui **todo** o conjunto de perfis do membro. Enviar `[]` desvincula todos. IDs repetidos são deduplicados.
+
+**Body:**
+```json
+{
+  "profileIds": ["uuid", "uuid"]
+}
+```
+
+**Resposta 200:** array com os perfis que ficaram vinculados (mesmo formato do `GET`)
+
+**Erros:**
+- `404` Associação não encontrada
+- `409` Perfis de permissão só podem ser vinculados a usuários com papel MEMBER
+- `422` Perfil não encontrado nesta empresa: `<id>` (inclui perfis de outra empresa)
+- `403` Não é possível gerenciar um usuário de papel superior ao seu
+- `403` Sem permissão para acessar: permissions.manage
+
+---
+
 ## Permissões
 
 > Todos requerem empresa ativa. As permissões são **por empresa**: cada empresa tem seu próprio
@@ -539,12 +596,18 @@ O OWNER nunca pode ser removido, e não é possível remover quem tem papel **su
 
 Use este endpoint para montar o menu e habilitar/desabilitar ações no frontend. É o único endpoint de permissões acessível ao MEMBER.
 
-**Resposta 200:** array de códigos ordenado alfabeticamente
+**Resposta 200:** array de códigos ordenado alfabeticamente, sem duplicatas
 ```json
 ["partners.list", "products.list", "products.read", "purchases.create"]
 ```
 
-> Para OWNER a resposta é o catálogo completo, refletindo o acesso total do papel.
+Como a resposta é montada:
+
+| Papel | Conteúdo |
+|-------|----------|
+| OWNER | catálogo completo, refletindo o acesso total do papel |
+| ADMIN | conjunto do papel ADMIN na empresa ativa |
+| MEMBER | conjunto do papel MEMBER **∪** permissões de todos os perfis vinculados |
 
 ---
 
@@ -605,6 +668,106 @@ Substitui **todo** o conjunto de permissões do papel MEMBER **dentro da empresa
 - `400` Apenas as permissões do papel MEMBER podem ser gerenciadas. (ao tentar `OWNER` ou `ADMIN`)
 - `400` Papel inválido. Valores aceitos: OWNER, ADMIN, MEMBER
 - `404` Permissão não encontrada: `<código>` (código inexistente na tabela `permissions`)
+
+> Este endpoint define o **baseline** do papel MEMBER, que vale para todos os membros da empresa. Para dar permissões a um membro específico, use um [perfil de permissão](#perfis-de-permissão).
+
+---
+
+## Perfis de permissão
+
+> Todos requerem empresa ativa e a permissão `permissions.manage` (por padrão OWNER e ADMIN).
+
+Um **perfil** é um conjunto nomeado de permissões, escopado por empresa. Um MEMBER pode ter
+vários perfis ao mesmo tempo, e as permissões se **somam** ao baseline do papel MEMBER.
+
+Regras que valem para todo o recurso:
+
+- O `name` é **único por empresa**
+- Perfis só se vinculam a memberships com papel `MEMBER` — OWNER e ADMIN já têm acesso amplo
+- Só é possível vincular perfis **da própria empresa**
+- Excluir um perfil o desvincula automaticamente de todos os membros
+
+### GET /permission-profiles — Listar perfis da empresa ativa
+
+**Resposta 200:**
+```json
+[
+  {
+    "id": "uuid",
+    "name": "Estoquista",
+    "description": "Acesso a produtos e movimentações de estoque",
+    "permissionCodes": ["products.list", "stock.create"],
+    "membersCount": 3,
+    "createdAt": "2026-07-28T12:00:00.000Z",
+    "updatedAt": "2026-07-28T12:00:00.000Z"
+  }
+]
+```
+
+> Ordenado por `name`. `permissionCodes` vem ordenado e sem duplicatas; `membersCount` é a quantidade de membros vinculados.
+
+---
+
+### POST /permission-profiles — Criar perfil
+
+**Body:**
+```json
+{
+  "name": "string (min 2, max 60, obrigatório)",
+  "description": "string (max 255, opcional)",
+  "permissionCodes": ["products.list", "stock.create"]
+}
+```
+
+**Resposta 201:** o perfil criado (mesmo formato do `GET`)
+
+**Erros:**
+- `409` Já existe um perfil com este nome
+- `422` Permissão não encontrada: `<código>` (código fora do catálogo `permissions`)
+- `403` Sem permissão para acessar: permissions.manage
+
+---
+
+### GET /permission-profiles/:id — Detalhar perfil
+
+**Resposta 200:** o perfil (mesmo formato do `GET` da lista)
+
+**Erros:** `404` Perfil de permissão não encontrado (inclui perfil de outra empresa)
+
+---
+
+### PATCH /permission-profiles/:id — Atualizar perfil
+
+Todos os campos são opcionais. Quando `permissionCodes` é enviado, ele **substitui integralmente**
+a lista de permissões do perfil — mesmo padrão do `PATCH /permissions/:role`. Omitir o campo mantém
+as permissões atuais; enviar `[]` remove todas. Enviar `description` vazia limpa a descrição.
+
+**Body:**
+```json
+{
+  "name": "Estoquista sênior",
+  "description": "Acesso total ao estoque",
+  "permissionCodes": ["products.list", "stock.create", "stock.list"]
+}
+```
+
+**Resposta 200:** o perfil atualizado
+
+**Erros:**
+- `404` Perfil de permissão não encontrado
+- `409` Já existe um perfil com este nome
+- `422` Permissão não encontrada: `<código>`
+
+---
+
+### DELETE /permission-profiles/:id — Excluir perfil
+
+Exclusão **definitiva** (não é soft delete — perfil é configuração, não dado de negócio). O vínculo
+com os membros cai junto por cascade; as permissões do papel MEMBER não são afetadas.
+
+**Resposta 204:** sem corpo
+
+**Erros:** `404` Perfil de permissão não encontrado
 
 ---
 
@@ -947,6 +1110,14 @@ Legenda: ✅ concedida por padrão · ❌ não concedida · **Endpoint** = endpo
 > Mesmo com `users.create`, o papel atribuído obedece à [hierarquia de papéis](#hierarquia-de-papéis).
 > `users.edit` e `users.delete` obedecem à mesma hierarquia: ninguém edita ou remove um usuário de papel superior ao seu.
 
+### Permissões (`permissions`)
+
+| Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
+|--------|-----------|:-----:|:-----:|:------:|----------|
+| `permissions.manage` | Gerenciar perfis de permissão | ✅ | ✅ | ❌ | `GET/POST/PATCH/DELETE /permission-profiles`, `GET/PUT /memberships/:id/profiles` |
+
+> Alterar o baseline de um papel (`PATCH /permissions/:role`) continua travado por **papel** (só OWNER), não por esta permissão.
+
 ### Estabelecimentos (`establishments`)
 
 | Código | Descrição | OWNER | ADMIN | MEMBER | Endpoint |
@@ -1026,7 +1197,7 @@ Vale em `POST /memberships`, `POST /users`, `POST /users/:id/memberships` e `PAT
 
 ### Ao editar ou remover usuário
 
-Vale em `PATCH /users/:id` e `DELETE /memberships/:id`:
+Vale em `PATCH /users/:id`, `DELETE /memberships/:id` e `PUT /memberships/:id/profiles`:
 
 - Ninguém edita ou remove um usuário de papel **superior ao seu** (`403`)
 - Papéis de mesmo nível podem se gerenciar (ADMIN edita/remove ADMIN)
@@ -1050,6 +1221,7 @@ Vale em `PATCH /users/:id` e `DELETE /memberships/:id`:
 |---|---------------|---------|
 | 1 | `PATCH /companies/:id` ignora o `:id` e atualiza sempre a empresa ativa. | Baixo — enviar o ID da empresa ativa para evitar confusão |
 | 2 | Permissões `sales.*` remanescentes do módulo de vendas removido continuam no catálogo e são copiadas para cada empresa nova. | Baixo — ruído em `GET /permissions`; nenhum endpoint as utiliza |
+| 3 | Código de permissão inexistente devolve `404` em `PATCH /permissions/:role` e `422` nos perfis. | Baixo — tratar os dois status ao validar o formulário de permissões |
 
 ---
 
@@ -1131,9 +1303,18 @@ GET   /permissions/MEMBER    → códigos concedidos na empresa ativa
 PATCH /permissions/MEMBER    → substitui o conjunto completo na empresa ativa (apenas OWNER)
 ```
 
-### 8. Montar a interface conforme as permissões
+### 8. Dar permissões extras a um membro específico
+```
+GET  /permissions                     → catálogo agrupado, para montar a seleção de códigos
+POST /permission-profiles             → cria o perfil (ex: "Estoquista") com os códigos escolhidos
+PUT  /memberships/:id/profiles        → vincula o perfil ao membro (apenas papel MEMBER)
+GET  /memberships                     → a listagem já devolve os perfis de cada membro
+```
+
+### 9. Montar a interface conforme as permissões
 ```
 GET /permissions/me          → códigos efetivos do usuário na empresa ativa
+                               (para MEMBER: papel + perfis vinculados)
 ```
 
 ---
@@ -1150,6 +1331,7 @@ GET /permissions/me          → códigos efetivos do usuário na empresa ativa
 | `403` | Sem permissão (papel insuficiente ou empresa incorreta) |
 | `404` | Recurso não encontrado |
 | `409` | Conflito (duplicidade: e-mail, CNPJ, SKU, etc.) |
+| `422` | Referência inválida no corpo (código de permissão ou perfil inexistente) |
 | `500` | Erro interno do servidor |
 
 ---

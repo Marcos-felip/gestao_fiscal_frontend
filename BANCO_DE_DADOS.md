@@ -75,12 +75,35 @@
       └────────┬─────────┘          └────────────────────────┘
                │
                │            ┌──────────────────────────────┐
-               └────1:N────<│  company_role_permissions    │  (efetivo, por empresa)
-                            │──────────────────────────────│
-                            │ company_id (PK, FK companies)│
-                            │ role (PK, enum)              │
-                            │ permission_code (PK, FK)     │
-                            └──────────────────────────────┘
+               ├────1:N────<│  company_role_permissions    │  (efetivo, por empresa)
+               │            │──────────────────────────────│
+               │            │ company_id (PK, FK companies)│
+               │            │ role (PK, enum)              │
+               │            │ permission_code (PK, FK)     │
+               │            └──────────────────────────────┘
+               │
+               │            ┌───────────────────────────────┐
+               └────1:N────<│permission_profile_permissions │
+                            │───────────────────────────────│
+                            │ profile_id (PK, FK)           │
+                            │ permission_code (PK, FK)      │
+                            └───────────────┬───────────────┘
+                                            │N:1
+                            ┌───────────────┴───────────────┐
+                            │     permission_profiles       │>──N:1──┐
+                            │───────────────────────────────│        │
+                            │ id (PK)                       │        │
+                            │ company_id (FK companies)     │────────┘
+                            │ name (UNIQUE por empresa)     │
+                            │ description                   │
+                            └───────────────┬───────────────┘
+                                            │1:N
+                            ┌───────────────┴───────────────┐
+                            │      membership_profiles      │
+                            │───────────────────────────────│
+                            │ membership_id (PK, FK)        │──> memberships
+                            │ profile_id (PK, FK)           │
+                            └───────────────────────────────┘
 ```
 
 ## Modelos
@@ -220,7 +243,7 @@ Estrutura com `purchase_number` (numeracao sequencial por empresa) e `supplier_i
 
 - Tabela **global** (não possui `company_id`) e **sem soft delete**
 - Populada por migration (seed em SQL), não por código da aplicação
-- Domínios atuais: `company`, `users`, `establishments`, `products`, `purchases`, `stock`, `partners` e `sales` (legado, módulo removido)
+- Domínios atuais: `company`, `users`, `permissions`, `establishments`, `products`, `purchases`, `stock`, `partners` e `sales` (legado, módulo removido)
 
 ### `role_permissions` — Conjunto padrão por papel (template)
 
@@ -250,6 +273,47 @@ Estrutura com `purchase_number` (numeracao sequencial por empresa) e `supplier_i
   tem acesso total por definição
 - A atualização é feita por substituição total (`deleteMany` + `createMany` dentro de `$transaction`),
   sempre filtrando por `company_id`
+
+### `permission_profiles` — Perfis de permissão (por empresa)
+
+| Coluna | Tipo | Obrig. | Descrição |
+|--------|------|--------|-----------|
+| `id` | TEXT (PK) | ✅ | UUID |
+| `company_id` | TEXT (FK → `companies.id`) | ✅ | Empresa dona do perfil |
+| `name` | TEXT | ✅ | Nome do perfil (único dentro da empresa) |
+| `description` | TEXT | ❌ | Descrição livre |
+| `created_at` | TIMESTAMP | ✅ | Data de criação |
+| `updated_at` | TIMESTAMP | ✅ | Data da última alteração |
+
+- **UNIQUE:** `(company_id, name)` · **Índice:** `company_id`
+- **FK:** `company_id → companies(id)` com `ON DELETE CASCADE ON UPDATE CASCADE`
+- **Sem soft delete** — perfil é configuração de acesso, não dado de negócio. O `DELETE` é físico
+  e o cascade em `membership_profiles` desvincula o perfil de todos os membros
+
+### `permission_profile_permissions` — Permissões que compõem o perfil
+
+| Coluna | Tipo | Obrig. | Descrição |
+|--------|------|--------|-----------|
+| `profile_id` | TEXT (FK → `permission_profiles.id`) | ✅ | Perfil |
+| `permission_code` | TEXT (FK → `permissions.code`) | ✅ | Permissão concedida pelo perfil |
+
+- **PK composta:** `(profile_id, permission_code)` · **Índice:** `permission_code`
+- **FKs:** ambas `ON DELETE CASCADE ON UPDATE CASCADE`
+- Atualizada por substituição total (`deleteMany` + `createMany` dentro de `$transaction`)
+
+### `membership_profiles` — Vínculo N-N usuário ↔ perfil
+
+| Coluna | Tipo | Obrig. | Descrição |
+|--------|------|--------|-----------|
+| `membership_id` | TEXT (FK → `memberships.id`) | ✅ | Membro |
+| `profile_id` | TEXT (FK → `permission_profiles.id`) | ✅ | Perfil vinculado |
+
+- **PK composta:** `(membership_id, profile_id)` · **Índice:** `profile_id`
+- **FKs:** ambas `ON DELETE CASCADE ON UPDATE CASCADE`
+- Só recebe memberships de papel `MEMBER` — a regra é da aplicação, não do banco
+- As permissões efetivas de um MEMBER são a **união** de `company_role_permissions[MEMBER]` com as
+  permissões de todos os perfis vinculados aqui. É a segunda consulta do `RequirePermissionGuard`,
+  executada apenas quando o papel não concedeu a permissão
 
 ---
 
@@ -296,12 +360,24 @@ Estrutura com `purchase_number` (numeracao sequencial por empresa) e `supplier_i
 | `company_role_permissions` | INDEX | `(company_id, role)` |
 | `company_role_permissions` | FK CASCADE | `company_id → companies(id)` |
 | `company_role_permissions` | FK CASCADE | `permission_code → permissions(code)` |
+| `permission_profiles` | PK | `id` |
+| `permission_profiles` | UNIQUE | `(company_id, name)` |
+| `permission_profiles` | INDEX | `company_id` |
+| `permission_profiles` | FK CASCADE | `company_id → companies(id)` |
+| `permission_profile_permissions` | PK | `(profile_id, permission_code)` |
+| `permission_profile_permissions` | INDEX | `permission_code` |
+| `permission_profile_permissions` | FK CASCADE | `profile_id → permission_profiles(id)` |
+| `permission_profile_permissions` | FK CASCADE | `permission_code → permissions(code)` |
+| `membership_profiles` | PK | `(membership_id, profile_id)` |
+| `membership_profiles` | INDEX | `profile_id` |
+| `membership_profiles` | FK CASCADE | `membership_id → memberships(id)` |
+| `membership_profiles` | FK CASCADE | `profile_id → permission_profiles(id)` |
 
 ---
 
 ## Soft Delete
 
-Todas as tabelas de negócio (exceto `purchase_items`, `permissions`, `role_permissions` e `company_role_permissions`) possuem o campo `deleted_at TIMESTAMP NULL`.
+Todas as tabelas de negócio (exceto `purchase_items` e as tabelas de autorização — `permissions`, `role_permissions`, `company_role_permissions`, `permission_profiles`, `permission_profile_permissions` e `membership_profiles`) possuem o campo `deleted_at TIMESTAMP NULL`.
 
 - Registros ativos: `deleted_at IS NULL`
 - Registros excluídos: `deleted_at IS NOT NULL`
@@ -324,6 +400,7 @@ As migrations ficam em `prisma/migrations/`.
 | `20260516000000_remove_sales_module` | Remove as tabelas `sales` / `sale_items` e o enum `SaleStatus` (as permissões `sales.*` **não** foram removidas) |
 | `20260525191254` | Recria a FK de `role_permissions` com `ON UPDATE CASCADE` |
 | `20260727120000_company_scoped_permissions` | Cria `company_role_permissions`; adiciona `purchases.delete` ao catálogo; concede `users.create` e `purchases.delete` ao ADMIN no padrão; faz o backfill do padrão para todas as empresas existentes |
+| `20260728120000_permission_profiles` | Cria `permission_profiles`, `permission_profile_permissions` e `membership_profiles`; adiciona `permissions.manage` ao catálogo, concede a OWNER e ADMIN no padrão e faz o backfill das empresas existentes |
 
 > As permissões são semeadas **por migration SQL**, não por script de seed do Prisma. Ao criar um módulo novo, a migration precisa fazer **três coisas**:
 >
