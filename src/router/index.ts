@@ -9,6 +9,8 @@ import { companiesRoutes } from '@/modules/companies/presentation/routes/compani
 import { establishmentsRoutes } from '@/modules/establishments/presentation/routes/establishments-routes'
 import { partnersRoutes } from '@/modules/partners/presentation/routes/partners-routes'
 import { productsRoutes } from '@/modules/products/presentation/routes/products-routes'
+import { stockRoutes } from '@/modules/stock/presentation/routes/stock-routes'
+import { purchasesRoutes } from '@/modules/purchases/presentation/routes/purchases-routes'
 import { membershipsRoutes } from '@/modules/memberships/presentation/routes/memberships-routes'
 import { permissionsRoutes } from '@/modules/permissions/presentation/routes/permissions-routes'
 import { errorRoutes } from '@/modules/errors/presentation/routes/error-routes'
@@ -28,6 +30,8 @@ const router = createRouter({
         ...establishmentsRoutes,
         ...partnersRoutes,
         ...productsRoutes,
+        ...stockRoutes,
+        ...purchasesRoutes,
         ...membershipsRoutes,
         ...permissionsRoutes,
       ],
