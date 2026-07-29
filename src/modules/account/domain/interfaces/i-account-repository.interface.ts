@@ -8,4 +8,7 @@ export interface IAccountRepository {
   updateProfile(
     dto: UpdateProfileDto,
   ): Promise<Either<DomainError, AccountProfile>>
+  setActiveCompany(
+    companyId: string,
+  ): Promise<Either<DomainError, AccountProfile>>
 }
