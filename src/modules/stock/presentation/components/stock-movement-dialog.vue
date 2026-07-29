@@ -72,6 +72,7 @@ function submit(): void {
   <Modal
     :model-value="props.modelValue"
     title="Nova movimentação"
+    size="lg"
     description="Registre uma entrada, saída ou ajuste manual de estoque."
     @update:model-value="emit('update:modelValue', $event)"
   >
