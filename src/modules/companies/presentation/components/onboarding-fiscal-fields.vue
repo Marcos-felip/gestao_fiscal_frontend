@@ -2,7 +2,7 @@
 import { Icon, Input, Select } from '@/shared/ui'
 import { taxRegimeOptions } from '@/enums/tax-regime.enum'
 import { formatCnpj, formatPhone } from '@/shared/ui/utils/masks'
-import { useOnboardingContext } from '@/modules/companies/presentation/schemas/onboarding-schema'
+import { useOnboardingContext } from '@/modules/companies/presentation/composables/useOnboardingContext'
 
 const { form, errors } = useOnboardingContext()
 </script>

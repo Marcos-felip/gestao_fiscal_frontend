@@ -4,7 +4,7 @@ import { Icon, Input, Select, Spinner } from '@/shared/ui'
 import { brazilianStateOptions } from '@/core/constants/brazilian-states'
 import { formatCep, onlyDigits } from '@/shared/ui/utils/masks'
 import { fetchAddressByCep } from '@/core/services/via-cep'
-import { useOnboardingContext } from '@/modules/companies/presentation/schemas/onboarding-schema'
+import { useOnboardingContext } from '@/modules/companies/presentation/composables/useOnboardingContext'
 
 const { form, errors } = useOnboardingContext()
 
