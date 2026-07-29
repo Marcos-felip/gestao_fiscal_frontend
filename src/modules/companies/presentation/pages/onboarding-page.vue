@@ -1,24 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { motion } from 'motion-v'
-import { Button, Icon, Input, Select, Spinner } from '@/shared/ui'
-import FormSection from '@/shared/components/form/form-section.vue'
+import { computed, onMounted, provide, reactive, ref } from 'vue'
+import { motion, AnimatePresence } from 'motion-v'
+import { Button, Icon, Spinner } from '@/shared/ui'
+import OnboardingBrandPanel from '@/modules/companies/presentation/components/onboarding-brand-panel.vue'
+import OnboardingCompanyFields from '@/modules/companies/presentation/components/onboarding-company-fields.vue'
+import OnboardingFiscalFields from '@/modules/companies/presentation/components/onboarding-fiscal-fields.vue'
+import OnboardingMatrizFields from '@/modules/companies/presentation/components/onboarding-matriz-fields.vue'
 import { makeOnboardingController } from '@/modules/companies/factories/companies.factory'
 import {
   onboardingSchema,
-  type OnboardingFormData,
+  ONBOARDING_ERRORS,
+  ONBOARDING_FORM,
+  type OnboardingErrors,
   type OnboardingFormValues,
+  type OnboardingStep,
 } from '@/modules/companies/presentation/schemas/onboarding-schema'
-import { companyTypeOptions } from '@/enums/company-type.enum'
-import { taxRegimeOptions } from '@/enums/tax-regime.enum'
-import { brazilianStateOptions } from '@/core/constants/brazilian-states'
-import {
-  formatCnpj,
-  formatCep,
-  formatPhone,
-  onlyDigits,
-} from '@/shared/ui/utils/masks'
-import { fetchAddressByCep } from '@/core/services/via-cep'
 import { toFormErrors } from '@/core/utils/zod-errors'
 
 const controller = makeOnboardingController()
@@ -40,284 +36,207 @@ const form = reactive<OnboardingFormValues>({
   city: '',
   state: '',
 })
-const errors = ref<Partial<Record<keyof OnboardingFormData, string>>>({})
-const cepLoading = ref(false)
+const errors = ref<OnboardingErrors>({})
+
+// Contexto do wizard consumido pelos componentes de campos.
+provide(ONBOARDING_FORM, form)
+provide(ONBOARDING_ERRORS, errors)
 
 const needsCreation = computed(() => controller.needsCompanyCreation.value)
 
+const ALL_STEPS: OnboardingStep[] = [
+  {
+    key: 'empresa',
+    icon: 'Building2',
+    title: 'Sua empresa',
+    description: 'Como sua empresa se chama',
+    fields: ['name', 'type'],
+  },
+  {
+    key: 'fiscal',
+    icon: 'ReceiptText',
+    title: 'Dados fiscais',
+    description: 'CNPJ e regime tributário',
+    fields: ['cnpj', 'taxRegime', 'phone'],
+  },
+  {
+    key: 'matriz',
+    icon: 'Store',
+    title: 'Estabelecimento matriz',
+    description: 'A sede e seu endereço',
+    fields: [
+      'establishmentName',
+      'inscricaoEstadual',
+      'inscricaoMunicipal',
+      'cep',
+      'street',
+      'number',
+      'complement',
+      'neighborhood',
+      'city',
+      'state',
+    ],
+  },
+]
+
+// Sem empresa: cria antes de configurar (3 passos). Com empresa: só configura.
+const steps = computed(() =>
+  needsCreation.value ? ALL_STEPS : ALL_STEPS.filter((s) => s.key !== 'empresa'),
+)
+
+const current = ref(0)
+const direction = ref(1)
+const currentStep = computed(() => steps.value[current.value])
+const isFirst = computed(() => current.value === 0)
+const isLast = computed(() => current.value === steps.value.length - 1)
+
 onMounted(async () => {
   await controller.prepare()
-  // Empresa já existe (criada, mas não configurada): semeia e trava o nome.
-  if (!needsCreation.value) {
-    form.name = controller.existingCompanyName
-  }
+  if (!needsCreation.value) form.name = controller.existingCompanyName
 })
 
-async function onCepInput(value: string): Promise<void> {
-  const masked = formatCep(value)
-  const changed = masked !== form.cep
-  form.cep = masked
-  if (!changed || onlyDigits(masked).length !== 8) return
-
-  cepLoading.value = true
-  const address = await fetchAddressByCep(masked)
-  cepLoading.value = false
-  if (!address) return
-  if (address.street) form.street = address.street
-  if (address.neighborhood) form.neighborhood = address.neighborhood
-  if (address.city) form.city = address.city
-  if (address.state) form.state = address.state
+/** Valida o formulário inteiro, mas só bloqueia pelos campos do passo atual. */
+function validateStep(): boolean {
+  const result = onboardingSchema.safeParse({ ...form })
+  const all = result.success ? {} : toFormErrors(result.error)
+  const stepErrors: OnboardingErrors = {}
+  for (const field of currentStep.value.fields) {
+    if (all[field]) stepErrors[field] = all[field]
+  }
+  errors.value = stepErrors
+  return Object.keys(stepErrors).length === 0
 }
 
-function handleSubmit(): void {
-  const result = onboardingSchema.safeParse({ ...form })
-  if (!result.success) {
-    errors.value = toFormErrors(result.error)
+function next(): void {
+  if (!validateStep()) return
+  if (isLast.value) {
+    submit()
     return
   }
+  direction.value = 1
+  current.value += 1
+}
+
+function back(): void {
+  if (isFirst.value) return
+  direction.value = -1
+  current.value -= 1
   errors.value = {}
+}
+
+function submit(): void {
+  const result = onboardingSchema.safeParse({ ...form })
+  if (!result.success) {
+    const all = toFormErrors(result.error)
+    errors.value = all
+    // Leva ao primeiro passo com erro.
+    const idx = steps.value.findIndex((s) => s.fields.some((f) => all[f]))
+    if (idx >= 0) {
+      direction.value = idx < current.value ? -1 : 1
+      current.value = idx
+    }
+    return
+  }
   void controller.save({ ...form })
 }
 
-const container = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
-}
-const item = {
-  hidden: { opacity: 0, y: 18 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: 'spring', stiffness: 320, damping: 30 },
-  },
+// Transição horizontal entre passos, conforme a direção da navegação.
+const stepVariants = {
+  enter: (dir: unknown) => ({ x: (dir as number) > 0 ? 48 : -48, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: unknown) => ({ x: (dir as number) > 0 ? -48 : 48, opacity: 0 }),
 }
 </script>
 
 <template>
-  <div class="min-h-screen bg-background-2 px-4 py-10">
-    <div class="mx-auto max-w-2xl">
-      <!-- Cabeçalho -->
-      <div class="mb-8 text-center">
-        <span
-          class="ui-shadow-soft mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary text-white"
-        >
-          <Icon name="Rocket" size="lg" />
-        </span>
-        <h1
-          class="font-display mt-4 text-2xl font-bold tracking-tight text-foreground"
-        >
-          {{ needsCreation ? 'Vamos configurar sua empresa' : 'Configure sua empresa' }}
-        </h1>
-        <p class="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-          Precisamos de alguns dados fiscais e do seu estabelecimento matriz
-          para liberar o sistema.
-        </p>
+  <div class="grid min-h-svh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+    <OnboardingBrandPanel :steps="steps" :current="current" />
+
+    <!-- Painel do wizard -->
+    <main class="relative flex flex-col justify-center overflow-hidden bg-background-1 px-6 py-10 sm:px-10 lg:px-16">
+      <div class="pointer-events-none absolute inset-0 lg:hidden">
+        <div
+          class="ui-aurora absolute -top-20 left-1/2 h-[360px] w-[520px] -translate-x-1/2 rounded-full bg-gradient-to-b from-primary-200/60 to-transparent blur-[90px]" />
       </div>
 
-      <!-- Erro -->
-      <div
-        v-if="controller.hasError"
-        class="mb-4 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-      >
-        {{ controller.errorMessage }}
-      </div>
+      <div class="relative z-10 mx-auto w-full max-w-xl">
+        <!-- Logo + progresso compacto (mobile) -->
+        <div class="mb-6 lg:hidden">
+          <div class="flex items-center justify-center gap-2.5">
+            <span
+              class="flex h-9 w-9 items-center justify-center rounded-xl bg-background shadow-sm ring-1 ring-line-2">
+              <img src="/apple-touch-icon.png" alt="Gestão Fiscal" class="h-6 w-6" />
+            </span>
+            <span class="font-display text-base font-bold tracking-tight">
+              <span class="text-foreground">Gestão</span>
+              <span class="text-primary">Fiscal</span>
+            </span>
+          </div>
+          <div class="mt-5 flex items-center gap-1.5">
+            <span v-for="(step, index) in steps" :key="step.key" :class="[
+              'h-1.5 flex-1 rounded-full transition-colors duration-300',
+              index <= current ? 'bg-primary' : 'bg-line-2',
+            ]" />
+          </div>
+        </div>
 
-      <!-- Carregando estado inicial -->
-      <div
-        v-if="!controller.loaded.value"
-        class="flex justify-center py-16 text-primary"
-      >
-        <Spinner size="lg" />
-      </div>
+        <!-- Cabeçalho do passo -->
+        <div class="mb-6 flex items-center gap-3">
+          <span
+            class="ui-shadow-soft flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
+            <Icon :name="currentStep.icon" size="md" />
+          </span>
+          <div>
+            <p class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Passo {{ current + 1 }} de {{ steps.length }}
+            </p>
+            <h2 class="font-display text-xl font-bold tracking-tight text-foreground">
+              {{ currentStep.title }}
+            </h2>
+          </div>
+        </div>
 
-      <form v-else @submit.prevent="handleSubmit">
-        <motion.div
-          class="space-y-6"
-          :variants="container"
-          initial="hidden"
-          animate="visible"
-        >
-          <!-- Sua empresa -->
-          <motion.div :variants="item">
-            <FormSection
-              icon="Building2"
-              title="Sua empresa"
-              description="Identificação e regime tributário."
-            >
-              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Input
-                  v-model="form.name"
-                  maxlength="120"
-                  placeholder="Razão social"
-                  :disabled="!needsCreation"
-                  :error="errors.name"
-                >
-                  <template #label>Nome da empresa</template>
-                </Input>
+        <!-- Erro do controller -->
+        <div v-if="controller.hasError"
+          class="mb-4 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {{ controller.errorMessage }}
+        </div>
 
-                <Select
-                  v-model="form.type"
-                  :options="companyTypeOptions"
-                  placeholder="Não informar"
-                  :disabled="!needsCreation"
-                  :error="errors.type"
-                >
-                  <template #label>Tipo de empresa</template>
-                </Select>
+        <!-- Carregando estado inicial -->
+        <div v-if="!controller.loaded.value" class="flex justify-center py-16 text-primary">
+          <Spinner size="lg" />
+        </div>
 
-                <Input
-                  :model-value="form.cnpj"
-                  maxlength="18"
-                  inputmode="numeric"
-                  placeholder="00.000.000/0000-00"
-                  :error="errors.cnpj"
-                  @update:model-value="form.cnpj = formatCnpj($event)"
-                >
-                  <template #prefix><Icon name="Landmark" size="sm" /></template>
-                  <template #label>CNPJ</template>
-                </Input>
+        <form v-else @submit.prevent="next">
+          <div class="relative overflow-x-clip">
+            <AnimatePresence :custom="direction" mode="wait">
+              <motion.div :key="currentStep.key" :custom="direction" :variants="stepVariants" initial="enter"
+                animate="center" exit="exit" :transition="{ type: 'spring', stiffness: 380, damping: 34 }">
+                <OnboardingCompanyFields v-if="currentStep.key === 'empresa'" />
+                <OnboardingFiscalFields v-else-if="currentStep.key === 'fiscal'" />
+                <OnboardingMatrizFields v-else />
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
-                <Select
-                  v-model="form.taxRegime"
-                  :options="taxRegimeOptions"
-                  placeholder="Selecione"
-                  :error="errors.taxRegime"
-                >
-                  <template #label>Regime tributário</template>
-                </Select>
+          <!-- Navegação -->
+          <div class="mt-8 flex items-center justify-between gap-3">
+            <Button v-if="!isFirst" type="button" variant="ghost" :disabled="controller.isLoading" @click="back">
+              <template #icon>
+                <Icon name="ArrowLeft" size="sm" />
+              </template>
+              Voltar
+            </Button>
+            <span v-else />
 
-                <Input
-                  :model-value="form.phone"
-                  maxlength="15"
-                  inputmode="tel"
-                  placeholder="(00) 00000-0000"
-                  :error="errors.phone"
-                  @update:model-value="form.phone = formatPhone($event)"
-                >
-                  <template #prefix><Icon name="Phone" size="sm" /></template>
-                  <template #label>Telefone</template>
-                </Input>
-              </div>
-            </FormSection>
-          </motion.div>
-
-          <!-- Estabelecimento matriz -->
-          <motion.div :variants="item">
-            <FormSection
-              icon="Store"
-              title="Estabelecimento matriz"
-              description="A sede da empresa e seu endereço."
-            >
-              <div class="grid grid-cols-1 gap-5 sm:grid-cols-6">
-                <div class="sm:col-span-3">
-                  <Input
-                    v-model="form.establishmentName"
-                    maxlength="120"
-                    placeholder="Nome da matriz"
-                    :error="errors.establishmentName"
-                  >
-                    <template #label>Nome do estabelecimento</template>
-                  </Input>
-                </div>
-
-                <div class="sm:col-span-3">
-                  <Input
-                    v-model="form.inscricaoEstadual"
-                    maxlength="20"
-                    inputmode="numeric"
-                    placeholder="Inscrição Estadual"
-                    :error="errors.inscricaoEstadual"
-                  >
-                    <template #label>Inscrição Estadual</template>
-                  </Input>
-                </div>
-
-                <div class="sm:col-span-3">
-                  <Input
-                    v-model="form.inscricaoMunicipal"
-                    maxlength="20"
-                    inputmode="numeric"
-                    placeholder="Inscrição Municipal"
-                  >
-                    <template #label>Inscrição Municipal</template>
-                  </Input>
-                </div>
-
-                <div class="sm:col-span-3">
-                  <Input
-                    :model-value="form.cep"
-                    maxlength="9"
-                    inputmode="numeric"
-                    placeholder="00000-000"
-                    :error="errors.cep"
-                    @update:model-value="onCepInput($event)"
-                  >
-                    <template #prefix><Icon name="MapPin" size="sm" /></template>
-                    <template #suffix>
-                      <Spinner v-if="cepLoading" size="sm" class="text-primary" />
-                    </template>
-                    <template #label>CEP</template>
-                  </Input>
-                </div>
-
-                <div class="sm:col-span-4">
-                  <Input v-model="form.street" placeholder="Rua / Logradouro">
-                    <template #label>Logradouro</template>
-                  </Input>
-                </div>
-
-                <div class="sm:col-span-2">
-                  <Input v-model="form.number" placeholder="Número">
-                    <template #label>Número</template>
-                  </Input>
-                </div>
-
-                <div class="sm:col-span-2">
-                  <Input v-model="form.complement" placeholder="Sala, andar…">
-                    <template #label>Complemento</template>
-                  </Input>
-                </div>
-
-                <div class="sm:col-span-2">
-                  <Input v-model="form.neighborhood" placeholder="Bairro">
-                    <template #label>Bairro</template>
-                  </Input>
-                </div>
-
-                <div class="sm:col-span-1">
-                  <Input v-model="form.city" placeholder="Cidade">
-                    <template #label>Cidade</template>
-                  </Input>
-                </div>
-
-                <div class="sm:col-span-1">
-                  <Select
-                    v-model="form.state"
-                    :options="brazilianStateOptions"
-                    placeholder="UF"
-                    :error="errors.state"
-                  >
-                    <template #label>UF</template>
-                  </Select>
-                </div>
-              </div>
-            </FormSection>
-          </motion.div>
-
-          <div class="flex justify-end">
-            <Button
-              type="submit"
-              variant="primary"
-              text-class="text-white"
-              :loading="controller.isLoading"
-              loading-text="Configurando…"
-            >
-              <template #icon><Icon name="Check" size="sm" /></template>
-              Concluir configuração
+            <Button type="submit" variant="primary" text-class="text-white" :loading="controller.isLoading"
+              loading-text="Configurando…">
+              <span>{{ isLast ? 'Concluir configuração' : 'Continuar' }}</span>
+              <Icon :name="isLast ? 'Check' : 'ArrowRight'" size="sm" />
             </Button>
           </div>
-        </motion.div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </main>
   </div>
 </template>
