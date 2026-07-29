@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Input, Select } from '@/shared/ui'
 import { companyTypeOptions } from '@/enums/company-type.enum'
-import { useOnboardingContext } from '@/modules/companies/presentation/composables/useOnboardingContext'
+import { useOnboardingContext } from '@/shared/composables/useOnboardingContext'
 
 const { form, errors } = useOnboardingContext()
 </script>

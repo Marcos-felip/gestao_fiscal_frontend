@@ -148,7 +148,7 @@ import { Button, NavbarButton, Icon, Switch, Span, Avatar } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import { useNavbar } from '@/shared/composables'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { routeNames } from '@/router/route-names'
 
 withDefaults(defineProps<{ tone?: 'default' | 'light' }>(), {

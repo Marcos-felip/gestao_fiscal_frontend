@@ -5,7 +5,7 @@ import { Button, Icon, Skeleton } from '@/shared/ui'
 import ProductForm from '@/modules/products/presentation/components/product-form.vue'
 import { makeProductFormController } from '@/modules/products/factories/products.factory'
 import type { ProductFormValues } from '@/modules/products/presentation/schemas/product-schema'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 

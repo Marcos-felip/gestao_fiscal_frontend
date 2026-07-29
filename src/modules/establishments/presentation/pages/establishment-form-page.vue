@@ -5,7 +5,7 @@ import { Button, Icon, Skeleton } from '@/shared/ui'
 import EstablishmentForm from '@/modules/establishments/presentation/components/establishment-form.vue'
 import { makeEstablishmentFormController } from '@/modules/establishments/factories/establishments.factory'
 import type { EstablishmentFormValues } from '@/modules/establishments/presentation/schemas/establishment-schema'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 

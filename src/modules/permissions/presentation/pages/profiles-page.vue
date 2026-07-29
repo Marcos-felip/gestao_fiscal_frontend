@@ -6,7 +6,7 @@ import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import ProfileFormDialog from '@/modules/permissions/presentation/components/profile-form-dialog.vue'
 import { makeProfilesController } from '@/modules/permissions/factories/permissions.factory'
 import type { PermissionProfile } from '@/modules/permissions/domain/entities/permission-profile.entity'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 

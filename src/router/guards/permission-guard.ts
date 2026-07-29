@@ -1,7 +1,7 @@
 import type { Router } from 'vue-router'
 import { routeNames } from '../route-names'
 import type { MembershipRole } from '@/enums/membership-role.enum'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 
 /**
  * Protege rotas por permissão (`meta.requiresPermission`) e/ou papel

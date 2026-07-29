@@ -12,3 +12,9 @@ export { useNotifications, type Notification } from './useNotifications'
 export { useProgress } from './useProgress'
 export { useToast } from './useToast'
 export { useTabs, type AppTab } from './useTabs'
+export { usePermissions } from './usePermissions'
+export {
+  useOnboardingContext,
+  ONBOARDING_FORM,
+  ONBOARDING_ERRORS,
+} from './useOnboardingContext'
