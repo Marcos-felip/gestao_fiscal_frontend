@@ -5,7 +5,11 @@
     <span class="mx-1 hidden h-5 w-px bg-white/20 sm:block" aria-hidden="true" />
 
     <!-- Busca: ícone que abre o modal -->
-    <NavbarButton tone="light" tooltip="Buscar" @click="showSearchModal = true">
+    <NavbarButton
+      tone="light"
+      tooltip="Buscar (Ctrl+K)"
+      @click="showSearchModal = true"
+    >
       <Icon name="Search" size="md" />
     </NavbarButton>
 
@@ -34,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { NavbarButton, Icon } from '@/shared/ui'
 import { useNotifications } from '@/shared/composables'
 import LanguageSelector from './language-selector.vue'
@@ -47,6 +51,18 @@ const { unreadCount } = useNotifications()
 const showSearchModal = ref(false)
 const showNotifications = ref(false)
 const showActivity = ref(false)
+
+// Atalho global para abrir a busca: Ctrl/⌘ + K (ou + /).
+function onGlobalKeydown(event: KeyboardEvent): void {
+  const combo = event.ctrlKey || event.metaKey
+  if (combo && (event.key === 'k' || event.key === '/')) {
+    event.preventDefault()
+    showSearchModal.value = true
+  }
+}
+
+onMounted(() => document.addEventListener('keydown', onGlobalKeydown))
+onBeforeUnmount(() => document.removeEventListener('keydown', onGlobalKeydown))
 </script>
 
 <style scoped lang="css">
