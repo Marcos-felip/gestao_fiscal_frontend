@@ -28,7 +28,9 @@
       <Icon name="Activity" size="md" />
     </NavbarButton>
 
+    <!-- Seletor de idioma oculto até haver i18n de fato.
     <LanguageSelector tone="light" />
+    -->
 
     <AccountMenu tone="light" />
 
@@ -41,7 +43,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { NavbarButton, Icon } from '@/shared/ui'
 import { useNotifications } from '@/shared/composables'
-import LanguageSelector from './language-selector.vue'
+// import LanguageSelector from './language-selector.vue' // reativar com i18n
 import AccountMenu from './account-menu.vue'
 import CompanySwitcher from './company-switcher.vue'
 import SearchModal from './search-modal.vue'
