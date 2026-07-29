@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { motion } from 'motion-v'
-import { Button, Icon, Select, Skeleton } from '@/shared/ui'
+import { Button, DatePicker, Icon, Select, Skeleton } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import PurchaseStatusBadge from '@/modules/purchases/presentation/components/purchase-status-badge.vue'
 import { makePurchasesListController } from '@/modules/purchases/factories/purchases.factory'
@@ -43,7 +43,13 @@ function onStatus(value: string): void {
   void progress.track(controller.setStatus(value as PurchaseStatus | ''))
 }
 
-function onDateChange(): void {
+function onStartDate(value: string): void {
+  startValue.value = value
+  void progress.track(controller.setDateRange(startValue.value, endValue.value))
+}
+
+function onEndDate(value: string): void {
+  endValue.value = value
   void progress.track(controller.setDateRange(startValue.value, endValue.value))
 }
 
@@ -122,27 +128,26 @@ function nextPage(): void {
         @update:model-value="onStatus"
       />
     </div>
-    <div>
-      <label class="mb-2 block text-xs font-medium text-muted-foreground">
-        De
-      </label>
-      <input
-        v-model="startValue"
-        type="date"
-        class="rounded-lg border border-line-2 bg-background-1 px-3 py-2.5 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none"
-        @change="onDateChange"
-      />
+    <div class="sm:w-44">
+      <DatePicker
+        :model-value="startValue"
+        :max="endValue || undefined"
+        placeholder="De"
+        @update:model-value="onStartDate"
+      >
+        <template #label>De</template>
+      </DatePicker>
     </div>
-    <div>
-      <label class="mb-2 block text-xs font-medium text-muted-foreground">
-        Até
-      </label>
-      <input
-        v-model="endValue"
-        type="date"
-        class="rounded-lg border border-line-2 bg-background-1 px-3 py-2.5 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none"
-        @change="onDateChange"
-      />
+    <div class="sm:w-44">
+      <DatePicker
+        :model-value="endValue"
+        :min="startValue || undefined"
+        placeholder="Até"
+        align="end"
+        @update:model-value="onEndDate"
+      >
+        <template #label>Até</template>
+      </DatePicker>
     </div>
   </div>
 

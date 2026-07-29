@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { motion } from 'motion-v'
-import { Icon, Input, Select } from '@/shared/ui'
+import { DatePicker, Icon, Input, Select } from '@/shared/ui'
 import type { SelectOption } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
 import FormActionBar from '@/shared/components/form/form-action-bar.vue'
@@ -129,20 +129,9 @@ const item = {
               <template #label>Fornecedor (opcional)</template>
             </Select>
 
-            <div>
-              <label
-                class="mb-2 block text-sm font-medium text-foreground"
-                for="purchase-date"
-              >
-                Data da compra
-              </label>
-              <input
-                id="purchase-date"
-                v-model="form.purchaseDate"
-                type="date"
-                class="block w-full rounded-lg border border-line-2 bg-background-1 px-4 py-2.5 text-foreground transition-colors duration-200 focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none sm:py-3 sm:text-sm"
-              />
-            </div>
+            <DatePicker v-model="form.purchaseDate">
+              <template #label>Data da compra</template>
+            </DatePicker>
 
             <Input
               v-model="form.notes"

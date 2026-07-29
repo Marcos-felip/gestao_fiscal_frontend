@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { motion } from 'motion-v'
-import { Button, Icon, Input, Select, Skeleton } from '@/shared/ui'
+import { Button, DatePicker, Icon, Input, Select, Skeleton } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import FormSection from '@/shared/components/form/form-section.vue'
 import PurchaseStatusBadge from '@/modules/purchases/presentation/components/purchase-status-badge.vue'
@@ -226,20 +226,9 @@ function goBack(): void {
           >
             <template #label>Fornecedor</template>
           </Select>
-          <div>
-            <label
-              class="mb-2 block text-sm font-medium text-foreground"
-              for="detail-date"
-            >
-              Data da compra
-            </label>
-            <input
-              id="detail-date"
-              v-model="controller.meta.value.purchaseDate"
-              type="date"
-              class="block w-full rounded-lg border border-line-2 bg-background-1 px-4 py-2.5 text-foreground transition-colors duration-200 focus:border-primary focus:ring-2 focus:ring-primary focus:outline-none sm:py-3 sm:text-sm"
-            />
-          </div>
+          <DatePicker v-model="controller.meta.value.purchaseDate">
+            <template #label>Data da compra</template>
+          </DatePicker>
           <Input
             v-model="controller.meta.value.notes"
             maxlength="1000"
