@@ -1,17 +1,14 @@
 <template>
-  <div v-if="active" class="company-switcher px-3 pb-2">
-    <!-- Uma empresa: linha estática, sem dropdown -->
+  <div v-if="active" class="company-switcher">
+    <!-- Uma empresa: pílula estática (apenas contexto) -->
     <div
       v-if="!store.hasMultiple"
-      class="flex items-center gap-3 rounded-lg border border-line-2 px-3 py-2"
+      class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-white/90"
     >
-      <Avatar :initials="initialsOf(active.name)" size="sm" shape="circle" />
-      <div class="min-w-0">
-        <Span size="sm" weight="semibold" class="truncate">
-          {{ active.name }}
-        </Span>
-        <Span size="xs" variant="muted" class="truncate">Empresa ativa</Span>
-      </div>
+      <Icon name="Building2" size="sm" class="shrink-0" />
+      <span class="hidden max-w-[10rem] truncate sm:inline">
+        {{ active.name }}
+      </span>
     </div>
 
     <!-- Múltiplas empresas: dropdown para trocar -->
@@ -19,27 +16,27 @@
       v-else
       align="left"
       trigger-label="Trocar empresa"
-      trigger-class="flex w-full items-center gap-3 rounded-lg border border-line-2 px-3 py-2 text-left transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
-      menu-class="w-[--sidebar-switcher-w] max-h-72 overflow-y-auto"
+      trigger-class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-white/90 transition-colors duration-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+      menu-class="w-64 max-h-72 overflow-y-auto"
     >
       <template #trigger="{ open }">
-        <Avatar :initials="initialsOf(active.name)" size="sm" shape="circle" />
-        <div class="min-w-0 flex-1">
-          <Span size="sm" weight="semibold" class="truncate">
-            {{ active.name }}
-          </Span>
-          <Span size="xs" variant="muted" class="truncate">
-            Trocar empresa
-          </Span>
-        </div>
+        <Icon name="Building2" size="sm" class="shrink-0" />
+        <span class="hidden max-w-[10rem] truncate sm:inline">
+          {{ active.name }}
+        </span>
         <Icon
           name="ChevronsUpDown"
           size="sm"
-          :class="['shrink-0 text-muted-foreground transition-transform', open && 'rotate-180']"
+          :class="['shrink-0 transition-transform', open && 'rotate-180']"
         />
       </template>
 
       <template #default="{ close }">
+        <p
+          class="px-3 pb-1 pt-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+        >
+          Trocar empresa
+        </p>
         <button
           v-for="company in store.companies"
           :key="company.id"
@@ -72,7 +69,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Avatar, Dropdown, Icon, Span, Spinner } from '@/shared/ui'
+import { Avatar, Dropdown, Icon, Spinner } from '@/shared/ui'
 import { useCompaniesStore } from '@/modules/companies/presentation/stores/companies-store'
 import { makeCompanySwitcherController } from '@/modules/companies/factories/companies.factory'
 
@@ -91,10 +88,3 @@ async function onSelect(companyId: string, close: () => void): Promise<void> {
   await controller.switchTo(companyId)
 }
 </script>
-
-<style scoped>
-.company-switcher {
-  /* Largura do menu do dropdown alinhada à sidebar. */
-  --sidebar-switcher-w: 14rem;
-}
-</style>
