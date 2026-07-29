@@ -45,6 +45,7 @@
 
         <!-- Primary actions -->
         <div class="py-2">
+          <!-- Configurações: oculto até existir uma tela/endpoint de settings.
           <Button
             variant="ghost"
             size="sm"
@@ -58,13 +59,14 @@
 
             <Span size="sm"> Configurações </Span>
           </Button>
+          -->
 
           <Button
             variant="ghost"
             size="sm"
             fullWidth
             class="h-auto! px-4! py-2! justify-start! gap-3! border-0! bg-transparent! hover:bg-muted!"
-            @click="handlePlaceholder('account')"
+            @click="goAccount"
           >
             <template #icon>
               <Icon name="User" size="sm" />
@@ -95,11 +97,12 @@
         <!-- Secondary actions -->
         <div class="py-2">
           <Button
+            v-if="canManageTeam"
             variant="ghost"
             size="sm"
             fullWidth
             class="h-auto! px-4! py-2! justify-start! gap-3! border-0! bg-transparent! hover:bg-muted!"
-            @click="handlePlaceholder('team')"
+            @click="goTeam"
           >
             <template #icon>
               <Icon name="Users" size="sm" />
@@ -145,6 +148,7 @@ import { Button, NavbarButton, Icon, Switch, Span, Avatar } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import { useNavbar } from '@/shared/composables'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
+import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
 import { routeNames } from '@/router/route-names'
 
 withDefaults(defineProps<{ tone?: 'default' | 'light' }>(), {
@@ -173,9 +177,23 @@ const onThemeToggle = (value: boolean) => {
   }
 }
 
-const handlePlaceholder = (_key: string) => {
-  // Placeholder para rotas/ações futuras, mantendo o UX do dropdown.
+// Reativar junto com o botão "Configurações" quando houver tela de settings.
+// const handlePlaceholder = (_key: string) => {
+//   // Placeholder para rotas/ações futuras, mantendo o UX do dropdown.
+//   closeMenu()
+// }
+
+const goAccount = () => {
   closeMenu()
+  router.push({ name: routeNames.ACCOUNT })
+}
+
+const { can } = usePermissions()
+const canManageTeam = computed(() => can('users.list'))
+
+const goTeam = () => {
+  closeMenu()
+  router.push({ name: routeNames.USERS })
 }
 
 const onDocumentPointerDown = (e: PointerEvent) => {

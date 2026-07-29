@@ -5,6 +5,7 @@ import { forcePasswordGuard } from './guards/force-password-guard'
 import { permissionGuard } from './guards/permission-guard'
 import { authRoutes } from '@/modules/auth/presentation/routes/auth-routes'
 import { dashboardRoutes } from '@/modules/dashboard/presentation/routes/dashboard-routes'
+import { accountRoutes } from '@/modules/account/presentation/routes/account-routes'
 import { companiesRoutes } from '@/modules/companies/presentation/routes/companies-routes'
 import { establishmentsRoutes } from '@/modules/establishments/presentation/routes/establishments-routes'
 import { partnersRoutes } from '@/modules/partners/presentation/routes/partners-routes'
@@ -26,6 +27,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         ...dashboardRoutes,
+        ...accountRoutes,
         ...companiesRoutes,
         ...establishmentsRoutes,
         ...partnersRoutes,
