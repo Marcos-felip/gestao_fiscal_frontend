@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './modules/auth/presentation/stores/auth-store'
 import { usePermissionsStore } from './modules/permissions/presentation/stores/permissions-store'
+import { useCompaniesStore } from './modules/companies/presentation/stores/companies-store'
 import './style.css'
 
 const app = createApp(App)
@@ -17,6 +18,7 @@ authStore.initializeFromStorage()
 
 if (authStore.isAuthenticated) {
   void usePermissionsStore(pinia).load()
+  void useCompaniesStore(pinia).load()
 }
 
 app.mount('#app')

@@ -22,4 +22,13 @@ export class AccountRepository implements IAccountRepository {
     const result = await httpClient.patch<unknown>('/users/profile', payload)
     return result.flatMap(toAccountProfile)
   }
+
+  async setActiveCompany(
+    companyId: string,
+  ): Promise<Either<DomainError, AccountProfile>> {
+    const result = await httpClient.patch<unknown>('/users/active-company', {
+      companyId,
+    })
+    return result.flatMap(toAccountProfile)
+  }
 }

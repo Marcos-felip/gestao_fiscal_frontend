@@ -2,11 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { authGuard } from './guards/auth-guard'
 import { guestGuard } from './guards/guest-guard'
 import { forcePasswordGuard } from './guards/force-password-guard'
+import { onboardingGuard } from './guards/onboarding-guard'
 import { permissionGuard } from './guards/permission-guard'
 import { authRoutes } from '@/modules/auth/presentation/routes/auth-routes'
 import { dashboardRoutes } from '@/modules/dashboard/presentation/routes/dashboard-routes'
 import { accountRoutes } from '@/modules/account/presentation/routes/account-routes'
 import { companiesRoutes } from '@/modules/companies/presentation/routes/companies-routes'
+import { onboardingRoutes } from '@/modules/companies/presentation/routes/onboarding-routes'
 import { establishmentsRoutes } from '@/modules/establishments/presentation/routes/establishments-routes'
 import { partnersRoutes } from '@/modules/partners/presentation/routes/partners-routes'
 import { productsRoutes } from '@/modules/products/presentation/routes/products-routes'
@@ -39,6 +41,7 @@ const router = createRouter({
       ],
     },
     ...authRoutes,
+    ...onboardingRoutes,
     ...errorRoutes,
   ],
 })
@@ -46,6 +49,7 @@ const router = createRouter({
 authGuard(router)
 guestGuard(router)
 forcePasswordGuard(router)
+onboardingGuard(router)
 permissionGuard(router)
 
 // Barra de progresso durante a navegação.

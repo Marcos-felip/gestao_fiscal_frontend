@@ -1,5 +1,9 @@
 <template>
   <div :class="['navbar-actions', 'flex items-center gap-1']">
+    <!-- Empresa ativa / troca de empresa -->
+    <CompanySwitcher />
+    <span class="mx-1 hidden h-5 w-px bg-white/20 sm:block" aria-hidden="true" />
+
     <!-- Busca: ícone que abre o modal -->
     <NavbarButton tone="light" tooltip="Buscar" @click="showSearchModal = true">
       <Icon name="Search" size="md" />
@@ -35,6 +39,7 @@ import { NavbarButton, Icon } from '@/shared/ui'
 import { useNotifications } from '@/shared/composables'
 import LanguageSelector from './language-selector.vue'
 import AccountMenu from './account-menu.vue'
+import CompanySwitcher from './company-switcher.vue'
 import SearchModal from './search-modal.vue'
 
 const { unreadCount } = useNotifications()

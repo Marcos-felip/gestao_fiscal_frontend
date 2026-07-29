@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { toCompany } from '@/modules/companies/data/mappers/company.mapper'
+import {
+  toCompany,
+  toCompanyList,
+  toCreatedCompany,
+} from '@/modules/companies/data/mappers/company.mapper'
 import { Company } from '@/modules/companies/domain/entities/company.entity'
 import { ContractError } from '@/core/errors/contract-error'
 
@@ -72,5 +76,48 @@ describe('toCompany', () => {
     expect(toCompany(null).isLeft).toBe(true)
     expect(toCompany('texto').isLeft).toBe(true)
     expect(toCompany(undefined).isLeft).toBe(true)
+  })
+})
+
+describe('toCompanyList', () => {
+  it('mapeia um array simples de empresas (GET /companies)', () => {
+    const result = toCompanyList([
+      respostaValida,
+      { id: 'company-2', name: 'Segunda Empresa' },
+    ])
+
+    expect(result.isRight).toBe(true)
+    const list = result.right
+    expect(list).toHaveLength(2)
+    expect(list[0]).toBeInstanceOf(Company)
+    expect(list[1].name).toBe('Segunda Empresa')
+    expect(list[1].isOnboarded).toBe(false)
+  })
+
+  it('rejeita quando o payload não é um array', () => {
+    const result = toCompanyList(respostaValida)
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+})
+
+describe('toCreatedCompany', () => {
+  it('extrai a empresa do envelope { company, membership }', () => {
+    const result = toCreatedCompany({
+      company: respostaValida,
+      membership: { id: 'm-1', role: 'OWNER' },
+    })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right).toBeInstanceOf(Company)
+    expect(result.right.id).toBe('company-1')
+  })
+
+  it('rejeita quando falta a chave company', () => {
+    const result = toCreatedCompany(respostaValida)
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
   })
 })
