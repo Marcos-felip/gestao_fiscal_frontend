@@ -10,7 +10,7 @@ import AssignProfilesDialog from '@/modules/permissions/presentation/components/
 import { makeMembershipsController } from '@/modules/memberships/factories/memberships.factory'
 import { makeMemberProfilesController } from '@/modules/permissions/factories/permissions.factory'
 import type { Membership } from '@/modules/memberships/domain/entities/membership.entity'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import {
   MembershipRole,
   assignableRoles,

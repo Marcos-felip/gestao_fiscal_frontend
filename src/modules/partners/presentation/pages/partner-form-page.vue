@@ -5,7 +5,7 @@ import { Button, Icon, Skeleton } from '@/shared/ui'
 import PartnerForm from '@/modules/partners/presentation/components/partner-form.vue'
 import { makePartnerFormController } from '@/modules/partners/factories/partners.factory'
 import type { PartnerFormValues } from '@/modules/partners/presentation/schemas/partner-schema'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 

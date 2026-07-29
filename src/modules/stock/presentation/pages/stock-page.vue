@@ -7,7 +7,7 @@ import StockMovementDialog from '@/modules/stock/presentation/components/stock-m
 import { makeStockController } from '@/modules/stock/factories/stock.factory'
 import type { StockMovement } from '@/modules/stock/domain/entities/stock-movement.entity'
 import type { StockMovementFormValues } from '@/modules/stock/presentation/schemas/stock-movement-schema'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import {
   StockMovementType,
   stockMovementTypeOptions,

@@ -6,7 +6,7 @@ import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import PurchaseStatusBadge from '@/modules/purchases/presentation/components/purchase-status-badge.vue'
 import { makePurchasesListController } from '@/modules/purchases/factories/purchases.factory'
 import type { Purchase } from '@/modules/purchases/domain/entities/purchase.entity'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import {
   PurchaseStatus,
   purchaseStatusOptions,

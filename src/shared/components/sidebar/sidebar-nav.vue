@@ -23,7 +23,7 @@
 import { computed } from 'vue'
 import { motion } from 'motion-v'
 import { SidebarLink, Icon } from '@/shared/ui'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import type { MembershipRole } from '@/enums/membership-role.enum'
 
 interface NavLink {

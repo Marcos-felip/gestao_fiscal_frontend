@@ -7,7 +7,7 @@ import type {
   CompanyFormValues,
   SedeFormValues,
 } from '@/modules/companies/presentation/schemas/company-schema'
-import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { useProgress } from '@/shared/composables'
 
 const controller = makeCompanyController()

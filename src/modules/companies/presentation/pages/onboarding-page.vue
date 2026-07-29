@@ -16,7 +16,7 @@ import {
 import {
   ONBOARDING_ERRORS,
   ONBOARDING_FORM,
-} from '@/modules/companies/presentation/composables/useOnboardingContext'
+} from '@/shared/composables/useOnboardingContext'
 import { toFormErrors } from '@/core/utils/zod-errors'
 
 const controller = makeOnboardingController()
@@ -175,7 +175,8 @@ const stepVariants = {
             </span>
           </div>
           <div class="mt-5 flex items-center gap-1.5">
-            <span v-for="(step, index) in steps" :key="step.key" :class="[
+            <span
+v-for="(step, index) in steps" :key="step.key" :class="[
               'h-1.5 flex-1 rounded-full transition-colors duration-300',
               index <= current ? 'bg-primary' : 'bg-line-2',
             ]" />
@@ -199,7 +200,8 @@ const stepVariants = {
         </div>
 
         <!-- Erro do controller -->
-        <div v-if="controller.hasError"
+        <div
+v-if="controller.hasError"
           class="mb-4 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {{ controller.errorMessage }}
         </div>
@@ -212,7 +214,8 @@ const stepVariants = {
         <form v-else @submit.prevent="next">
           <div class="relative overflow-x-clip">
             <AnimatePresence :custom="direction" mode="wait">
-              <motion.div :key="currentStep.key" :custom="direction" :variants="stepVariants" initial="enter"
+              <motion.div
+:key="currentStep.key" :custom="direction" :variants="stepVariants" initial="enter"
                 animate="center" exit="exit" :transition="{ type: 'spring', stiffness: 380, damping: 34 }">
                 <OnboardingCompanyFields v-if="currentStep.key === 'empresa'" />
                 <OnboardingFiscalFields v-else-if="currentStep.key === 'fiscal'" />
@@ -231,7 +234,8 @@ const stepVariants = {
             </Button>
             <span v-else />
 
-            <Button type="submit" variant="primary" text-class="text-white" :loading="controller.isLoading"
+            <Button
+type="submit" variant="primary" text-class="text-white" :loading="controller.isLoading"
               loading-text="Configurando…">
               <span>{{ isLast ? 'Concluir configuração' : 'Continuar' }}</span>
               <Icon :name="isLast ? 'Check' : 'ArrowRight'" size="sm" />
