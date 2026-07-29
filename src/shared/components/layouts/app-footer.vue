@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// Ano corrente para o aviso de copyright (evita data fixa que envelhece).
+
 const year = new Date().getFullYear()
 </script>
 
@@ -8,11 +8,11 @@ const year = new Date().getFullYear()
     <div
       class="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 py-4 sm:px-6 lg:px-8"
     >
-      <p class="flex items-center gap-2 text-xs text-muted-foreground">
+      <p class="flex items-center gap-1 text-sm text-muted-foreground">
         <img
           src="/apple-touch-icon.png"
           alt="Gestão Fiscal"
-          class="size-5 rounded-md"
+          class="size-6 rounded-md"
         />
         © {{ year }} Gestão Fiscal — todos os direitos reservados.
       </p>
