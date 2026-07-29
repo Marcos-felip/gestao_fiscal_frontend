@@ -8,10 +8,16 @@
       <Sidebar />
 
       <!-- Main content -->
-      <main :class="['main-content', 'flex-1 pt-[80px] lg:ml-64']">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <main
+        :class="[
+          'main-content',
+          'flex min-h-svh flex-1 flex-col pt-[80px] lg:ml-64',
+        ]"
+      >
+        <div class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
           <RouterView />
         </div>
+        <AppFooter />
       </main>
     </div>
   </div>
@@ -21,6 +27,7 @@
 import { RouterView } from 'vue-router'
 import Navbar from '@/shared/components/navbar/navbar.vue'
 import Sidebar from '@/shared/components/sidebar/sidebar.vue'
+import AppFooter from '@/shared/components/layouts/app-footer.vue'
 </script>
 
 <style scoped lang="css">
