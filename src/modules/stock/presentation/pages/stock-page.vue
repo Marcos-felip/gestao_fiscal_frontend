@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { motion } from 'motion-v'
-import { Button, Icon, Select, Skeleton } from '@/shared/ui'
+import { Button, Combobox, Icon, Select, Skeleton } from '@/shared/ui'
 import MovementTypeBadge from '@/modules/stock/presentation/components/movement-type-badge.vue'
 import StockMovementDialog from '@/modules/stock/presentation/components/stock-movement-dialog.vue'
 import { makeStockController } from '@/modules/stock/factories/stock.factory'
@@ -31,10 +31,6 @@ const typeFilterOptions = [
   { value: '', label: 'Todos os tipos' },
   ...stockMovementTypeOptions,
 ]
-const productFilterOptions = computed(() => [
-  { value: '', label: 'Todos os produtos' },
-  ...controller.productOptions.value,
-])
 
 onMounted(() => {
   progress.track(controller.loadList())
@@ -113,20 +109,21 @@ function nextPage(): void {
 
   <!-- Toolbar: filtros por tipo e produto -->
   <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div class="sm:max-w-xs sm:flex-1">
+      <Combobox
+        :model-value="productValue"
+        :options="controller.productOptions.value"
+        placeholder="Buscar produto…"
+        empty-text="Nenhum produto encontrado"
+        @update:model-value="onProduct"
+      />
+    </div>
     <div class="sm:w-48">
       <Select
         :model-value="typeValue"
         :options="typeFilterOptions"
         placeholder="Tipo"
         @update:model-value="onType"
-      />
-    </div>
-    <div class="sm:w-64">
-      <Select
-        :model-value="productValue"
-        :options="productFilterOptions"
-        placeholder="Produto"
-        @update:model-value="onProduct"
       />
     </div>
   </div>
