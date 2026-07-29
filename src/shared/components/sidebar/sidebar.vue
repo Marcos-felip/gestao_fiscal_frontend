@@ -23,6 +23,7 @@
         ]"
       >
         <SidebarHeader />
+        <CompanySwitcher />
         <SidebarNav />
         <SidebarFooter />
       </div>
@@ -47,6 +48,7 @@
 import { watch } from 'vue'
 import { useSidebar } from '@/shared/composables'
 import SidebarHeader from './sidebar-header.vue'
+import CompanySwitcher from './company-switcher.vue'
 import SidebarNav from './sidebar-nav.vue'
 import SidebarFooter from './sidebar-footer.vue'
 

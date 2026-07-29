@@ -21,6 +21,24 @@ const companySchema = z.object({
   updatedAt: z.string().nullable().default(null),
 })
 
+type CompanyPayload = z.infer<typeof companySchema>
+
+function build(value: CompanyPayload): Company {
+  return new Company(
+    value.id,
+    value.name,
+    value.type as CompanyType | null,
+    value.cnpj,
+    value.stateRegistration,
+    value.phone,
+    value.taxRegime as TaxRegime | null,
+    value.businessSegment,
+    value.isOnboarded,
+    value.createdAt,
+    value.updatedAt,
+  )
+}
+
 export function toCompany(data: unknown): Either<DomainError, Company> {
   const parsed = companySchema.safeParse(data)
 
@@ -28,20 +46,33 @@ export function toCompany(data: unknown): Either<DomainError, Company> {
     return Either.left(new ContractError('companies', toIssueList(parsed.error)))
   }
 
-  const value = parsed.data
-  return Either.right(
-    new Company(
-      value.id,
-      value.name,
-      value.type as CompanyType | null,
-      value.cnpj,
-      value.stateRegistration,
-      value.phone,
-      value.taxRegime as TaxRegime | null,
-      value.businessSegment,
-      value.isOnboarded,
-      value.createdAt,
-      value.updatedAt,
-    ),
-  )
+  return Either.right(build(parsed.data))
+}
+
+/** `GET /companies` devolve um array simples (sem envelope de paginação). */
+export function toCompanyList(
+  data: unknown,
+): Either<DomainError, Company[]> {
+  const parsed = z.array(companySchema).safeParse(data)
+
+  if (!parsed.success) {
+    return Either.left(new ContractError('companies', toIssueList(parsed.error)))
+  }
+
+  return Either.right(parsed.data.map(build))
+}
+
+/** `POST /companies` devolve `{ company, membership }`; extrai a empresa. */
+export function toCreatedCompany(
+  data: unknown,
+): Either<DomainError, Company> {
+  const envelope = z.object({ company: companySchema }).safeParse(data)
+
+  if (!envelope.success) {
+    return Either.left(
+      new ContractError('companies', toIssueList(envelope.error)),
+    )
+  }
+
+  return Either.right(build(envelope.data.company))
 }

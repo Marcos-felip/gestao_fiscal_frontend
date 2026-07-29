@@ -10,6 +10,7 @@ import type { ChangePasswordDto } from '@/modules/auth/domain/dto/change-passwor
 import { AuthUser } from '@/modules/auth/domain/entities/auth.entity'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
 import { usePermissionsStore } from '@/modules/permissions/presentation/stores/permissions-store'
+import { useCompaniesStore } from '@/modules/companies/presentation/stores/companies-store'
 import { useToast } from '@/shared/composables'
 import { routeNames } from '@/router/route-names'
 
@@ -25,6 +26,7 @@ export class AuthController extends BaseController {
 
   private readonly authStore = useAuthStore()
   private readonly permissionsStore = usePermissionsStore()
+  private readonly companiesStore = useCompaniesStore()
   private readonly toast = useToast()
 
   constructor(
@@ -96,6 +98,7 @@ export class AuthController extends BaseController {
     this.handleResult(result, () => {
       this.authStore.clear()
       this.permissionsStore.clear()
+      this.companiesStore.clear()
       this.router.push({ name: routeNames.LOGIN })
     })
     this.setLoading(false)
@@ -130,7 +133,7 @@ export class AuthController extends BaseController {
       return
     }
 
-    await this.permissionsStore.load()
+    await Promise.all([this.permissionsStore.load(), this.companiesStore.load()])
     this.router.push({ name: routeNames.DASHBOARD })
   }
 }

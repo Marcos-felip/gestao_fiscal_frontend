@@ -2,6 +2,7 @@ export const routeNames = {
   LOGIN: 'login',
   REGISTER: 'register',
   CHANGE_PASSWORD: 'change-password',
+  ONBOARDING: 'onboarding',
   DASHBOARD: 'dashboard',
   ACCOUNT: 'account',
   COMPANY: 'company',
