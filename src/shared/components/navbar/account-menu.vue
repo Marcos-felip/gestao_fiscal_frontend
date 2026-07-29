@@ -45,6 +45,7 @@
 
         <!-- Primary actions -->
         <div class="py-2">
+          <!-- Configurações: oculto até existir uma tela/endpoint de settings.
           <Button
             variant="ghost"
             size="sm"
@@ -58,6 +59,7 @@
 
             <Span size="sm"> Configurações </Span>
           </Button>
+          -->
 
           <Button
             variant="ghost"
@@ -175,10 +177,11 @@ const onThemeToggle = (value: boolean) => {
   }
 }
 
-const handlePlaceholder = (_key: string) => {
-  // Placeholder para rotas/ações futuras, mantendo o UX do dropdown.
-  closeMenu()
-}
+// Reativar junto com o botão "Configurações" quando houver tela de settings.
+// const handlePlaceholder = (_key: string) => {
+//   // Placeholder para rotas/ações futuras, mantendo o UX do dropdown.
+//   closeMenu()
+// }
 
 const goAccount = () => {
   closeMenu()
@@ -186,8 +189,6 @@ const goAccount = () => {
 }
 
 const { can } = usePermissions()
-// "Equipe" é a mesma coisa que Usuários (membros da empresa ativa); esconde
-// para quem não pode listá-los, evitando levar a um FORBIDDEN.
 const canManageTeam = computed(() => can('users.list'))
 
 const goTeam = () => {
