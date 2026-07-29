@@ -9,12 +9,14 @@ import OnboardingMatrizFields from '@/modules/companies/presentation/components/
 import { makeOnboardingController } from '@/modules/companies/factories/companies.factory'
 import {
   onboardingSchema,
-  ONBOARDING_ERRORS,
-  ONBOARDING_FORM,
   type OnboardingErrors,
   type OnboardingFormValues,
   type OnboardingStep,
 } from '@/modules/companies/presentation/schemas/onboarding-schema'
+import {
+  ONBOARDING_ERRORS,
+  ONBOARDING_FORM,
+} from '@/modules/companies/presentation/composables/useOnboardingContext'
 import { toFormErrors } from '@/core/utils/zod-errors'
 
 const controller = makeOnboardingController()

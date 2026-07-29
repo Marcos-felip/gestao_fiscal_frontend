@@ -1,4 +1,3 @@
-import { inject, type InjectionKey, type Ref } from 'vue'
 import { z } from 'zod'
 import { TaxRegime } from '@/enums/tax-regime.enum'
 import { CompanyType } from '@/enums/company-type.enum'
@@ -9,9 +8,7 @@ export const onboardingSchema = z.object({
     .string()
     .min(2, 'Mínimo 2 caracteres')
     .max(120, 'Máximo 120 caracteres'),
-  type: z
-    .union([z.nativeEnum(CompanyType), z.literal('')])
-    .optional(),
+  type: z.union([z.nativeEnum(CompanyType), z.literal('')]).optional(),
   cnpj: z.string().refine((v) => isValidCnpj(v), 'CNPJ inválido'),
   taxRegime: z.nativeEnum(TaxRegime, {
     errorMap: () => ({ message: 'Selecione o regime tributário' }),
@@ -60,28 +57,11 @@ export interface OnboardingFormValues {
 
 export type OnboardingErrors = Partial<Record<keyof OnboardingFormData, string>>
 
+/** Um passo do wizard de onboarding. */
 export interface OnboardingStep {
   key: 'empresa' | 'fiscal' | 'matriz'
   icon: string
   title: string
   description: string
   fields: (keyof OnboardingFormData)[]
-}
-
-// Contexto compartilhado do wizard: a página provê, os campos injetam. Evita
-// passar o form por props (e a mutação de prop que o lint bloquearia).
-export const ONBOARDING_FORM: InjectionKey<OnboardingFormValues> =
-  Symbol('onboarding-form')
-export const ONBOARDING_ERRORS: InjectionKey<Ref<OnboardingErrors>> =
-  Symbol('onboarding-errors')
-
-/** Injeta o contexto do wizard (form + errors), garantindo que exista. */
-export function useOnboardingContext(): {
-  form: OnboardingFormValues
-  errors: Ref<OnboardingErrors>
-} {
-  const form = inject(ONBOARDING_FORM)
-  const errors = inject(ONBOARDING_ERRORS)
-  if (!form || !errors) throw new Error('Contexto de onboarding ausente')
-  return { form, errors }
 }
