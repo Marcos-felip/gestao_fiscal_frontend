@@ -95,11 +95,12 @@
         <!-- Secondary actions -->
         <div class="py-2">
           <Button
+            v-if="canManageTeam"
             variant="ghost"
             size="sm"
             fullWidth
             class="h-auto! px-4! py-2! justify-start! gap-3! border-0! bg-transparent! hover:bg-muted!"
-            @click="handlePlaceholder('team')"
+            @click="goTeam"
           >
             <template #icon>
               <Icon name="Users" size="sm" />
@@ -145,6 +146,7 @@ import { Button, NavbarButton, Icon, Switch, Span, Avatar } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import { useNavbar } from '@/shared/composables'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
+import { usePermissions } from '@/modules/permissions/presentation/composables/usePermissions'
 import { routeNames } from '@/router/route-names'
 
 withDefaults(defineProps<{ tone?: 'default' | 'light' }>(), {
@@ -181,6 +183,16 @@ const handlePlaceholder = (_key: string) => {
 const goAccount = () => {
   closeMenu()
   router.push({ name: routeNames.ACCOUNT })
+}
+
+const { can } = usePermissions()
+// "Equipe" é a mesma coisa que Usuários (membros da empresa ativa); esconde
+// para quem não pode listá-los, evitando levar a um FORBIDDEN.
+const canManageTeam = computed(() => can('users.list'))
+
+const goTeam = () => {
+  closeMenu()
+  router.push({ name: routeNames.USERS })
 }
 
 const onDocumentPointerDown = (e: PointerEvent) => {
