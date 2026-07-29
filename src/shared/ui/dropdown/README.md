@@ -38,6 +38,9 @@ const isOpen = ref(false)
 | `modelValue` | `boolean` | `false` | Estado aberto/fechado (v-model) |
 | `align` | `'left' \| 'right'` | `'right'` | Alinhamento horizontal |
 | `closeOnClickOutside` | `boolean` | `true` | Fechar ao clicar fora |
+| `triggerClass` | `string` | (base) | Classes do botão-gatilho |
+| `triggerActiveClass` | `string` | `'bg-muted'` | Fundo do gatilho enquanto aberto (ajuste sobre fundos escuros, ex.: `bg-white/10`) |
+| `menuClass` | `string` | `''` | Classes extras do menu (largura, `max-h`) |
 
 ## Events
 

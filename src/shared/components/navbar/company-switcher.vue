@@ -17,6 +17,7 @@
       align="left"
       trigger-label="Trocar empresa"
       trigger-class="inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-white/90 transition-colors duration-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
+      trigger-active-class="bg-white/10"
       menu-class="w-64 max-h-72 overflow-y-auto"
     >
       <template #trigger="{ open }">

@@ -3,7 +3,7 @@
     <!-- Gatilho -->
     <button
       type="button"
-      :class="[triggerClass, isOpen && 'bg-muted']"
+      :class="[triggerClass, isOpen && triggerActiveClass]"
       :aria-label="triggerLabel || undefined"
       :aria-expanded="isOpen"
       aria-haspopup="menu"
@@ -50,6 +50,8 @@ interface Props {
   closeOnClickOutside?: boolean
   /** Classes do botão-gatilho (permite um gatilho discreto, ex.: ícone). */
   triggerClass?: string
+  /** Fundo do gatilho enquanto aberto (padrão claro; ajuste sobre fundos escuros). */
+  triggerActiveClass?: string
   /** Rótulo acessível do gatilho. */
   triggerLabel?: string
   /** Classes extras do menu (ex.: largura mínima ou `max-h`). */
@@ -62,6 +64,7 @@ const props = withDefaults(defineProps<Props>(), {
   closeOnClickOutside: true,
   triggerClass:
     'inline-flex items-center justify-center gap-2 rounded-lg p-2.5 text-sm font-medium transition-colors duration-200 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/40',
+  triggerActiveClass: 'bg-muted',
   triggerLabel: '',
   menuClass: '',
 })
