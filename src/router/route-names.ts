@@ -3,6 +3,7 @@ export const routeNames = {
   REGISTER: 'register',
   CHANGE_PASSWORD: 'change-password',
   DASHBOARD: 'dashboard',
+  ACCOUNT: 'account',
   COMPANY: 'company',
   USERS: 'users',
   PERMISSION_PROFILES: 'permission-profiles',
