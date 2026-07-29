@@ -64,7 +64,7 @@
             size="sm"
             fullWidth
             class="h-auto! px-4! py-2! justify-start! gap-3! border-0! bg-transparent! hover:bg-muted!"
-            @click="handlePlaceholder('account')"
+            @click="goAccount"
           >
             <template #icon>
               <Icon name="User" size="sm" />
@@ -176,6 +176,11 @@ const onThemeToggle = (value: boolean) => {
 const handlePlaceholder = (_key: string) => {
   // Placeholder para rotas/ações futuras, mantendo o UX do dropdown.
   closeMenu()
+}
+
+const goAccount = () => {
+  closeMenu()
+  router.push({ name: routeNames.ACCOUNT })
 }
 
 const onDocumentPointerDown = (e: PointerEvent) => {
