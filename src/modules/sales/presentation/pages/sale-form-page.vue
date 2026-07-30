@@ -29,8 +29,8 @@ function resolvePrice(productId: string): number | null {
 </script>
 
 <template>
-  <!-- Tela imersiva do PDV (fora do AppLayout) -->
   <div class="h-dvh bg-muted/30">
+    <!-- Tela imersiva do PDV (fora do AppLayout) -->
     <!-- Carregando o caixa -->
     <div v-if="!controller.loaded.value" class="flex h-dvh flex-col">
       <div class="flex items-center justify-between bg-foreground px-6 py-2.5">
