@@ -1,38 +1,31 @@
 import { computed, ref } from 'vue'
 import { BaseController } from '@/core/controllers/base-controller'
 import type { CreateSaleUseCase } from '@/modules/sales/application/use-cases/create-sale.use-case'
+import type { GetSaleContextUseCase } from '@/modules/sales/application/use-cases/get-sale-context.use-case'
 import { CreateSaleDto } from '@/modules/sales/domain/dto/create-sale-dto'
+import type {
+  SaleContextProduct,
+  SaleContextRef,
+} from '@/modules/sales/domain/responses/sale-context-response'
 import type {
   SaleFormValues,
   SaleProductOption,
 } from '@/modules/sales/presentation/schemas/sale-schema'
-import type { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
-import type { Establishment } from '@/modules/establishments/domain/entities/establishment.entity'
-import type { ListProductsUseCase } from '@/modules/products/application/use-cases/list-products.use-case'
-import { ListProductsDto } from '@/modules/products/domain/dto/list-products-dto'
-import type { Product } from '@/modules/products/domain/entities/product.entity'
-import type { ListPartnersUseCase } from '@/modules/partners/application/use-cases/list-partners.use-case'
-import { ListPartnersDto } from '@/modules/partners/domain/dto/list-partners-dto'
-import { PartnerType } from '@/enums/partner-type.enum'
 import type { PaymentMethod } from '@/enums/payment-method.enum'
 import { parseDecimal } from '@/shared/ui/utils/masks'
 import { useToast } from '@/shared/composables'
 import { routeNames } from '@/router/route-names'
 
-const PICKER_LIMIT = 100
-
 export class SaleFormController extends BaseController {
   private readonly createUseCase: CreateSaleUseCase
-  private readonly listEstablishmentsUseCase: ListEstablishmentsUseCase
-  private readonly listProductsUseCase: ListProductsUseCase
-  private readonly listPartnersUseCase: ListPartnersUseCase
+  private readonly getContextUseCase: GetSaleContextUseCase
   private readonly toast = useToast()
 
   readonly loaded = ref(false)
   readonly finalizing = ref(false)
-  readonly establishments = ref<Establishment[]>([])
-  readonly products = ref<Product[]>([])
-  readonly customers = ref<{ id: string; name: string }[]>([])
+  readonly establishments = ref<SaleContextRef[]>([])
+  readonly products = ref<SaleContextProduct[]>([])
+  readonly customers = ref<SaleContextRef[]>([])
 
   readonly establishmentOptions = computed(() =>
     this.establishments.value.map((e) => ({ value: e.id, label: e.name })),
@@ -40,7 +33,6 @@ export class SaleFormController extends BaseController {
   readonly customerOptions = computed(() =>
     this.customers.value.map((c) => ({ value: c.id, label: c.name })),
   )
-  /** Produtos no formato consumido pela busca e pelo carrinho do PDV. */
   readonly productItems = computed<SaleProductOption[]>(() =>
     this.products.value.map((p) => ({
       id: p.id,
@@ -55,54 +47,30 @@ export class SaleFormController extends BaseController {
 
   constructor(
     createUseCase: CreateSaleUseCase,
-    listEstablishmentsUseCase: ListEstablishmentsUseCase,
-    listProductsUseCase: ListProductsUseCase,
-    listPartnersUseCase: ListPartnersUseCase,
+    getContextUseCase: GetSaleContextUseCase,
   ) {
     super()
     this.createUseCase = createUseCase
-    this.listEstablishmentsUseCase = listEstablishmentsUseCase
-    this.listProductsUseCase = listProductsUseCase
-    this.listPartnersUseCase = listPartnersUseCase
+    this.getContextUseCase = getContextUseCase
   }
 
+  /**
+   * Carrega tudo que o PDV precisa numa chamada só (`GET /sales/context`),
+   * gated em `sales.create` — o vendedor não precisa de `establishments.list`
+   * nem `partners.list`, então esses módulos seguem escondidos.
+   */
   async prepareCreate(): Promise<void> {
     this.setLoading(true)
-    await Promise.all([
-      this.loadEstablishments(),
-      this.loadProducts(),
-      this.loadCustomers(),
-    ])
+    const result = await this.getContextUseCase.execute()
+    this.handleResult(result, (context) => {
+      this.establishments.value = context.establishments
+      this.customers.value = context.customers
+      this.products.value = context.products
+    })
     this.loaded.value = true
     this.setLoading(false)
   }
 
-  private async loadEstablishments(): Promise<void> {
-    const result = await this.listEstablishmentsUseCase.execute()
-    result.map((list) => {
-      this.establishments.value = list
-    })
-  }
-
-  private async loadProducts(): Promise<void> {
-    const dto = new ListProductsDto({ page: 1, limit: PICKER_LIMIT })
-    const result = await this.listProductsUseCase.execute(dto)
-    result.map((list) => {
-      this.products.value = list.items
-    })
-  }
-
-  private async loadCustomers(): Promise<void> {
-    const dto = new ListPartnersDto({ page: 1, limit: PICKER_LIMIT })
-    const result = await this.listPartnersUseCase.execute(dto)
-    result.map((list) => {
-      this.customers.value = list.items
-        .filter((p) => p.type !== PartnerType.SUPPLIER)
-        .map((p) => ({ id: p.id, name: p.name }))
-    })
-  }
-
-  /** Preço de venda sugerido para prefill ao adicionar um produto. */
   salePriceOf(productId: string): number | null {
     return this.products.value.find((p) => p.id === productId)?.salePrice ?? null
   }

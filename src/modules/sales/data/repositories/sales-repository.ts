@@ -3,11 +3,13 @@ import type { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import type { Sale } from '@/modules/sales/domain/entities/sale.entity'
 import type { SaleList } from '@/modules/sales/domain/responses/sale-list-response'
+import type { SaleContext } from '@/modules/sales/domain/responses/sale-context-response'
 import type { ListSalesDto } from '@/modules/sales/domain/dto/list-sales-dto'
 import type { CreateSaleDto } from '@/modules/sales/domain/dto/create-sale-dto'
 import type { UpdateSaleDto } from '@/modules/sales/domain/dto/update-sale-dto'
 import { httpClient } from '@/core/client/http-client'
 import { toSale, toSaleList } from '@/modules/sales/data/mappers/sale.mapper'
+import { toSaleContext } from '@/modules/sales/data/mappers/sale-context.mapper'
 
 export class SalesRepository implements ISalesRepository {
   async list(dto: ListSalesDto): Promise<Either<DomainError, SaleList>> {
@@ -25,6 +27,11 @@ export class SalesRepository implements ISalesRepository {
 
     const result = await httpClient.get<unknown>('/sales', { params })
     return result.flatMap(toSaleList)
+  }
+
+  async getContext(): Promise<Either<DomainError, SaleContext>> {
+    const result = await httpClient.get<unknown>('/sales/context')
+    return result.flatMap(toSaleContext)
   }
 
   async getById(id: string): Promise<Either<DomainError, Sale>> {
