@@ -3,6 +3,7 @@ import { LoginUseCase } from '@/modules/auth/application/use-cases/login.use-cas
 import { RegisterUseCase } from '@/modules/auth/application/use-cases/register.use-case'
 import { LogoutUseCase } from '@/modules/auth/application/use-cases/logout.use-case'
 import { ChangePasswordFirstLoginUseCase } from '@/modules/auth/application/use-cases/change-password-first-login.use-case'
+import { AuthorizeActionUseCase } from '@/modules/auth/application/use-cases/authorize-action.use-case'
 import { AuthController } from '@/modules/auth/presentation/controllers/auth-controller'
 
 export function makeAuthController(): AuthController {
@@ -14,4 +15,9 @@ export function makeAuthController(): AuthController {
     new LogoutUseCase(authRepository),
     new ChangePasswordFirstLoginUseCase(authRepository),
   )
+}
+
+/** Autorização de supervisor para ações sensíveis (ex.: cancelar venda). */
+export function makeAuthorizeActionUseCase(): AuthorizeActionUseCase {
+  return new AuthorizeActionUseCase(new AuthRepository())
 }
