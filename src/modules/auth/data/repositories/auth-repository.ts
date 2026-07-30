@@ -7,9 +7,12 @@ import type { RegisterDto } from '@/modules/auth/domain/dto/register-dto'
 import type { RefreshTokenDto } from '@/modules/auth/domain/dto/refresh-token-dto'
 import type { ChangePasswordDto } from '@/modules/auth/domain/dto/change-password-dto'
 import type { ChangePasswordResult } from '@/modules/auth/domain/responses/change-password-response'
+import type { AuthorizeDto } from '@/modules/auth/domain/dto/authorize-dto'
+import type { AuthorizeResult } from '@/modules/auth/domain/responses/authorize-response'
 import { httpClient } from '@/core/client/http-client'
 import { toAuthResponse } from '@/modules/auth/data/mappers/auth.mapper'
 import { toChangePasswordResult } from '@/modules/auth/data/mappers/change-password.mapper'
+import { toAuthorizeResult } from '@/modules/auth/data/mappers/authorize.mapper'
 
 export class AuthRepository implements IAuthRepository {
   async login(dto: LoginDto): Promise<Either<DomainError, AuthResponse>> {
@@ -54,5 +57,16 @@ export class AuthRepository implements IAuthRepository {
       },
     )
     return result.flatMap(toChangePasswordResult)
+  }
+
+  async authorize(
+    dto: AuthorizeDto,
+  ): Promise<Either<DomainError, AuthorizeResult>> {
+    const result = await httpClient.post<unknown>('/auth/authorize', {
+      email: dto.email,
+      password: dto.password,
+      permission: dto.permission,
+    })
+    return result.flatMap(toAuthorizeResult)
   }
 }

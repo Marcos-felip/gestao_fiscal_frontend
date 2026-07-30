@@ -6,6 +6,8 @@ import type { RegisterDto } from '@/modules/auth/domain/dto/register-dto'
 import type { RefreshTokenDto } from '@/modules/auth/domain/dto/refresh-token-dto'
 import type { ChangePasswordDto } from '@/modules/auth/domain/dto/change-password-dto'
 import type { ChangePasswordResult } from '@/modules/auth/domain/responses/change-password-response'
+import type { AuthorizeDto } from '@/modules/auth/domain/dto/authorize-dto'
+import type { AuthorizeResult } from '@/modules/auth/domain/responses/authorize-response'
 
 export interface IAuthRepository {
   login(dto: LoginDto): Promise<Either<DomainError, AuthResponse>>
@@ -15,4 +17,5 @@ export interface IAuthRepository {
   changePasswordFirstLogin(
     dto: ChangePasswordDto,
   ): Promise<Either<DomainError, ChangePasswordResult>>
+  authorize(dto: AuthorizeDto): Promise<Either<DomainError, AuthorizeResult>>
 }

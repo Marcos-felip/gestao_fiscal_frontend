@@ -70,6 +70,18 @@ const links: NavLink[] = [
     permission: 'purchases.list',
   },
   {
+    to: '/sales',
+    label: 'Vendas',
+    icon: 'ShoppingBag',
+    permission: 'sales.list',
+  },
+  {
+    to: '/pdv',
+    label: 'PDV',
+    icon: 'ScanBarcode',
+    permission: 'sales.create',
+  },
+  {
     to: '/establishments',
     label: 'Estabelecimentos',
     icon: 'Store',
