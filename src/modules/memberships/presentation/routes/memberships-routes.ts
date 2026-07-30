@@ -4,7 +4,7 @@ import UsersPage from '../pages/users-page.vue'
 
 export const membershipsRoutes: RouteRecordRaw[] = [
   {
-    path: 'users',
+    path: 'usuarios',
     name: routeNames.USERS,
     component: UsersPage,
     meta: {

@@ -5,7 +5,7 @@ import { routeNames } from '@/router/route-names'
 
 export const productsRoutes: RouteRecordRaw[] = [
   {
-    path: 'products',
+    path: 'produtos',
     name: routeNames.PRODUCTS,
     component: ProductsPage,
     meta: {
@@ -15,14 +15,14 @@ export const productsRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'products/new',
+    path: 'produtos/novo',
     name: routeNames.PRODUCT_NEW,
     component: ProductFormPage,
     meta: { requiresPermission: 'products.create' },
   },
   {
     // Abre em somente leitura para quem tem read mas não edit.
-    path: 'products/:id/edit',
+    path: 'produtos/:id/editar',
     name: routeNames.PRODUCT_EDIT,
     component: ProductFormPage,
     meta: { requiresPermission: 'products.read' },

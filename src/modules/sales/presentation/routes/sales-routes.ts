@@ -7,7 +7,7 @@ import { routeNames } from '@/router/route-names'
 /** Telas de vendas que vivem dentro do AppLayout (com sidebar/navbar). */
 export const salesRoutes: RouteRecordRaw[] = [
   {
-    path: 'sales',
+    path: 'vendas',
     name: routeNames.SALES,
     component: SalesPage,
     meta: {
@@ -17,7 +17,7 @@ export const salesRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'sales/:id',
+    path: 'vendas/:id',
     name: routeNames.SALE_DETAIL,
     component: SaleDetailPage,
     meta: { requiresPermission: 'sales.read' },

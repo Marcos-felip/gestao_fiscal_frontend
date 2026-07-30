@@ -5,7 +5,7 @@ import { routeNames } from '@/router/route-names'
 
 export const establishmentsRoutes: RouteRecordRaw[] = [
   {
-    path: 'establishments',
+    path: 'estabelecimentos',
     name: routeNames.ESTABLISHMENTS,
     component: EstablishmentsPage,
     meta: {
@@ -15,14 +15,14 @@ export const establishmentsRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'establishments/new',
+    path: 'estabelecimentos/novo',
     name: routeNames.ESTABLISHMENT_NEW,
     component: EstablishmentFormPage,
     meta: { requiresPermission: 'establishments.create' },
   },
   {
     // Abre em somente leitura para quem tem read mas não edit.
-    path: 'establishments/:id/edit',
+    path: 'estabelecimentos/:id/editar',
     name: routeNames.ESTABLISHMENT_EDIT,
     component: EstablishmentFormPage,
     meta: { requiresPermission: 'establishments.read' },

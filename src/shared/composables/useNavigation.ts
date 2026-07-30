@@ -28,22 +28,22 @@ const navigationItems = computed((): NavigationItem[] => {
     {
       id: 'permissions',
       label: 'Permissões',
-      to: '/permissions',
+      to: '/perfis-de-permissao',
     },
     {
       id: 'users',
       label: 'Usuários',
-      to: '/users',
+      to: '/usuarios',
     },
     {
       id: 'companies',
       label: 'Empresa',
-      to: '/companies',
+      to: '/empresa',
     },
     {
       id: 'establishments',
       label: 'Estabelecimentos',
-      to: '/establishments',
+      to: '/estabelecimentos',
     },
     {
       id: 'account',
@@ -52,12 +52,12 @@ const navigationItems = computed((): NavigationItem[] => {
         {
           id: 'account-settings',
           label: 'Configurações',
-          to: '/account/settings',
+          to: '/conta/configuracoes',
         },
         {
           id: 'account-security',
           label: 'Segurança',
-          to: '/account/security',
+          to: '/conta/seguranca',
         },
       ],
     },
