@@ -4,7 +4,7 @@ import { routeNames } from '@/router/route-names'
 
 export const companiesRoutes: RouteRecordRaw[] = [
   {
-    path: 'companies',
+    path: 'empresa',
     name: routeNames.COMPANY,
     component: CompanyEditPage,
     meta: {

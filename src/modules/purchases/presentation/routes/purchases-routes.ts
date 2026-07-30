@@ -6,7 +6,7 @@ import { routeNames } from '@/router/route-names'
 
 export const purchasesRoutes: RouteRecordRaw[] = [
   {
-    path: 'purchases',
+    path: 'compras',
     name: routeNames.PURCHASES,
     component: PurchasesPage,
     meta: {
@@ -16,13 +16,13 @@ export const purchasesRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'purchases/new',
+    path: 'compras/nova',
     name: routeNames.PURCHASE_NEW,
     component: PurchaseFormPage,
     meta: { requiresPermission: 'purchases.create' },
   },
   {
-    path: 'purchases/:id',
+    path: 'compras/:id',
     name: routeNames.PURCHASE_DETAIL,
     component: PurchaseDetailPage,
     meta: { requiresPermission: 'purchases.read' },

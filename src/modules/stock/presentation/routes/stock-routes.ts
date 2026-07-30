@@ -4,7 +4,7 @@ import { routeNames } from '@/router/route-names'
 
 export const stockRoutes: RouteRecordRaw[] = [
   {
-    path: 'stock',
+    path: 'estoque',
     name: routeNames.STOCK,
     component: StockPage,
     meta: {

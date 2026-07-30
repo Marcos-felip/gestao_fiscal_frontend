@@ -6,19 +6,19 @@ import ChangePasswordPage from '../pages/change-password-page.vue'
 
 export const authRoutes: RouteRecordRaw[] = [
   {
-    path: '/login',
+    path: '/entrar',
     name: routeNames.LOGIN,
     component: LoginPage,
     meta: { guest: true },
   },
   {
-    path: '/register',
+    path: '/cadastro',
     name: routeNames.REGISTER,
     component: RegisterPage,
     meta: { guest: true },
   },
   {
-    path: '/change-password',
+    path: '/alterar-senha',
     name: routeNames.CHANGE_PASSWORD,
     component: ChangePasswordPage,
     meta: { requiresAuth: true },

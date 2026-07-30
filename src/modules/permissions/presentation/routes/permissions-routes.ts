@@ -4,7 +4,7 @@ import ProfilesPage from '../pages/profiles-page.vue'
 
 export const permissionsRoutes: RouteRecordRaw[] = [
   {
-    path: 'permission-profiles',
+    path: 'perfis-de-permissao',
     name: routeNames.PERMISSION_PROFILES,
     component: ProfilesPage,
     meta: {

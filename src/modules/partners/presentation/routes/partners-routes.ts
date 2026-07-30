@@ -5,7 +5,7 @@ import { routeNames } from '@/router/route-names'
 
 export const partnersRoutes: RouteRecordRaw[] = [
   {
-    path: 'partners',
+    path: 'parceiros',
     name: routeNames.PARTNERS,
     component: PartnersPage,
     meta: {
@@ -15,14 +15,14 @@ export const partnersRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'partners/new',
+    path: 'parceiros/novo',
     name: routeNames.PARTNER_NEW,
     component: PartnerFormPage,
     meta: { requiresPermission: 'partners.create' },
   },
   {
     // Abre em somente leitura para quem tem read mas não edit.
-    path: 'partners/:id/edit',
+    path: 'parceiros/:id/editar',
     name: routeNames.PARTNER_EDIT,
     component: PartnerFormPage,
     meta: { requiresPermission: 'partners.read' },
