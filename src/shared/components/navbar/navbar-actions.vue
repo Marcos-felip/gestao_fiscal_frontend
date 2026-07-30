@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { NavbarButton, Icon } from '@/shared/ui'
+import { NavbarButton, Icon, Badge } from '@/shared/ui'
 import { useNotifications } from '@/shared/composables'
 // import LanguageSelector from './language-selector.vue' // reativar com i18n
 import AccountMenu from './account-menu.vue'
