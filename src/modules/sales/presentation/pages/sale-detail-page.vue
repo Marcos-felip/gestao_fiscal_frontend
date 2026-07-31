@@ -6,10 +6,13 @@ import { Button, Icon, Skeleton } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import FormSection from '@/shared/components/form/form-section.vue'
 import SaleStatusBadge from '@/modules/sales/presentation/components/sale-status-badge.vue'
+import SalePaymentDialog from '@/modules/sales/presentation/components/sale-payment-dialog.vue'
 import { makeSaleDetailController } from '@/modules/sales/factories/sales.factory'
+import type { CreateSalePaymentInput } from '@/modules/sales/domain/dto/create-sale-dto'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { PaymentStatus, paymentStatusLabels } from '@/enums/payment-status.enum'
 import { paymentMethodLabels } from '@/enums/payment-method.enum'
+import { PaymentCondition } from '@/enums/payment-condition.enum'
 import { unitOfMeasureShortLabels } from '@/enums/unit-of-measure.enum'
 import { formatMoney, formatQuantity } from '@/shared/ui/utils/masks'
 import { formatDate } from '@/core/utils/date'
@@ -45,9 +48,15 @@ const paymentMethodLabel = computed(() => {
   return method ? (paymentMethodLabels[method] ?? method) : null
 })
 
+/** Orçamento à vista: finalizar abre o checkout (formas + troco). */
+const isCash = computed(
+  () => controller.sale.value?.paymentCondition === PaymentCondition.A_VISTA,
+)
+
 type PendingAction = 'confirm' | 'cancel' | 'delete'
 const pendingAction = ref<PendingAction | null>(null)
 const dialogOpen = ref(false)
+const paymentDialogOpen = ref(false)
 
 const dialogConfig = computed(() => {
   switch (pendingAction.value) {
@@ -55,7 +64,7 @@ const dialogConfig = computed(() => {
       return {
         title: 'Finalizar venda',
         description:
-          'Finalizar dará baixa no estoque de cada item desta venda. Deseja continuar?',
+          'Finalizar dará baixa no estoque e gerará os títulos a receber das parcelas. Deseja continuar?',
         label: 'Finalizar',
         variant: 'primary' as const,
         icon: 'CircleCheck',
@@ -87,6 +96,11 @@ onMounted(() => {
 })
 
 function ask(action: PendingAction): void {
+  // Finalizar à vista → checkout de pagamento; a prazo → confirmação simples.
+  if (action === 'confirm' && isCash.value) {
+    paymentDialogOpen.value = true
+    return
+  }
   pendingAction.value = action
   dialogOpen.value = true
 }
@@ -98,6 +112,13 @@ async function onDialogConfirm(): Promise<void> {
   else if (action === 'delete') await progress.track(controller.remove())
   dialogOpen.value = false
   pendingAction.value = null
+}
+
+async function onPaymentsConfirm(
+  payments: CreateSalePaymentInput[],
+): Promise<void> {
+  await progress.track(controller.confirm(payments))
+  paymentDialogOpen.value = false
 }
 
 function goBack(): void {
@@ -313,6 +334,34 @@ function goBack(): void {
         </dl>
       </FormSection>
 
+      <!-- Formas de pagamento (venda à vista) -->
+      <FormSection
+        v-if="controller.sale.value.payments.length > 0"
+        icon="Wallet"
+        title="Pagamento"
+        description="Formas usadas nesta venda."
+      >
+        <ul class="space-y-2 text-sm">
+          <li
+            v-for="pay in controller.sale.value.payments"
+            :key="pay.id"
+            class="flex items-center justify-between gap-4"
+          >
+            <span class="text-muted-foreground">
+              {{ paymentMethodLabels[pay.method] ?? pay.method }}
+            </span>
+            <span class="text-right">
+              <span class="font-medium tabular-nums text-foreground">
+                R$ {{ formatMoney(pay.amount) }}
+              </span>
+              <span v-if="pay.changeGiven" class="ml-2 text-xs text-success-600">
+                troco R$ {{ formatMoney(pay.changeGiven) }}
+              </span>
+            </span>
+          </li>
+        </ul>
+      </FormSection>
+
       <!-- Ações de ciclo de vida -->
       <div
         v-if="
@@ -369,5 +418,14 @@ function goBack(): void {
     :icon="dialogConfig.icon"
     :loading="controller.acting.value"
     @confirm="onDialogConfirm"
+  />
+
+  <!-- Checkout (finalizar à vista): formas de pagamento + troco -->
+  <SalePaymentDialog
+    v-if="controller.sale.value"
+    v-model="paymentDialogOpen"
+    :total="controller.sale.value.totalAmount"
+    :loading="controller.acting.value"
+    @confirm="onPaymentsConfirm"
   />
 </template>

@@ -5,6 +5,7 @@ import type { ConfirmSaleUseCase } from '@/modules/sales/application/use-cases/c
 import type { CancelSaleUseCase } from '@/modules/sales/application/use-cases/cancel-sale.use-case'
 import type { DeleteSaleUseCase } from '@/modules/sales/application/use-cases/delete-sale.use-case'
 import type { Sale } from '@/modules/sales/domain/entities/sale.entity'
+import type { CreateSalePaymentInput } from '@/modules/sales/domain/dto/create-sale-dto'
 import { SaleStatus } from '@/enums/sale-status.enum'
 import { useToast } from '@/shared/composables'
 import { routeNames } from '@/router/route-names'
@@ -69,10 +70,10 @@ export class SaleDetailController extends BaseController {
     this.setLoading(false)
   }
 
-  async confirm(): Promise<void> {
+  async confirm(payments?: CreateSalePaymentInput[]): Promise<void> {
     if (!this.sale.value) return
     this.acting.value = true
-    const result = await this.confirmUseCase.execute(this.sale.value.id)
+    const result = await this.confirmUseCase.execute(this.sale.value.id, payments)
     this.handleResult(
       result,
       (sale) => {
