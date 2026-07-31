@@ -48,9 +48,7 @@
           (error || success || $slots.suffix) && 'pe-10',
           inputClass,
         ]"
-        @input="
-          $emit('update:modelValue', ($event.target as HTMLInputElement).value)
-        "
+        @input="onInput"
         @blur="$emit('blur')"
         @focus="$emit('focus')"
       />
@@ -169,6 +167,13 @@ interface Props {
   success?: string
   hint?: string
   inputClass?: string
+  /**
+   * Sanitiza a digitação (ex.: `onlyDigits`). Aplicado no `input` e o valor
+   * corrigido é escrito de volta no DOM **na hora** — assim caracteres
+   * inválidos não "grudam" mesmo quando o `modelValue` não muda (o controlado
+   * do Vue só re-renderiza quando a prop muda).
+   */
+  sanitize?: (value: string) => string
 }
 
 interface Emits {
@@ -179,7 +184,7 @@ interface Emits {
 
 defineOptions({ inheritAttrs: false })
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   placeholder: '',
   disabled: false,
@@ -187,9 +192,21 @@ withDefaults(defineProps<Props>(), {
   success: '',
   hint: '',
   inputClass: '',
+  sanitize: undefined,
 })
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
+
+function onInput(event: Event): void {
+  const el = event.target as HTMLInputElement
+  let value = el.value
+  if (props.sanitize) {
+    value = props.sanitize(value)
+    // Reflete o valor saneado no DOM já, defeatando o desync do controlado.
+    if (el.value !== value) el.value = value
+  }
+  emit('update:modelValue', value)
+}
 
 // class/style ficam no wrapper; o restante (id, maxlength, inputmode...) vai ao input.
 const attrs = useAttrs()

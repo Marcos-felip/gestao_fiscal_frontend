@@ -57,6 +57,35 @@ export function formatPhone(value: string): string {
     .replace(/(\d{5})(\d)/, '$1-$2')
 }
 
+/** Formata data brasileira progressivamente: `dd/MM/aaaa` (até 8 dígitos). */
+export function formatDateBr(value: string): string {
+  return onlyDigits(value)
+    .slice(0, 8)
+    .replace(/^(\d{2})(\d)/, '$1/$2')
+    .replace(/^(\d{2})\/(\d{2})(\d)/, '$1/$2/$3')
+}
+
+/**
+ * Converte `dd/MM/aaaa` em ISO. Rejeita datas incompletas ou inexistentes
+ * (ex.: `31/02/2026`), devolvendo `undefined`.
+ */
+export function dateBrToIso(value: string): string | undefined {
+  const match = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  if (!match) return undefined
+
+  const day = Number(match[1])
+  const month = Number(match[2])
+  const year = Number(match[3])
+  const date = new Date(year, month - 1, day)
+
+  const isRealDate =
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+
+  return isRealDate ? date.toISOString() : undefined
+}
+
 /**
  * Sanitiza a digitação de um valor decimal: mantém apenas dígitos e um único
  * separador (vírgula ou ponto). Não formata — só evita caracteres inválidos.
