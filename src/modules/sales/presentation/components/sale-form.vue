@@ -8,6 +8,8 @@ import SupervisorAuthDialog from '@/shared/components/dialog/supervisor-auth-dia
 import PdvOperatorBar from '@/modules/sales/presentation/components/pdv-operator-bar.vue'
 import PdvProductSearch from '@/modules/sales/presentation/components/pdv-product-search.vue'
 import PdvShortcutsHelp from '@/modules/sales/presentation/components/pdv-shortcuts-help.vue'
+import SalePaymentDialog from '@/modules/sales/presentation/components/sale-payment-dialog.vue'
+import type { CreateSalePaymentInput } from '@/modules/sales/domain/dto/create-sale-dto'
 import {
   validateSale,
   type SaleFormErrors,
@@ -40,7 +42,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  submit: [values: SaleFormValues, confirm: boolean]
+  submit: [
+    values: SaleFormValues,
+    confirm: boolean,
+    payments?: CreateSalePaymentInput[],
+  ]
   exit: []
 }>()
 
@@ -72,6 +78,7 @@ const searchRef = ref<{ focus: () => void } | null>(null)
 const helpOpen = ref(false)
 const cancelConfirmOpen = ref(false)
 const supervisorOpen = ref(false)
+const paymentDialogOpen = ref(false)
 
 const sellerName = computed(() => authStore.user?.name ?? 'Operador')
 const sellerRole = computed(() =>
@@ -177,16 +184,41 @@ function buildValues(): SaleFormValues {
   }
 }
 
-function submit(confirm: boolean): void {
+function validateCart(): boolean {
   const values = buildValues()
   const result = validateSale(values)
   errors.value = result.errors
   itemErrors.value = result.itemErrors
   if (!result.ok) {
     toast.error('Revise os itens da venda antes de continuar.')
-    return
+    return false
   }
-  emit('submit', values, confirm)
+  return true
+}
+
+/** F6 — salva orçamento (sem pagamento). */
+function saveBudget(): void {
+  if (!validateCart()) return
+  emit('submit', buildValues(), false)
+}
+
+/**
+ * F4 — finaliza. A prazo vai direto (gera títulos a receber); à vista abre o
+ * checkout pra escolher as formas de pagamento e o troco.
+ */
+function attemptFinalize(): void {
+  if (!validateCart()) return
+  if (onCredit.value) {
+    emit('submit', buildValues(), true)
+  } else {
+    paymentDialogOpen.value = true
+  }
+}
+
+function onPaymentsConfirmed(payments: CreateSalePaymentInput[]): void {
+  // Mantém o diálogo aberto (loading) — a navegação ao detalhe o desmonta no
+  // sucesso; se falhar, ele segue aberto pra ajustar e tentar de novo.
+  emit('submit', buildValues(), true, payments)
 }
 
 function focusSearch(): void {
@@ -237,7 +269,10 @@ function onKeydown(event: KeyboardEvent): void {
   }
 
   const modalOpen =
-    helpOpen.value || cancelConfirmOpen.value || supervisorOpen.value
+    helpOpen.value ||
+    cancelConfirmOpen.value ||
+    supervisorOpen.value ||
+    paymentDialogOpen.value
   if (modalOpen) return
 
   switch (event.key) {
@@ -247,11 +282,11 @@ function onKeydown(event: KeyboardEvent): void {
       break
     case 'F4':
       event.preventDefault()
-      if (canSubmit.value && !props.loading) submit(true)
+      if (canSubmit.value && !props.loading) attemptFinalize()
       break
     case 'F6':
       event.preventDefault()
-      if (canSubmit.value && !props.loading) submit(false)
+      if (canSubmit.value && !props.loading) saveBudget()
       break
     case 'F8':
       event.preventDefault()
@@ -447,14 +482,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
             <template #label>Estabelecimento</template>
           </Select>
 
-          <Select
-            v-model="form.paymentMethod"
-            :options="paymentOptions"
-            placeholder="Forma de pagamento"
-          >
-            <template #label>Forma de pagamento</template>
-          </Select>
-
           <!-- Condição: à vista x a prazo -->
           <div>
             <span class="mb-2 block text-sm font-medium text-foreground">
@@ -532,6 +559,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
               <template #label>1º vencimento</template>
               <template #prefix><Icon name="CalendarClock" size="sm" /></template>
             </Input>
+
+            <Select
+              v-model="form.paymentMethod"
+              :options="paymentOptions"
+              placeholder="Forma prevista"
+            >
+              <template #label>Forma prevista</template>
+            </Select>
 
             <p
               class="flex items-center justify-between gap-2 border-t border-line-2 pt-3 text-sm"
@@ -636,7 +671,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           variant="secondary"
           :loading="props.loading && !props.finalizing"
           :disabled="!canSubmit || props.loading"
-          @click="submit(false)"
+          @click="saveBudget"
         >
           <template #icon>
             <kbd class="font-mono text-[11px] font-semibold">F6</kbd>
@@ -648,7 +683,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
           text-class="text-white"
           :loading="props.loading && props.finalizing"
           :disabled="!canSubmit || props.loading"
-          @click="submit(true)"
+          @click="attemptFinalize"
         >
           <template #icon>
             <kbd class="font-mono text-[11px] font-semibold">F4</kbd>
@@ -681,6 +716,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       description="Você não tem permissão para cancelar vendas. Um administrador ou proprietário precisa autorizar."
       action-label="Autorizar cancelamento"
       @authorized="onSupervisorAuthorized"
+    />
+
+    <!-- Checkout (F4, à vista): formas de pagamento + troco -->
+    <SalePaymentDialog
+      v-model="paymentDialogOpen"
+      :total="total"
+      :loading="props.finalizing"
+      @confirm="onPaymentsConfirmed"
     />
   </div>
 </template>
