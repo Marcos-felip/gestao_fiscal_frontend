@@ -12,7 +12,8 @@ import type {
   SaleProductOption,
 } from '@/modules/sales/presentation/schemas/sale-schema'
 import type { PaymentMethod } from '@/enums/payment-method.enum'
-import { parseDecimal } from '@/shared/ui/utils/masks'
+import { PaymentCondition } from '@/enums/payment-condition.enum'
+import { dateBrToIso, parseDecimal } from '@/shared/ui/utils/masks'
 import { useToast } from '@/shared/composables'
 import { routeNames } from '@/router/route-names'
 
@@ -75,9 +76,31 @@ export class SaleFormController extends BaseController {
     return this.products.value.find((p) => p.id === productId)?.salePrice ?? null
   }
 
+  /** Feedback pós-venda: destaca as parcelas geradas quando finalizada a prazo. */
+  private successMessage(
+    confirm: boolean,
+    onCredit: boolean,
+    installments: number,
+  ): string {
+    if (!confirm) return 'Orçamento salvo.'
+    if (onCredit) {
+      const label = installments === 1 ? 'parcela gerada' : 'parcelas geradas'
+      return `Venda finalizada — estoque baixado e ${installments} ${label} em contas a receber.`
+    }
+    return 'Venda finalizada — estoque baixado.'
+  }
+
   async save(values: SaleFormValues, confirm: boolean): Promise<void> {
     this.setLoading(true)
     this.finalizing.value = confirm
+
+    const onCredit = values.paymentCondition === PaymentCondition.A_PRAZO
+    const installments = onCredit
+      ? Math.max(1, Math.trunc(parseDecimal(values.installments) ?? 1))
+      : undefined
+    const intervalDays = onCredit
+      ? Math.max(1, Math.trunc(parseDecimal(values.intervalDays) ?? 30))
+      : undefined
 
     const dto = new CreateSaleDto({
       establishmentId: values.establishmentId,
@@ -89,6 +112,11 @@ export class SaleFormController extends BaseController {
       customerId: values.customerId || undefined,
       discount: parseDecimal(values.discount) || undefined,
       paymentMethod: (values.paymentMethod as PaymentMethod) || undefined,
+      paymentCondition:
+        (values.paymentCondition as PaymentCondition) || undefined,
+      installments,
+      firstDueDate: onCredit ? dateBrToIso(values.firstDueDate) : undefined,
+      intervalDays,
       notes: values.notes || undefined,
       confirm,
     })
@@ -98,7 +126,7 @@ export class SaleFormController extends BaseController {
       result,
       (sale) => {
         this.toast.success(
-          confirm ? 'Venda finalizada — estoque baixado.' : 'Orçamento salvo.',
+          this.successMessage(confirm, onCredit, installments ?? 1),
         )
         this.router.push({
           name: routeNames.SALE_DETAIL,
