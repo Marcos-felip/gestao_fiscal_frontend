@@ -76,6 +76,12 @@ const links: NavLink[] = [
     permission: 'sales.list',
   },
   {
+    to: '/contas-a-receber',
+    label: 'Contas a receber',
+    icon: 'HandCoins',
+    permission: 'receivables.list',
+  },
+  {
     to: '/pdv',
     label: 'PDV',
     icon: 'ScanBarcode',

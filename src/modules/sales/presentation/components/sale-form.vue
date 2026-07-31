@@ -17,11 +17,14 @@ import {
   type SaleProductOption,
 } from '@/modules/sales/presentation/schemas/sale-schema'
 import { paymentMethodOptions } from '@/enums/payment-method.enum'
+import { PaymentCondition } from '@/enums/payment-condition.enum'
 import { unitOfMeasureShortLabels } from '@/enums/unit-of-measure.enum'
 import { membershipRoleLabels } from '@/enums/membership-role.enum'
 import {
+  formatDateBr,
   formatDecimalInput,
   formatMoney,
+  onlyDigits,
   parseDecimal,
 } from '@/shared/ui/utils/masks'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
@@ -53,6 +56,10 @@ const form = reactive({
       : '',
   customerId: '',
   paymentMethod: '',
+  paymentCondition: PaymentCondition.A_VISTA as string,
+  installments: '1',
+  firstDueDate: '',
+  intervalDays: '30',
   discount: '',
   notes: '',
 })
@@ -139,11 +146,31 @@ const canSubmit = computed(
   () => cart.value.length > 0 && Boolean(form.establishmentId),
 )
 
+// ---- Condição de pagamento (à vista / a prazo) ----
+const onCredit = computed(
+  () => form.paymentCondition === PaymentCondition.A_PRAZO,
+)
+const installmentsCount = computed(() =>
+  Math.max(1, Math.trunc(parseDecimal(form.installments) ?? 1)),
+)
+/** Valor aproximado por parcela (o backend joga o resto na última). */
+const installmentAmount = computed(() =>
+  installmentsCount.value > 0 ? total.value / installmentsCount.value : 0,
+)
+
+function setCondition(condition: PaymentCondition): void {
+  form.paymentCondition = condition
+}
+
 function buildValues(): SaleFormValues {
   return {
     establishmentId: form.establishmentId,
     customerId: form.customerId,
     paymentMethod: form.paymentMethod,
+    paymentCondition: form.paymentCondition,
+    installments: form.installments,
+    firstDueDate: form.firstDueDate,
+    intervalDays: form.intervalDays,
     discount: form.discount,
     notes: form.notes,
     items: cart.value.map((line) => ({ ...line })),
@@ -330,12 +357,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
                   </button>
                   <Input
                     :model-value="line.quantity"
+                    :sanitize="formatDecimalInput"
                     inputmode="decimal"
                     input-class="text-center"
                     :error="itemErrors[index]?.quantity"
-                    @update:model-value="
-                      line.quantity = formatDecimalInput($event)
-                    "
+                    @update:model-value="line.quantity = $event"
                   />
                   <button
                     type="button"
@@ -352,12 +378,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
               <div class="sm:col-span-2">
                 <Input
                   :model-value="line.unitPrice"
+                  :sanitize="formatDecimalInput"
                   inputmode="decimal"
                   input-class="text-right"
                   :error="itemErrors[index]?.unitPrice"
-                  @update:model-value="
-                    line.unitPrice = formatDecimalInput($event)
-                  "
+                  @update:model-value="line.unitPrice = $event"
                 >
                   <template #prefix>
                     <span class="text-xs text-muted-foreground">R$</span>
@@ -430,12 +455,103 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
             <template #label>Forma de pagamento</template>
           </Select>
 
+          <!-- Condição: à vista x a prazo -->
+          <div>
+            <span class="mb-2 block text-sm font-medium text-foreground">
+              Condição
+            </span>
+            <div
+              class="grid grid-cols-2 gap-1 rounded-lg border border-line-2 bg-background-1 p-1"
+            >
+              <button
+                type="button"
+                :class="[
+                  'flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  !onCredit
+                    ? 'bg-primary text-white'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                ]"
+                @click="setCondition(PaymentCondition.A_VISTA)"
+              >
+                <Icon name="Banknote" size="sm" />
+                À vista
+              </button>
+              <button
+                type="button"
+                :class="[
+                  'flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  onCredit
+                    ? 'bg-primary text-white'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                ]"
+                @click="setCondition(PaymentCondition.A_PRAZO)"
+              >
+                <Icon name="CalendarClock" size="sm" />
+                A prazo
+              </button>
+            </div>
+          </div>
+
+          <!-- Parcelamento (só a prazo) -->
+          <motion.div
+            v-if="onCredit"
+            class="space-y-4 rounded-xl border border-line-2 bg-muted/30 p-4"
+            :initial="{ opacity: 0, height: 0 }"
+            :animate="{ opacity: 1, height: 'auto' }"
+            :transition="{ duration: 0.2 }"
+          >
+            <div class="grid grid-cols-2 gap-3">
+              <Input
+                :model-value="form.installments"
+                :sanitize="onlyDigits"
+                inputmode="numeric"
+                input-class="text-center"
+                @update:model-value="form.installments = $event"
+              >
+                <template #label>Parcelas</template>
+              </Input>
+              <Input
+                :model-value="form.intervalDays"
+                :sanitize="onlyDigits"
+                inputmode="numeric"
+                input-class="text-center"
+                @update:model-value="form.intervalDays = $event"
+              >
+                <template #label>Intervalo (dias)</template>
+              </Input>
+            </div>
+
+            <Input
+              :model-value="form.firstDueDate"
+              :sanitize="formatDateBr"
+              inputmode="numeric"
+              maxlength="10"
+              placeholder="dd/mm/aaaa (padrão: hoje + intervalo)"
+              @update:model-value="form.firstDueDate = $event"
+            >
+              <template #label>1º vencimento</template>
+              <template #prefix><Icon name="CalendarClock" size="sm" /></template>
+            </Input>
+
+            <p
+              class="flex items-center justify-between gap-2 border-t border-line-2 pt-3 text-sm"
+            >
+              <span class="text-muted-foreground">
+                {{ installmentsCount }}×
+              </span>
+              <span class="font-semibold tabular-nums text-foreground">
+                R$ {{ formatMoney(installmentAmount) }}
+              </span>
+            </p>
+          </motion.div>
+
           <Input
             :model-value="form.discount"
+            :sanitize="formatDecimalInput"
             inputmode="decimal"
             placeholder="0,00"
             input-class="text-right"
-            @update:model-value="form.discount = formatDecimalInput($event)"
+            @update:model-value="form.discount = $event"
           >
             <template #prefix><Icon name="TicketPercent" size="sm" /></template>
             <template #label>Desconto</template>

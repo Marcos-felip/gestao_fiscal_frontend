@@ -47,6 +47,10 @@ export class SalesRepository implements ISalesRepository {
     if (dto.customerId) payload.customerId = dto.customerId
     if (dto.discount !== undefined) payload.discount = dto.discount
     if (dto.paymentMethod) payload.paymentMethod = dto.paymentMethod
+    if (dto.paymentCondition) payload.paymentCondition = dto.paymentCondition
+    if (dto.installments !== undefined) payload.installments = dto.installments
+    if (dto.firstDueDate) payload.firstDueDate = dto.firstDueDate
+    if (dto.intervalDays !== undefined) payload.intervalDays = dto.intervalDays
     if (dto.notes) payload.notes = dto.notes
     if (dto.saleDate) payload.saleDate = dto.saleDate
     if (dto.confirm !== undefined) payload.confirm = dto.confirm

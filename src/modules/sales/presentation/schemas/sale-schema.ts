@@ -25,6 +25,14 @@ export interface SaleFormValues {
   establishmentId: string
   customerId: string
   paymentMethod: string
+  /** 'A_VISTA' | 'A_PRAZO' — string para o binding do seletor. */
+  paymentCondition: string
+  /** Nº de parcelas (só relevante quando a prazo); string do input. */
+  installments: string
+  /** 1º vencimento (aaaa-MM-dd do DatePicker); vazio = padrão do backend. */
+  firstDueDate: string
+  /** Dias entre parcelas; string do input, vazio = 30 no backend. */
+  intervalDays: string
   discount: string
   notes: string
   items: SaleItemRow[]

@@ -4,6 +4,8 @@ import {
   formatCnpj,
   formatCep,
   formatPhone,
+  formatDateBr,
+  dateBrToIso,
   isValidCnpj,
 } from '@/shared/ui/utils/masks'
 
@@ -50,6 +52,36 @@ describe('formatPhone', () => {
   it('formata parcialmente durante a digitação', () => {
     expect(formatPhone('11')).toBe('11')
     expect(formatPhone('119')).toBe('(11) 9')
+  })
+})
+
+describe('formatDateBr', () => {
+  it('formata progressivamente como dd/MM/aaaa', () => {
+    expect(formatDateBr('3')).toBe('3')
+    expect(formatDateBr('31')).toBe('31')
+    expect(formatDateBr('3108')).toBe('31/08')
+    expect(formatDateBr('31082026')).toBe('31/08/2026')
+  })
+
+  it('ignora dígitos além de 8 e caracteres inválidos', () => {
+    expect(formatDateBr('31082026999')).toBe('31/08/2026')
+    expect(formatDateBr('31/08/2026')).toBe('31/08/2026')
+  })
+})
+
+describe('dateBrToIso', () => {
+  it('converte data válida para ISO', () => {
+    const iso = dateBrToIso('31/08/2026')
+    expect(iso).toBeDefined()
+    expect(new Date(iso as string).getFullYear()).toBe(2026)
+    expect(new Date(iso as string).getDate()).toBe(31)
+  })
+
+  it('rejeita data incompleta ou inexistente', () => {
+    expect(dateBrToIso('31/08')).toBeUndefined()
+    expect(dateBrToIso('')).toBeUndefined()
+    expect(dateBrToIso('31/02/2026')).toBeUndefined()
+    expect(dateBrToIso('00/13/2026')).toBeUndefined()
   })
 })
 
