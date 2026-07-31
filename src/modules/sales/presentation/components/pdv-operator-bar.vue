@@ -57,15 +57,17 @@ onBeforeUnmount(() => {
   >
     <!-- Identidade do caixa -->
     <div class="flex min-w-0 items-center gap-3">
-      <span
-        class="flex size-9 items-center justify-center rounded-lg bg-primary text-white"
-      >
-        <Icon name="Store" size="md" />
-      </span>
+      <img
+        src="/apple-touch-icon.png"
+        alt="Gestão Fiscal"
+        class="size-9 shrink-0 rounded-lg bg-white object-contain"
+      />
       <div class="min-w-0 leading-tight">
-        <p class="font-display text-sm font-bold tracking-tight">PDV</p>
+        <p class="font-display text-sm font-bold tracking-tight">
+          Gestão Fiscal
+        </p>
         <p class="truncate text-xs text-background/60">
-          {{ props.establishmentName || 'Balcão' }}
+          PDV · {{ props.establishmentName || 'Balcão' }}
         </p>
       </div>
     </div>
