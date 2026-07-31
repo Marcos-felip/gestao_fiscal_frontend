@@ -82,6 +82,12 @@ const links: NavLink[] = [
     permission: 'receivables.list',
   },
   {
+    to: '/contas-a-pagar',
+    label: 'Contas a pagar',
+    icon: 'Wallet',
+    permission: 'payables.list',
+  },
+  {
     to: '/pdv',
     label: 'PDV',
     icon: 'ScanBarcode',
