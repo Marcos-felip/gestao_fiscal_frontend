@@ -38,6 +38,10 @@ export class PurchasesRepository implements IPurchasesRepository {
       items: dto.items,
     }
     if (dto.supplierId) payload.supplierId = dto.supplierId
+    if (dto.paymentCondition) payload.paymentCondition = dto.paymentCondition
+    if (dto.installments !== undefined) payload.installments = dto.installments
+    if (dto.firstDueDate) payload.firstDueDate = dto.firstDueDate
+    if (dto.intervalDays !== undefined) payload.intervalDays = dto.intervalDays
     if (dto.notes) payload.notes = dto.notes
     if (dto.purchaseDate) payload.purchaseDate = dto.purchaseDate
 

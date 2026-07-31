@@ -26,6 +26,8 @@ export const routeNames = {
   SALE_DETAIL: 'sale-detail',
   RECEIVABLES: 'receivables',
   RECEIVABLE_DETAIL: 'receivable-detail',
+  PAYABLES: 'payables',
+  PAYABLE_DETAIL: 'payable-detail',
   FORBIDDEN: 'forbidden',
   NOT_FOUND: 'not-found',
   SERVER_ERROR: 'server-error',

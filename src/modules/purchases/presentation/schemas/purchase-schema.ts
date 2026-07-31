@@ -11,6 +11,14 @@ export interface PurchaseFormValues {
   establishmentId: string
   supplierId: string
   purchaseDate: string
+  /** 'A_VISTA' | 'A_PRAZO' — string para o binding do seletor. */
+  paymentCondition: string
+  /** Nº de parcelas (só relevante quando a prazo); string do input. */
+  installments: string
+  /** 1º vencimento (dd/MM/aaaa); vazio = padrão do backend. */
+  firstDueDate: string
+  /** Dias entre parcelas; vazio = 30 no backend. */
+  intervalDays: string
   notes: string
   items: PurchaseItemRow[]
 }
