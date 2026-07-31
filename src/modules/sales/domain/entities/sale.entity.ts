@@ -2,7 +2,9 @@ import type { SaleStatus } from '@/enums/sale-status.enum'
 import type { PaymentStatus } from '@/enums/payment-status.enum'
 import type { FiscalStatus } from '@/enums/fiscal-status.enum'
 import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { PaymentCondition } from '@/enums/payment-condition.enum'
 import type { SaleItem } from '@/modules/sales/domain/entities/sale-item.entity'
+import type { SalePayment } from '@/modules/sales/domain/entities/sale-payment.entity'
 
 export class Sale {
   readonly id: string
@@ -24,6 +26,8 @@ export class Sale {
   readonly createdAt: string | null
   readonly updatedAt: string | null
   readonly items: SaleItem[]
+  readonly payments: SalePayment[]
+  readonly paymentCondition: PaymentCondition
 
   constructor(
     id: string,
@@ -45,6 +49,8 @@ export class Sale {
     createdAt: string | null,
     updatedAt: string | null,
     items: SaleItem[],
+    payments: SalePayment[],
+    paymentCondition: PaymentCondition,
   ) {
     this.id = id
     this.companyId = companyId
@@ -65,6 +71,8 @@ export class Sale {
     this.createdAt = createdAt
     this.updatedAt = updatedAt
     this.items = items
+    this.payments = payments
+    this.paymentCondition = paymentCondition
   }
 
   get itemsCount(): number {

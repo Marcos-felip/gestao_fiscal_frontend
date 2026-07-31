@@ -4,11 +4,13 @@ import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { Sale } from '@/modules/sales/domain/entities/sale.entity'
 import { SaleItem } from '@/modules/sales/domain/entities/sale-item.entity'
+import { SalePayment } from '@/modules/sales/domain/entities/sale-payment.entity'
 import type { SaleList } from '@/modules/sales/domain/responses/sale-list-response'
 import type { SaleStatus } from '@/enums/sale-status.enum'
 import type { PaymentStatus } from '@/enums/payment-status.enum'
 import type { FiscalStatus } from '@/enums/fiscal-status.enum'
 import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { PaymentCondition } from '@/enums/payment-condition.enum'
 import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
@@ -32,6 +34,16 @@ const itemSchema = z.object({
   total: decimal,
 })
 
+const nullableDecimal = z.union([z.number(), z.string()]).nullable().default(null)
+
+const paymentSchema = z.object({
+  id: z.string(),
+  method: z.string(),
+  amount: decimal,
+  amountReceived: nullableDecimal,
+  changeGiven: nullableDecimal,
+})
+
 const namedRefSchema = z
   .object({ id: z.string(), name: z.string().nullable().default(null) })
   .nullable()
@@ -52,15 +64,18 @@ const saleSchema = z.object({
   discount: decimal,
   totalAmount: decimal,
   paymentMethod: z.string().nullable().default(null),
+  paymentCondition: z.string().nullable().default('A_VISTA'),
   notes: z.string().nullable().default(null),
   saleDate: z.string().nullable().default(null),
   createdAt: z.string().nullable().default(null),
   updatedAt: z.string().nullable().default(null),
   items: z.array(itemSchema).default([]),
+  payments: z.array(paymentSchema).default([]),
 })
 
 type SalePayload = z.infer<typeof saleSchema>
 type ItemPayload = z.infer<typeof itemSchema>
+type PaymentPayload = z.infer<typeof paymentSchema>
 
 const saleListSchema = z.object({
   data: z.array(saleSchema),
@@ -72,6 +87,22 @@ const saleListSchema = z.object({
 function toNumber(value: number | string): number {
   const parsed = typeof value === 'number' ? value : Number(value)
   return Number.isFinite(parsed) ? parsed : 0
+}
+
+function toNumberOrNull(value: number | string | null): number | null {
+  if (value === null) return null
+  const parsed = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function buildPayment(value: PaymentPayload): SalePayment {
+  return new SalePayment(
+    value.id,
+    value.method as PaymentMethod,
+    toNumber(value.amount),
+    toNumberOrNull(value.amountReceived),
+    toNumberOrNull(value.changeGiven),
+  )
 }
 
 function buildItem(value: ItemPayload): SaleItem {
@@ -107,6 +138,8 @@ function build(value: SalePayload): Sale {
     value.createdAt,
     value.updatedAt,
     value.items.map(buildItem),
+    value.payments.map(buildPayment),
+    (value.paymentCondition ?? 'A_VISTA') as PaymentCondition,
   )
 }
 

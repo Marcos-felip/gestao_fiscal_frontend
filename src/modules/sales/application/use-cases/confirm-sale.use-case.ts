@@ -2,6 +2,7 @@ import type { ISalesRepository } from '@/modules/sales/domain/interfaces/i-sales
 import type { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import type { Sale } from '@/modules/sales/domain/entities/sale.entity'
+import type { CreateSalePaymentInput } from '@/modules/sales/domain/dto/create-sale-dto'
 
 export class ConfirmSaleUseCase {
   private readonly repository: ISalesRepository
@@ -10,7 +11,10 @@ export class ConfirmSaleUseCase {
     this.repository = repository
   }
 
-  async execute(id: string): Promise<Either<DomainError, Sale>> {
-    return this.repository.confirm(id)
+  async execute(
+    id: string,
+    payments?: CreateSalePaymentInput[],
+  ): Promise<Either<DomainError, Sale>> {
+    return this.repository.confirm(id, payments)
   }
 }

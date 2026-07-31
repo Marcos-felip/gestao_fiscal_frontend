@@ -76,6 +76,30 @@ describe('toSale', () => {
     expect(sale.discount).toBe(0)
     expect(sale.totalAmount).toBe(0)
     expect(sale.items).toEqual([])
+    expect(sale.payments).toEqual([])
+    expect(sale.paymentCondition).toBe('A_VISTA')
+  })
+
+  it('mapeia as formas de pagamento com troco e a condição', () => {
+    const result = toSale({
+      ...respostaValida,
+      paymentCondition: 'A_VISTA',
+      payments: [
+        { id: 'p-1', method: 'PIX', amount: '460', amountReceived: null, changeGiven: null },
+        { id: 'p-2', method: 'DINHEIRO', amount: '40', amountReceived: '50', changeGiven: '10' },
+      ],
+    })
+
+    expect(result.isRight).toBe(true)
+    const sale = result.right
+    expect(sale.paymentCondition).toBe('A_VISTA')
+    expect(sale.payments).toHaveLength(2)
+    expect(sale.payments[1].method).toBe('DINHEIRO')
+    expect(sale.payments[1].amount).toBe(40)
+    expect(sale.payments[1].amountReceived).toBe(50)
+    expect(sale.payments[1].changeGiven).toBe(10)
+    expect(sale.payments[0].amountReceived).toBeNull()
+    expect(sale.payments[0].changeGiven).toBeNull()
   })
 
   it('rejeita resposta sem establishmentId (ContractError)', () => {

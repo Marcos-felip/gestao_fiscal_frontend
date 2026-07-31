@@ -7,6 +7,14 @@ export interface CreateSaleItemInput {
   unitPrice: number
 }
 
+/** Uma forma de pagamento de venda à vista (parte de um pagamento dividido). */
+export interface CreateSalePaymentInput {
+  method: PaymentMethod
+  amount: number
+  /** Só no DINHEIRO: valor entregue pelo cliente, para o backend calcular o troco. */
+  amountReceived?: number
+}
+
 export class CreateSaleDto {
   establishmentId: string
   items: CreateSaleItemInput[]
@@ -17,6 +25,8 @@ export class CreateSaleDto {
   installments?: number
   firstDueDate?: string
   intervalDays?: number
+  /** Formas de pagamento — exigido ao finalizar uma venda à vista. */
+  payments?: CreateSalePaymentInput[]
   notes?: string
   saleDate?: string
   confirm?: boolean
@@ -31,6 +41,7 @@ export class CreateSaleDto {
     installments?: number
     firstDueDate?: string
     intervalDays?: number
+    payments?: CreateSalePaymentInput[]
     notes?: string
     saleDate?: string
     confirm?: boolean
@@ -44,6 +55,7 @@ export class CreateSaleDto {
     this.installments = fields.installments
     this.firstDueDate = fields.firstDueDate
     this.intervalDays = fields.intervalDays
+    this.payments = fields.payments
     this.notes = fields.notes
     this.saleDate = fields.saleDate
     this.confirm = fields.confirm
