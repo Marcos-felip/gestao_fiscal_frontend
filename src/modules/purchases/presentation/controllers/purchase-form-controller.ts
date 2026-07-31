@@ -11,7 +11,8 @@ import type { Product } from '@/modules/products/domain/entities/product.entity'
 import type { ListPartnersUseCase } from '@/modules/partners/application/use-cases/list-partners.use-case'
 import { ListPartnersDto } from '@/modules/partners/domain/dto/list-partners-dto'
 import { PartnerType } from '@/enums/partner-type.enum'
-import { parseDecimal } from '@/shared/ui/utils/masks'
+import { PaymentCondition } from '@/enums/payment-condition.enum'
+import { dateBrToIso, parseDecimal } from '@/shared/ui/utils/masks'
 import { dateInputToIso } from '@/core/utils/date'
 import { useToast } from '@/shared/composables'
 import { routeNames } from '@/router/route-names'
@@ -97,6 +98,15 @@ export class PurchaseFormController extends BaseController {
 
   async save(values: PurchaseFormValues): Promise<void> {
     this.setLoading(true)
+
+    const onCredit = values.paymentCondition === PaymentCondition.A_PRAZO
+    const installments = onCredit
+      ? Math.max(1, Math.trunc(parseDecimal(values.installments) ?? 1))
+      : undefined
+    const intervalDays = onCredit
+      ? Math.max(1, Math.trunc(parseDecimal(values.intervalDays) ?? 30))
+      : undefined
+
     const dto = new CreatePurchaseDto({
       establishmentId: values.establishmentId,
       items: values.items.map((row) => ({
@@ -105,6 +115,11 @@ export class PurchaseFormController extends BaseController {
         unitPrice: parseDecimal(row.unitPrice) ?? 0,
       })),
       supplierId: values.supplierId || undefined,
+      paymentCondition:
+        (values.paymentCondition as PaymentCondition) || undefined,
+      installments,
+      firstDueDate: onCredit ? dateBrToIso(values.firstDueDate) : undefined,
+      intervalDays,
       notes: values.notes || undefined,
       purchaseDate: dateInputToIso(values.purchaseDate),
     })

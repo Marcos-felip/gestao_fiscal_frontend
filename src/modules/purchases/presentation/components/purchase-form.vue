@@ -12,7 +12,14 @@ import {
   type PurchaseItemRow,
   type PurchaseFormValues,
 } from '@/modules/purchases/presentation/schemas/purchase-schema'
-import { formatDecimalInput, formatMoney, parseDecimal } from '@/shared/ui/utils/masks'
+import { PaymentCondition } from '@/enums/payment-condition.enum'
+import {
+  formatDateBr,
+  formatDecimalInput,
+  formatMoney,
+  onlyDigits,
+  parseDecimal,
+} from '@/shared/ui/utils/masks'
 
 const props = defineProps<{
   establishmentOptions: SelectOption[]
@@ -35,9 +42,25 @@ const form = reactive<PurchaseFormValues>({
   establishmentId: '',
   supplierId: '',
   purchaseDate: '',
+  paymentCondition: PaymentCondition.A_VISTA,
+  installments: '1',
+  firstDueDate: '',
+  intervalDays: '30',
   notes: '',
   items: [emptyRow()],
 })
+
+// ---- Condição de pagamento (à vista / a prazo) ----
+const onCredit = computed(
+  () => form.paymentCondition === PaymentCondition.A_PRAZO,
+)
+const installmentsCount = computed(() =>
+  Math.max(1, Math.trunc(parseDecimal(form.installments) ?? 1)),
+)
+
+function setCondition(condition: PaymentCondition): void {
+  form.paymentCondition = condition
+}
 
 const errors = ref<PurchaseFormErrors>({})
 const itemErrors = ref<PurchaseItemErrors[]>([])
@@ -141,6 +164,99 @@ const item = {
               <template #prefix><Icon name="StickyNote" size="sm" /></template>
               <template #label>Observações</template>
             </Input>
+          </div>
+        </FormSection>
+      </motion.div>
+
+      <!-- Pagamento -->
+      <motion.div :variants="item">
+        <FormSection
+          icon="Wallet"
+          title="Pagamento"
+          description="À vista quita a compra; a prazo gera títulos em contas a pagar ao confirmar."
+        >
+          <div class="space-y-5">
+            <!-- Condição: à vista x a prazo -->
+            <div
+              class="grid grid-cols-2 gap-1 rounded-lg border border-line-2 bg-background-1 p-1 sm:max-w-xs"
+            >
+              <button
+                type="button"
+                :class="[
+                  'flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  !onCredit
+                    ? 'bg-primary text-white'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                ]"
+                @click="setCondition(PaymentCondition.A_VISTA)"
+              >
+                <Icon name="Banknote" size="sm" />
+                À vista
+              </button>
+              <button
+                type="button"
+                :class="[
+                  'flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  onCredit
+                    ? 'bg-primary text-white'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                ]"
+                @click="setCondition(PaymentCondition.A_PRAZO)"
+              >
+                <Icon name="CalendarClock" size="sm" />
+                A prazo
+              </button>
+            </div>
+
+            <!-- Parcelamento (só a prazo) -->
+            <motion.div
+              v-if="onCredit"
+              class="grid grid-cols-1 gap-5 sm:grid-cols-3"
+              :initial="{ opacity: 0, y: 8 }"
+              :animate="{ opacity: 1, y: 0 }"
+              :transition="{ duration: 0.2 }"
+            >
+              <Input
+                :model-value="form.installments"
+                :sanitize="onlyDigits"
+                inputmode="numeric"
+                input-class="text-center"
+                @update:model-value="form.installments = $event"
+              >
+                <template #label>Parcelas</template>
+              </Input>
+              <Input
+                :model-value="form.intervalDays"
+                :sanitize="onlyDigits"
+                inputmode="numeric"
+                input-class="text-center"
+                @update:model-value="form.intervalDays = $event"
+              >
+                <template #label>Intervalo (dias)</template>
+              </Input>
+              <Input
+                :model-value="form.firstDueDate"
+                :sanitize="formatDateBr"
+                inputmode="numeric"
+                maxlength="10"
+                placeholder="dd/mm/aaaa (opcional)"
+                @update:model-value="form.firstDueDate = $event"
+              >
+                <template #label>1º vencimento</template>
+                <template #prefix><Icon name="CalendarClock" size="sm" /></template>
+              </Input>
+
+              <p
+                class="flex items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm sm:col-span-3"
+              >
+                <span class="text-muted-foreground">
+                  {{ installmentsCount }}× de (aprox.)
+                </span>
+                <span class="font-semibold tabular-nums text-foreground">
+                  R$ {{ formatMoney(grandTotal / installmentsCount) }}
+                </span>
+              </p>
+            </motion.div>
           </div>
         </FormSection>
       </motion.div>
