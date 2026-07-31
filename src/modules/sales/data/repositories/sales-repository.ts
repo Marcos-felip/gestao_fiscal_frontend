@@ -5,7 +5,10 @@ import type { Sale } from '@/modules/sales/domain/entities/sale.entity'
 import type { SaleList } from '@/modules/sales/domain/responses/sale-list-response'
 import type { SaleContext } from '@/modules/sales/domain/responses/sale-context-response'
 import type { ListSalesDto } from '@/modules/sales/domain/dto/list-sales-dto'
-import type { CreateSaleDto } from '@/modules/sales/domain/dto/create-sale-dto'
+import type {
+  CreateSaleDto,
+  CreateSalePaymentInput,
+} from '@/modules/sales/domain/dto/create-sale-dto'
 import type { UpdateSaleDto } from '@/modules/sales/domain/dto/update-sale-dto'
 import { httpClient } from '@/core/client/http-client'
 import { toSale, toSaleList } from '@/modules/sales/data/mappers/sale.mapper'
@@ -51,6 +54,7 @@ export class SalesRepository implements ISalesRepository {
     if (dto.installments !== undefined) payload.installments = dto.installments
     if (dto.firstDueDate) payload.firstDueDate = dto.firstDueDate
     if (dto.intervalDays !== undefined) payload.intervalDays = dto.intervalDays
+    if (dto.payments && dto.payments.length) payload.payments = dto.payments
     if (dto.notes) payload.notes = dto.notes
     if (dto.saleDate) payload.saleDate = dto.saleDate
     if (dto.confirm !== undefined) payload.confirm = dto.confirm
@@ -76,8 +80,13 @@ export class SalesRepository implements ISalesRepository {
     return result.flatMap(toSale)
   }
 
-  async confirm(id: string): Promise<Either<DomainError, Sale>> {
-    const result = await httpClient.post<unknown>(`/sales/${id}/confirm`, {})
+  async confirm(
+    id: string,
+    payments?: CreateSalePaymentInput[],
+  ): Promise<Either<DomainError, Sale>> {
+    const body =
+      payments && payments.length ? { payments } : ({} as Record<string, unknown>)
+    const result = await httpClient.post<unknown>(`/sales/${id}/confirm`, body)
     return result.flatMap(toSale)
   }
 

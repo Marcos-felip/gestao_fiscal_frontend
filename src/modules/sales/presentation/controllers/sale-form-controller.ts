@@ -2,7 +2,10 @@ import { computed, ref } from 'vue'
 import { BaseController } from '@/core/controllers/base-controller'
 import type { CreateSaleUseCase } from '@/modules/sales/application/use-cases/create-sale.use-case'
 import type { GetSaleContextUseCase } from '@/modules/sales/application/use-cases/get-sale-context.use-case'
-import { CreateSaleDto } from '@/modules/sales/domain/dto/create-sale-dto'
+import {
+  CreateSaleDto,
+  type CreateSalePaymentInput,
+} from '@/modules/sales/domain/dto/create-sale-dto'
 import type {
   SaleContextProduct,
   SaleContextRef,
@@ -90,7 +93,11 @@ export class SaleFormController extends BaseController {
     return 'Venda finalizada — estoque baixado.'
   }
 
-  async save(values: SaleFormValues, confirm: boolean): Promise<void> {
+  async save(
+    values: SaleFormValues,
+    confirm: boolean,
+    payments?: CreateSalePaymentInput[],
+  ): Promise<void> {
     this.setLoading(true)
     this.finalizing.value = confirm
 
@@ -117,6 +124,7 @@ export class SaleFormController extends BaseController {
       installments,
       firstDueDate: onCredit ? dateBrToIso(values.firstDueDate) : undefined,
       intervalDays,
+      payments: !onCredit ? payments : undefined,
       notes: values.notes || undefined,
       confirm,
     })

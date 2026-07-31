@@ -4,6 +4,7 @@ import { Skeleton } from '@/shared/ui'
 import SaleForm from '@/modules/sales/presentation/components/sale-form.vue'
 import { makeSaleFormController } from '@/modules/sales/factories/sales.factory'
 import type { SaleFormValues } from '@/modules/sales/presentation/schemas/sale-schema'
+import type { CreateSalePaymentInput } from '@/modules/sales/domain/dto/create-sale-dto'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 
@@ -15,8 +16,9 @@ onMounted(() => progress.track(controller.prepareCreate()))
 async function handleSubmit(
   values: SaleFormValues,
   confirm: boolean,
+  payments?: CreateSalePaymentInput[],
 ): Promise<void> {
-  await progress.track(controller.save(values, confirm))
+  await progress.track(controller.save(values, confirm, payments))
 }
 
 function handleExit(): void {
