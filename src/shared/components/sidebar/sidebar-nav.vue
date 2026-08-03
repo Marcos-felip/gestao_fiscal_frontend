@@ -13,42 +13,42 @@
       :key="group.id"
       class="mt-2 first:mt-1"
     >
-      <!-- Cabeçalho da seção (colapsa/expande) -->
+      <!-- Cabeçalho da seção (colapsa/expande) — mesma cara do item "Início" -->
       <button
         type="button"
-        class="group/sec mb-0.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors hover:bg-muted hover:text-foreground"
+        class="group/sec mb-0.5 flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         :aria-expanded="isOpen(group.id)"
         @click="toggle(group.id)"
       >
-        <span class="flex min-w-0 items-center gap-2">
-          <Icon :name="group.icon" size="sm" class="shrink-0 opacity-80" />
-          <span class="truncate">{{ group.label }}</span>
+        <span class="flex h-5 w-5 shrink-0 items-center justify-center">
+          <Icon :name="group.icon" size="md" />
         </span>
-        <span
-          class="flex size-5 shrink-0 items-center justify-center rounded-md"
-        >
-          <Icon
-            name="ChevronDown"
-            size="xs"
-            :class="[
-              'transition-transform duration-200',
-              isOpen(group.id) ? '' : '-rotate-90',
-            ]"
-          />
-        </span>
+        <span class="min-w-0 flex-1 truncate text-left">{{ group.label }}</span>
+        <Icon
+          name="ChevronDown"
+          size="sm"
+          :class="[
+            'shrink-0 transition-transform duration-200',
+            isOpen(group.id) ? '' : '-rotate-90',
+          ]"
+        />
       </button>
 
-      <!-- Sub-itens -->
+      <!-- Sub-itens: compactos e indentados sob a seção -->
       <Transition name="collapse" @enter="onEnter" @leave="onLeave">
-        <div v-show="isOpen(group.id)" class="space-y-0.5 overflow-hidden">
+        <div
+          v-show="isOpen(group.id)"
+          class="ml-4 space-y-0.5 overflow-hidden border-l border-line-2 pl-2"
+        >
           <SidebarLink
             v-for="link in group.links"
             :key="link.to"
             :to="link.to"
             :label="link.label"
+            size="sm"
           >
             <template #icon>
-              <Icon :name="link.icon" size="md" />
+              <Icon :name="link.icon" size="sm" />
             </template>
           </SidebarLink>
         </div>
