@@ -3,8 +3,9 @@
     :to="to"
     :class="[
       'sidebar-link',
-      'group relative flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium',
+      'group relative flex items-center rounded-lg font-medium',
       'transition-colors duration-200',
+      sizeClass,
       isActive
         ? 'text-white'
         : 'text-muted-foreground hover:text-foreground hover:bg-muted',
@@ -19,7 +20,7 @@
     />
 
     <!-- Ícone -->
-    <span class="relative z-10 h-5 w-5 shrink-0">
+    <span :class="['relative z-10 shrink-0', iconClass]">
       <slot name="icon" />
     </span>
 
@@ -38,10 +39,22 @@ import { RouterLink, useRoute } from 'vue-router'
 interface Props {
   to: string | object
   label?: string
+  /** `md` (padrão, item de topo) ou `sm` (sub-item, mais compacto). */
+  size?: 'md' | 'sm'
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), { label: '', size: 'md' })
 const route = useRoute()
+
+const sizeClass = computed(() =>
+  props.size === 'sm'
+    ? 'gap-2.5 px-3 py-2 text-[13px]'
+    : 'gap-3 px-4 py-2.5 text-sm',
+)
+
+const iconClass = computed(() =>
+  props.size === 'sm' ? 'h-4 w-4' : 'h-5 w-5',
+)
 
 const isActive = computed(() => {
   if (typeof props.to === 'string') {
