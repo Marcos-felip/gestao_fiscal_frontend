@@ -1,0 +1,17 @@
+schema: spec-driven
+
+context: |
+  Projeto: Gestão Fiscal — ERP/PDV SaaS multi-tenant (Brasil). Frontend.
+  Stack: Vue 3.5 + TypeScript + Vite + Pinia + Tailwind CSS 4 (tokens sólidos)
+  + Preline + Lucide + motion-v + Zod + Axios. Clean Architecture por módulo
+  (domain → data → application → factories → presentation); factories é o único
+  ponto de composição/cross-module. httpClient retorna Either<DomainError,T>;
+  controllers estendem BaseController (handleResult). Gating por permissão via
+  usePermissions() (can/canAny/isAtLeast) + meta.requiresPermission nas rotas +
+  sidebar. UI compartilhada em src/shared/ui e src/shared/components.
+  Já existem os módulos: auth, companies, establishments, partners, products,
+  stock, purchases, sales (+PDV), receivables, payables, cash (caixa),
+  memberships, permissions.
+  Este change: FRONTEND do módulo fiscal (MVP NFC-e), consumindo a API fiscal do
+  backend NestJS. Depende do backend fiscal pronto.
+  Fora do MVP: NF-e, NFS-e, DF-e, devoluções, etc.
