@@ -8,4 +8,5 @@ export const StorageKeys = {
   ACTIVE_COMPANY: 'active_company',
   USER: 'user',
   OPEN_TABS: 'open_tabs',
+  SIDEBAR_GROUPS: 'sidebar_groups',
 } as const
