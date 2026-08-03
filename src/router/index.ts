@@ -17,6 +17,7 @@ import { purchasesRoutes } from '@/modules/purchases/presentation/routes/purchas
 import { salesRoutes, pdvRoutes } from '@/modules/sales/presentation/routes/sales-routes'
 import { receivablesRoutes } from '@/modules/receivables/presentation/routes/receivables-routes'
 import { payablesRoutes } from '@/modules/payables/presentation/routes/payables-routes'
+import { cashRoutes } from '@/modules/cash/presentation/routes/cash-routes'
 import { membershipsRoutes } from '@/modules/memberships/presentation/routes/memberships-routes'
 import { permissionsRoutes } from '@/modules/permissions/presentation/routes/permissions-routes'
 import { errorRoutes } from '@/modules/errors/presentation/routes/error-routes'
@@ -42,6 +43,7 @@ const router = createRouter({
         ...salesRoutes,
         ...receivablesRoutes,
         ...payablesRoutes,
+        ...cashRoutes,
         ...membershipsRoutes,
         ...permissionsRoutes,
       ],
