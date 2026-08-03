@@ -39,6 +39,7 @@ const props = defineProps<{
   loading: boolean
   finalizing: boolean
   resolvePrice: (productId: string) => number | null
+  cashRegisterName?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -48,6 +49,9 @@ const emit = defineEmits<{
     payments?: CreateSalePaymentInput[],
   ]
   exit: []
+  suprimento: []
+  sangria: []
+  'fechar-caixa': []
 }>()
 
 const authStore = useAuthStore()
@@ -311,9 +315,13 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
       :seller-role="sellerRole"
       :establishment-name="establishmentName"
       :is-fullscreen="isFullscreen"
+      :cash-register-name="props.cashRegisterName"
       @toggle-fullscreen="toggleFullscreen"
       @help="helpOpen = true"
       @exit="emit('exit')"
+      @suprimento="emit('suprimento')"
+      @sangria="emit('sangria')"
+      @fechar="emit('fechar-caixa')"
     />
 
     <!-- Corpo: carrinho | ticket -->

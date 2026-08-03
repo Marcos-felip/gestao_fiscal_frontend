@@ -101,6 +101,22 @@ export function formatDecimalInput(value: string): string {
 }
 
 /**
+ * Máscara de moeda "de caixa" (base centavos): formata a digitação ao vivo como
+ * `1.234,56` — ponto de milhar e vírgula decimal. Cada dígito digitado desloca o
+ * valor (ex.: `1` → `0,01`, `100` → `1,00`, `123456` → `1.234,56`). String vazia
+ * quando não há dígitos. Combina com `parseDecimal` na leitura.
+ */
+export function formatMoneyInput(value: string): string {
+  const digits = onlyDigits(value)
+  if (!digits) return ''
+  const number = Number(digits) / 100
+  return number.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+/**
  * Converte uma string decimal (pt-BR ou "en") em número.
  * - Com vírgula: trata vírgula como decimal e pontos como milhar (`1.234,56`).
  * - Sem vírgula: trata ponto como decimal (`1234.56`).

@@ -46,6 +46,51 @@ const navigationItems = computed((): NavigationItem[] => {
       to: '/estabelecimentos',
     },
     {
+      id: 'products',
+      label: 'Produtos',
+      to: '/produtos',
+    },
+    {
+      id: 'partners',
+      label: 'Parceiros',
+      to: '/parceiros',
+    },
+    {
+      id: 'stock',
+      label: 'Estoque',
+      to: '/estoque',
+    },
+    {
+      id: 'purchases',
+      label: 'Compras',
+      to: '/compras',
+    },
+    {
+      id: 'sales',
+      label: 'Vendas',
+      to: '/vendas',
+    },
+    {
+      id: 'receivables',
+      label: 'Contas a receber',
+      to: '/contas-a-receber',
+    },
+    {
+      id: 'payables',
+      label: 'Contas a pagar',
+      to: '/contas-a-pagar',
+    },
+    {
+      id: 'cash-registers',
+      label: 'Caixas',
+      to: '/caixas',
+    },
+    {
+      id: 'cash-sessions',
+      label: 'Sessões de caixa',
+      to: '/sessoes-de-caixa',
+    },
+    {
       id: 'account',
       label: 'Conta',
       children: [

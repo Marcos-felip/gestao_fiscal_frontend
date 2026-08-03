@@ -94,6 +94,18 @@ const links: NavLink[] = [
     permission: 'sales.create',
   },
   {
+    to: '/sessoes-de-caixa',
+    label: 'Sessões de caixa',
+    icon: 'Archive',
+    permission: 'cash.list',
+  },
+  {
+    to: '/caixas',
+    label: 'Caixas',
+    icon: 'Monitor',
+    permission: 'cash-registers.list',
+  },
+  {
     to: '/estabelecimentos',
     label: 'Estabelecimentos',
     icon: 'Store',

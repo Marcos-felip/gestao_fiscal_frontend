@@ -6,6 +6,7 @@ import {
   formatPhone,
   formatDateBr,
   dateBrToIso,
+  formatMoneyInput,
   isValidCnpj,
 } from '@/shared/ui/utils/masks'
 
@@ -14,6 +15,20 @@ describe('onlyDigits', () => {
     expect(onlyDigits('11.222.333/0001-81')).toBe('11222333000181')
     expect(onlyDigits('(11) 98765-4321')).toBe('11987654321')
     expect(onlyDigits('abc')).toBe('')
+  })
+})
+
+describe('formatMoneyInput', () => {
+  it('formata a digitação como moeda (base centavos)', () => {
+    expect(formatMoneyInput('1')).toBe('0,01')
+    expect(formatMoneyInput('100')).toBe('1,00')
+    expect(formatMoneyInput('123456')).toBe('1.234,56')
+  })
+
+  it('ignora caracteres não numéricos e devolve vazio sem dígitos', () => {
+    expect(formatMoneyInput('R$ 1.000,00')).toBe('1.000,00')
+    expect(formatMoneyInput('')).toBe('')
+    expect(formatMoneyInput('abc')).toBe('')
   })
 })
 
