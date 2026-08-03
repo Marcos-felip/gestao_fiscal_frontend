@@ -1,29 +1,68 @@
 <template>
-  <motion.nav
-    :class="['sidebar-nav', 'flex-1 overflow-y-auto px-4 py-1 space-y-1']"
-    :variants="containerVariants"
-    initial="hidden"
-    animate="visible"
-  >
-    <motion.div
-      v-for="link in visibleLinks"
-      :key="link.to"
-      :variants="itemVariants"
+  <nav class="sidebar-nav flex-1 overflow-y-auto px-3 py-2">
+    <!-- Item fixo: início -->
+    <SidebarLink :to="home.to" :label="home.label" class="mb-1">
+      <template #icon>
+        <Icon :name="home.icon" size="md" />
+      </template>
+    </SidebarLink>
+
+    <!-- Grupos: seção → sub-itens -->
+    <div
+      v-for="group in visibleGroups"
+      :key="group.id"
+      class="mt-2 first:mt-1"
     >
-      <SidebarLink :to="link.to" :label="link.label">
-        <template #icon>
-          <Icon :name="link.icon" size="md" />
-        </template>
-      </SidebarLink>
-    </motion.div>
-  </motion.nav>
+      <!-- Cabeçalho da seção (colapsa/expande) -->
+      <button
+        type="button"
+        class="group/sec mb-0.5 flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors hover:bg-muted hover:text-foreground"
+        :aria-expanded="isOpen(group.id)"
+        @click="toggle(group.id)"
+      >
+        <span class="flex min-w-0 items-center gap-2">
+          <Icon :name="group.icon" size="sm" class="shrink-0 opacity-80" />
+          <span class="truncate">{{ group.label }}</span>
+        </span>
+        <span
+          class="flex size-5 shrink-0 items-center justify-center rounded-md"
+        >
+          <Icon
+            name="ChevronDown"
+            size="xs"
+            :class="[
+              'transition-transform duration-200',
+              isOpen(group.id) ? '' : '-rotate-90',
+            ]"
+          />
+        </span>
+      </button>
+
+      <!-- Sub-itens -->
+      <Transition name="collapse" @enter="onEnter" @leave="onLeave">
+        <div v-show="isOpen(group.id)" class="space-y-0.5 overflow-hidden">
+          <SidebarLink
+            v-for="link in group.links"
+            :key="link.to"
+            :to="link.to"
+            :label="link.label"
+          >
+            <template #icon>
+              <Icon :name="link.icon" size="md" />
+            </template>
+          </SidebarLink>
+        </div>
+      </Transition>
+    </div>
+  </nav>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { motion } from 'motion-v'
+import { computed, reactive, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { SidebarLink, Icon } from '@/shared/ui'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { StorageKeys } from '@/core/constants/storage-keys'
 import type { MembershipRole } from '@/enums/membership-role.enum'
 
 interface NavLink {
@@ -36,120 +75,175 @@ interface NavLink {
   role?: MembershipRole
 }
 
-const links: NavLink[] = [
-  { to: '/', label: 'Dashboard', icon: 'LayoutDashboard' },
+interface NavGroup {
+  id: string
+  label: string
+  icon: string
+  links: NavLink[]
+}
+
+const home: NavLink = { to: '/', label: 'Início', icon: 'LayoutDashboard' }
+
+// Agrupamento por objetivo (operação do dia a dia → cadastros → configurações),
+// no espírito dos ERPs/PDVs modernos. Cada item segue gated por permissão.
+const groups: NavGroup[] = [
   {
-    to: '/usuarios',
-    label: 'Usuários',
-    icon: 'Users',
-    permission: 'users.list',
+    id: 'operacao',
+    label: 'Operação',
+    icon: 'Zap',
+    links: [
+      { to: '/pdv', label: 'PDV', icon: 'ScanBarcode', permission: 'sales.create' },
+      { to: '/vendas', label: 'Vendas', icon: 'ShoppingBag', permission: 'sales.list' },
+      { to: '/compras', label: 'Compras', icon: 'ShoppingCart', permission: 'purchases.list' },
+      {
+        to: '/sessoes-de-caixa',
+        label: 'Sessões de caixa',
+        icon: 'Archive',
+        permission: 'cash.list',
+      },
+    ],
   },
   {
-    to: '/perfis-de-permissao',
-    label: 'Perfis',
-    icon: 'ShieldPlus',
-    permission: 'permissions.manage',
+    id: 'financeiro',
+    label: 'Financeiro',
+    icon: 'CircleDollarSign',
+    links: [
+      {
+        to: '/contas-a-receber',
+        label: 'Contas a receber',
+        icon: 'HandCoins',
+        permission: 'receivables.list',
+      },
+      {
+        to: '/contas-a-pagar',
+        label: 'Contas a pagar',
+        icon: 'Wallet',
+        permission: 'payables.list',
+      },
+    ],
   },
   {
-    to: '/produtos',
-    label: 'Produtos',
-    icon: 'Package',
-    permission: 'products.list',
+    id: 'cadastros',
+    label: 'Cadastros',
+    icon: 'Database',
+    links: [
+      { to: '/produtos', label: 'Produtos', icon: 'Package', permission: 'products.list' },
+      { to: '/parceiros', label: 'Parceiros', icon: 'Users', permission: 'partners.list' },
+      { to: '/estoque', label: 'Estoque', icon: 'Layers', permission: 'stock.list' },
+      { to: '/caixas', label: 'Caixas', icon: 'Monitor', permission: 'cash-registers.list' },
+      {
+        to: '/estabelecimentos',
+        label: 'Estabelecimentos',
+        icon: 'Store',
+        permission: 'establishments.list',
+      },
+    ],
   },
   {
-    to: '/parceiros',
-    label: 'Parceiros',
-    icon: 'Users',
-    permission: 'partners.list',
-  },
-  { to: '/estoque', label: 'Estoque', icon: 'Layers', permission: 'stock.list' },
-  {
-    to: '/compras',
-    label: 'Compras',
-    icon: 'ShoppingCart',
-    permission: 'purchases.list',
-  },
-  {
-    to: '/vendas',
-    label: 'Vendas',
-    icon: 'ShoppingBag',
-    permission: 'sales.list',
-  },
-  {
-    to: '/contas-a-receber',
-    label: 'Contas a receber',
-    icon: 'HandCoins',
-    permission: 'receivables.list',
-  },
-  {
-    to: '/contas-a-pagar',
-    label: 'Contas a pagar',
-    icon: 'Wallet',
-    permission: 'payables.list',
-  },
-  {
-    to: '/pdv',
-    label: 'PDV',
-    icon: 'ScanBarcode',
-    permission: 'sales.create',
-  },
-  {
-    to: '/sessoes-de-caixa',
-    label: 'Sessões de caixa',
-    icon: 'Archive',
-    permission: 'cash.list',
-  },
-  {
-    to: '/caixas',
-    label: 'Caixas',
-    icon: 'Monitor',
-    permission: 'cash-registers.list',
-  },
-  {
-    to: '/estabelecimentos',
-    label: 'Estabelecimentos',
-    icon: 'Store',
-    permission: 'establishments.list',
-  },
-  {
-    to: '/empresa',
-    label: 'Empresa',
-    icon: 'Building',
-    permission: 'company.read',
+    id: 'config',
+    label: 'Configurações',
+    icon: 'Settings',
+    links: [
+      { to: '/empresa', label: 'Empresa', icon: 'Building', permission: 'company.read' },
+      { to: '/usuarios', label: 'Usuários', icon: 'Users', permission: 'users.list' },
+      {
+        to: '/perfis-de-permissao',
+        label: 'Perfis',
+        icon: 'ShieldPlus',
+        permission: 'permissions.manage',
+      },
+    ],
   },
 ]
 
+const route = useRoute()
 const { can, isAtLeast } = usePermissions()
 
-// Esconde itens sem permissão/papel; itens sem restrição sempre aparecem.
-const visibleLinks = computed(() =>
-  links.filter((link) => {
-    if (link.permission && !can(link.permission)) return false
-    if (link.role && !isAtLeast(link.role)) return false
-    return true
-  }),
-)
-
-// Entrada encenada: os itens surgem em cascata a partir da esquerda.
-const containerVariants = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.05, delayChildren: 0.08 },
-  },
+function isVisible(link: NavLink): boolean {
+  if (link.permission && !can(link.permission)) return false
+  if (link.role && !isAtLeast(link.role)) return false
+  return true
 }
 
-const itemVariants = {
-  hidden: { opacity: 0, x: -12 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { type: 'spring', stiffness: 400, damping: 30 },
+// Esconde grupos sem nenhum item visível.
+const visibleGroups = computed<NavGroup[]>(() =>
+  groups
+    .map((group) => ({ ...group, links: group.links.filter(isVisible) }))
+    .filter((group) => group.links.length > 0),
+)
+
+// ---- Estado de colapso (persistido) ----
+function loadCollapsed(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(StorageKeys.SIDEBAR_GROUPS)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as unknown
+    return parsed && typeof parsed === 'object'
+      ? (parsed as Record<string, boolean>)
+      : {}
+  } catch {
+    return {}
+  }
+}
+
+const collapsed = reactive<Record<string, boolean>>(loadCollapsed())
+
+watch(
+  collapsed,
+  (value) =>
+    localStorage.setItem(StorageKeys.SIDEBAR_GROUPS, JSON.stringify(value)),
+  { deep: true },
+)
+
+function isRouteActive(to: string): boolean {
+  return route.path === to || route.path.startsWith(to + '/')
+}
+
+// Abre automaticamente o grupo que contém a rota atual (item nunca fica oculto).
+watch(
+  () => route.path,
+  () => {
+    const active = groups.find((g) => g.links.some((l) => isRouteActive(l.to)))
+    if (active) collapsed[active.id] = false
   },
+  { immediate: true },
+)
+
+function isOpen(id: string): boolean {
+  return !collapsed[id]
+}
+
+function toggle(id: string): void {
+  collapsed[id] = !collapsed[id]
+}
+
+// Transição de altura suave ao colapsar/expandir.
+function onEnter(el: Element): void {
+  const element = el as HTMLElement
+  element.style.height = '0'
+  void element.offsetHeight
+  element.style.height = element.scrollHeight + 'px'
+}
+function onLeave(el: Element): void {
+  const element = el as HTMLElement
+  element.style.height = element.scrollHeight + 'px'
+  void element.offsetHeight
+  element.style.height = '0'
 }
 </script>
 
 <style scoped lang="css">
 .sidebar-nav {
   background-color: var(--color-background);
+}
+
+.collapse-enter-active,
+.collapse-leave-active {
+  transition: height 200ms ease-in-out;
+}
+
+.collapse-enter-from,
+.collapse-leave-to {
+  height: 0;
 }
 </style>
