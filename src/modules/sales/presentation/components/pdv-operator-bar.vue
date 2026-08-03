@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { Icon } from '@/shared/ui'
+import { Dropdown, Icon } from '@/shared/ui'
 
 const props = defineProps<{
   sellerName: string
   sellerRole: string | null
   establishmentName?: string | null
   isFullscreen: boolean
+  cashRegisterName?: string | null
 }>()
 
 const emit = defineEmits<{
   'toggle-fullscreen': []
   help: []
   exit: []
+  suprimento: []
+  sangria: []
+  fechar: []
 }>()
 
 const now = ref(new Date())
@@ -82,6 +86,50 @@ onBeforeUnmount(() => {
 
     <!-- Vendedor + ações -->
     <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Caixa aberto: sangria / suprimento / fechar -->
+      <Dropdown
+        v-if="props.cashRegisterName !== undefined"
+        align="right"
+        trigger-class="flex items-center gap-1.5 rounded-full bg-background/10 px-3 py-1.5 text-xs font-medium text-background transition-colors hover:bg-background/20"
+        trigger-active-class="bg-background/20"
+        trigger-label="Ações do caixa"
+      >
+        <template #trigger>
+          <Icon name="Wallet" size="sm" />
+          <span class="hidden max-w-[9rem] truncate sm:inline">
+            {{ props.cashRegisterName || 'Caixa aberto' }}
+          </span>
+          <Icon name="ChevronDown" size="xs" />
+        </template>
+        <template #default="{ close }">
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
+            @click="emit('suprimento'), close()"
+          >
+            <Icon name="ArrowDownToLine" size="sm" class="text-success-600" />
+            Suprimento
+          </button>
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
+            @click="emit('sangria'), close()"
+          >
+            <Icon name="ArrowUpFromLine" size="sm" class="text-error-600" />
+            Sangria
+          </button>
+          <div class="my-1 border-t border-line-2"></div>
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            @click="emit('fechar'), close()"
+          >
+            <Icon name="Lock" size="sm" />
+            Fechar caixa
+          </button>
+        </template>
+      </Dropdown>
+
       <div class="flex items-center gap-2 rounded-full bg-background/10 py-1 pr-3 pl-1">
         <span
           class="flex size-7 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white"
