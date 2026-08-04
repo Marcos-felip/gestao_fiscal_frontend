@@ -2,36 +2,37 @@
 
 ### Requirement: Emissão de NFC-e a partir da venda
 A interface SHALL permitir emitir NFC-e de uma venda concluída (no PDV e/ou no
-detalhe da venda) e SHALL acompanhar o status assíncrono até AUTORIZADO ou
-REJEITADO, refletindo o status fiscal na venda.
+detalhe da venda) via `POST /fiscal/documents/nfce`, SHALL acompanhar o status
+assíncrono por polling até AUTORIZADO/REJEITADO/ERRO e SHALL refletir o status
+fiscal na venda.
 
-#### Scenario: Emissão autorizada
-- **WHEN** o operador emite a NFC-e de uma venda válida e a SEFAZ autoriza
-- **THEN** a interface mostra a nota autorizada e a venda passa a exibir o status fiscal correspondente
+#### Scenario: Emissão e acompanhamento assíncrono
+- **WHEN** o operador emite a NFC-e de uma venda válida
+- **THEN** a interface registra a emissão como PENDENTE e vai atualizando o status por polling (PROCESSANDO → AUTORIZADO/REJEITADO/ERRO), sem travar a tela
 
-#### Scenario: Configuração incompleta
+#### Scenario: Configuração ou produto incompleto
 - **WHEN** o operador tenta emitir com configuração fiscal ou produto incompleto
-- **THEN** a interface bloqueia/avisa e aponta o que falta
+- **THEN** a interface avisa (pré-checagem client-side e/ou erro 400 do backend) e aponta o que falta, sem criar documento
+
+#### Scenario: Rejeição exibida
+- **WHEN** a emissão termina como REJEITADO ou ERRO
+- **THEN** a interface mostra o código e a mensagem de rejeição na venda e no documento
 
 ### Requirement: Lista e detalhe de documentos fiscais
-A interface SHALL listar os documentos fiscais com filtros (status, período,
-estabelecimento, modelo) e SHALL exibir o detalhe com chave, protocolo, datas,
-valores e o snapshot, além de permitir ver/baixar DANFE, baixar XML, exibir o QR
-Code e reimprimir.
+A interface SHALL listar os documentos fiscais (`GET /fiscal/documents`) com filtros
+(status, período, estabelecimento, modelo) e paginação sobre o envelope
+`{ data, total, page, limit }`, e SHALL exibir o detalhe (`GET /fiscal/documents/:id`)
+com chave, protocolo, datas, valores, snapshot dos itens/pagamentos, histórico de
+status e eventos, além de permitir baixar o XML disponível.
 
-#### Scenario: Baixar DANFE e XML
-- **WHEN** o usuário abre uma NFC-e autorizada
-- **THEN** consegue visualizar/baixar o DANFE, baixar o XML autorizado e ver o QR Code
+#### Scenario: Filtrar e paginar
+- **WHEN** o usuário filtra por status e período
+- **THEN** a lista aplica os filtros e navega pelas páginas usando `total`/`page`/`limit`
 
-### Requirement: Cancelamento e central de rejeições
-A interface SHALL permitir cancelar uma nota autorizada com justificativa de no
-mínimo 15 caracteres, e SHALL apresentar uma central de rejeições com código,
-mensagem amigável e ação de reprocessar.
+#### Scenario: Baixar XML
+- **WHEN** o usuário abre um documento que tem XML enviado/autorizado/cancelamento
+- **THEN** consegue baixar o XML correspondente (`/xml/:tipo`), tratado como texto e salvo como arquivo `.xml`
 
-#### Scenario: Cancelamento com justificativa curta
-- **WHEN** o usuário digita uma justificativa com menos de 15 caracteres
-- **THEN** o botão de cancelar permanece bloqueado e a interface explica o mínimo exigido
-
-#### Scenario: Reprocessar nota rejeitada
-- **WHEN** uma nota está rejeitada e o cadastro foi corrigido
-- **THEN** o usuário aciona o retry pela central de rejeições e acompanha a nova tentativa
+#### Scenario: Ações indisponíveis na Fase A
+- **WHEN** o usuário abre um documento autorizado
+- **THEN** as ações de cancelar, reprocessar, consultar SEFAZ e baixar DANFE/QR ficam ocultas ou desabilitadas (sem endpoint nesta fase)

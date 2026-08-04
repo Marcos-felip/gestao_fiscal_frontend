@@ -1,58 +1,69 @@
+> Escopo: **Fase A** do backend (emissão em homologação). Itens de Fase B/C estão
+> na seção 8 (diferidos) e só entram quando o backend liberar os endpoints.
+
 ## 1. Fundação do módulo fiscal (frontend)
 
 - [ ] 1.1 Criar `src/modules/fiscal/**` (domain/data/application/factories/presentation)
-- [ ] 1.2 Enums espelho: `fiscal-document-model` (55/65), `fiscal-environment` (homologação/produção), `fiscal-document-status`
-- [ ] 1.3 Entidades: `FiscalDocument`, `FiscalDocumentEvent`, `FiscalSettings` (decimais string → toNumber)
-- [ ] 1.4 Mappers (+specs), repositórios (httpClient → Either) e interfaces
-- [ ] 1.5 Route names + rotas (gated por permissão) + item(ns) de sidebar
+- [ ] 1.2 Enums espelho: `fiscal-document-model` (NFE/NFCE), `fiscal-environment` (HOMOLOGACAO/PRODUCAO), `fiscal-document-status` (10 valores), `sale-fiscal-status` (5 valores — o `FiscalStatus` da venda), `tax-regime-code` (CRT), `fiscal-payment-code`
+- [ ] 1.3 Entidades: `FiscalDocument`, `FiscalStatusHistory`, `FiscalDocumentEvent`, `FiscalSettings` (decimais string → `toNumber`; datas ISO → Date/format)
+- [ ] 1.4 Mappers (+specs) tolerando `valorTotal`/alíquotas como string e campos `null`; repositórios (httpClient → Either) e interfaces
+- [ ] 1.5 Response paginada `{ data, total, page, limit }` para documentos (mapper calcula `totalPages`/`hasNext`)
+- [ ] 1.6 Route names + rotas (gated por `fiscal.*`) + item(ns) de sidebar
 
-## 2. Configuração fiscal (empresa + estabelecimento)
+## 2. Configuração fiscal do estabelecimento
 
-- [ ] 2.1 Tela de configuração fiscal do estabelecimento (ambiente, série/numeração NFC-e, CSC/idCSC)
-- [ ] 2.2 Formulário read-only quando sem `fiscal.settings.edit` (padrão de gating do app)
-- [ ] 2.3 Complementar os dados fiscais da empresa (CRT, IE/IM, IBGE, contribuinte ICMS) na página de Empresa
-- [ ] 2.4 Indicador visual de "configuração fiscal completa/incompleta"
+- [ ] 2.1 Tela de configuração fiscal por estabelecimento (`GET /fiscal/settings` + `GET/POST/PATCH /fiscal/settings/:establishmentId`): ambiente, série, próximo número, CSC/idCSC
+- [ ] 2.2 Tratar `GET /fiscal/settings/:establishmentId` retornando `null` (200) → estado "sem configuração" com ação de criar
+- [ ] 2.3 Formulário read-only quando sem `fiscal.settings.edit` (padrão de gating do app)
+- [ ] 2.4 Exibir metadados do certificado (validade/titular) quando presentes; alerta a ≤30 dias do vencimento / vencido
+- [ ] 2.5 Indicador visual de "configuração fiscal completa/incompleta" do estabelecimento
 
-## 3. Certificado A1
+## 3. Dados fiscais da empresa
 
-- [ ] 3.1 Upload do certificado A1 (.pfx) + senha (envio seguro, sem exibir a senha)
-- [ ] 3.2 Exibir validade e titular do certificado
-- [ ] 3.3 Alerta de certificado próximo do vencimento / vencido
-- [ ] 3.4 Substituir certificado
-- [ ] 3.5 Botão "testar comunicação com a SEFAZ" com feedback (toast/estado)
+> ⚠️ BLOQUEADO (backend): `UpdateCompanyDto` (PATCH `/companies/:id`) NÃO aceita os
+> campos fiscais (CRT, IBGE, contribuinte ICMS, IE/IM, razão social, tel/e-mail
+> fiscal) — eles só existem no `onboarding.dto` (one-time). Precisa o backend
+> estender `UpdateCompanyDto` ou expor `PATCH /companies/:id/fiscal` antes de 3.1.
+> Enquanto isso, exibir só leitura do indicador `fiscalConfigComplete`.
 
-## 4. Pendências fiscais dos produtos
+- [ ] 3.1 (bloqueado) Complementar dados fiscais da empresa (CRT, IE/IM, código IBGE, contribuinte ICMS, tel/e-mail fiscal) na página de Empresa — aguarda endpoint de update
+- [ ] 3.2 Indicador `fiscalConfigComplete` da empresa (somente leitura por enquanto)
+- [ ] 3.3 Máscaras/validações client-side (CNPJ, IE, IBGE, CEP) — quando 3.1 desbloquear
 
-- [ ] 4.1 Tela/painel de produtos com pendência fiscal (consome relatório do backend)
-- [ ] 4.2 Adicionar seção fiscal ao formulário de produto (NCM, CEST, origem, CFOP, CSOSN/CST, alíquotas, unidade, GTIN)
-- [ ] 4.3 Máscaras/validações client-side dos campos fiscais
-- [ ] 4.4 Indicador de "produto fiscalmente completo" na lista/detalhe
+## 4. Dados e pendências fiscais dos produtos
+
+- [ ] 4.1 Seção fiscal no formulário de produto (NCM, CEST, origem, CFOP, CSOSN/CST ICMS/PIS/COFINS, alíquotas, unidade, GTIN)
+- [ ] 4.2 Máscaras/validações client-side dos campos fiscais
+- [ ] 4.3 Indicador `fiscalComplete` na lista/detalhe de produto
+- [ ] 4.4 Lista/painel de produtos com pendência fiscal (filtro client-side por `fiscalComplete=false`; sem endpoint dedicado na Fase A)
 
 ## 5. Emissão de NFC-e (a partir da venda)
 
-- [ ] 5.1 Gatilho de emissão na venda concluída (PDV e/ou detalhe da venda)
-- [ ] 5.2 Estado de progresso da emissão assíncrona (PENDENTE/PROCESSANDO → AUTORIZADO/REJEITADO)
-- [ ] 5.3 Bloquear/avisar quando configuração ou produtos estiverem incompletos
-- [ ] 5.4 Exibir o status fiscal na venda (badge)
+- [ ] 5.1 Gatilho de emissão na venda concluída — `POST /fiscal/documents/nfce { saleId, establishmentId?, payments? }` (PDV e/ou detalhe da venda), gated por `fiscal.emit`
+- [ ] 5.2 Acompanhar status assíncrono por **polling** (`GET /fiscal/documents/:id` ou `/documents/sale/:saleId`): PENDENTE → PROCESSANDO → AUTORIZADO/REJEITADO/ERRO
+- [ ] 5.3 Pré-checagem/aviso quando empresa, estabelecimento ou produtos estiverem incompletos + tratar erro 400 de configuração incompleta do backend
+- [ ] 5.4 Badge de status fiscal na venda (enum `FiscalStatus` de 5 valores) e exibir código/mensagem de rejeição quando REJEITADO/ERRO
 
 ## 6. Documentos fiscais (lista e detalhe)
 
-- [ ] 6.1 Lista de documentos fiscais (filtros: status, período, estabelecimento, modelo) paginada
-- [ ] 6.2 Badge de status fiscal (cores por situação)
-- [ ] 6.3 Detalhe do documento (chave, protocolo, datas, valores, snapshot dos itens/pagamentos)
-- [ ] 6.4 Ver/baixar **DANFE**, baixar **XML**, exibir **QR Code**, reimprimir
+- [ ] 6.1 Lista de documentos fiscais (`GET /fiscal/documents`) paginada, filtros: status, período (createdAt), estabelecimento, modelo
+- [ ] 6.2 Badge de status fiscal do documento (`FiscalDocumentStatus`, cores por situação)
+- [ ] 6.3 Detalhe do documento (`GET /fiscal/documents/:id`): chave, protocolo, datas, `valorTotal`, snapshot dos itens/pagamentos, `statusHistory[]` e `events[]`
+- [ ] 6.4 Download do **XML** (`GET /fiscal/documents/:id/xml/:tipo` — string crua → blob `text/xml`), com `:tipo ∈ enviado|autorizado|cancelamento` conforme disponível
 
-## 7. Cancelamento e rejeições
+## 7. Verificação
 
-- [ ] 7.1 Diálogo de cancelamento com justificativa (mín. 15 caracteres, validação client-side)
-- [ ] 7.2 Refletir CANCELADO no documento e na venda
-- [ ] 7.3 Central de rejeições (lista + código + mensagem amigável + retorno técnico)
-- [ ] 7.4 Ação de retry (reprocessar) a partir do documento rejeitado
-- [ ] 7.5 Consulta de situação na SEFAZ a partir do detalhe
+- [ ] 7.1 `npm run verify` verde (lint + testes + build); specs dos mappers
+- [ ] 7.2 Gating por permissão conferido (esconder/desabilitar conforme `fiscal.*`; OWNER sempre passa; backend semeia só ADMIN)
+- [ ] 7.3 Dark mode e responsividade conferidos
+- [ ] 7.4 Atualizar `AGENTS.md` com o módulo fiscal
 
-## 8. Verificação
+## 8. Diferido — Fase B/C (aguardando endpoints do backend)
 
-- [ ] 8.1 `npm run verify` verde (lint + testes + build); specs dos mappers
-- [ ] 8.2 Gating por permissão conferido (esconder/desabilitar conforme `fiscal.*`)
-- [ ] 8.3 Dark mode e responsividade conferidos
-- [ ] 8.4 Atualizar `AGENTS.md` com o módulo fiscal
+- [ ] 8.1 Upload/substituição de certificado A1 (.pfx) — quando existir rota de upload
+- [ ] 8.2 Botão "testar comunicação com a SEFAZ" — quando existir endpoint
+- [ ] 8.3 Cancelamento com justificativa (mín. 15 caracteres) — Fase B
+- [ ] 8.4 Central de rejeições + ação de retry — Fase B
+- [ ] 8.5 Consulta de situação na SEFAZ a partir do detalhe — Fase B
+- [ ] 8.6 Ver/baixar DANFE, exibir QR Code, reimprimir — quando populados/servidos
+- [ ] 8.7 Ativação de produção / checklist — Fase C
