@@ -554,14 +554,18 @@ const item = {
           </FormSection>
         </motion.div>
 
-        <!-- Seção 2: Certificado digital A1 -->
-        <motion.div :variants="item">
+        <!-- Seções 2 e 3: Certificado (2/3) + Comunicação SEFAZ (1/3) -->
+        <motion.div
+          :variants="item"
+          class="grid items-start gap-6 lg:grid-cols-3"
+        >
+          <!-- Certificado digital A1 -->
           <FormSection
+            class="lg:col-span-2"
             icon="ShieldCheck"
             title="Certificado digital A1"
             description="Certificado usado para assinar e transmitir a NFC-e."
           >
-            <!-- Carregando status -->
             <p
               v-if="controller.certificateLoading.value"
               class="flex items-center gap-2 text-sm text-muted-foreground"
@@ -571,92 +575,88 @@ const item = {
             </p>
 
             <template v-else>
-              <!-- Status atual -->
-              <template v-if="certificateView">
-                <dl
-                  class="grid grid-cols-1 gap-x-6 gap-y-2 rounded-xl border border-line-2 bg-muted/30 p-4 text-sm sm:grid-cols-2"
-                >
-                  <div class="flex justify-between gap-4">
-                    <dt class="text-muted-foreground">Situação</dt>
-                    <dd class="font-medium text-success-600">Configurado</dd>
-                  </div>
-                  <div class="flex justify-between gap-4">
-                    <dt class="text-muted-foreground">Válido até</dt>
-                    <dd class="text-right tabular-nums text-foreground">
-                      {{ certificateView.validade }}
-                    </dd>
-                  </div>
-                  <div class="flex justify-between gap-4">
-                    <dt class="shrink-0 text-muted-foreground">Titular</dt>
-                    <dd class="min-w-0 truncate text-right text-foreground">
-                      {{ certificateView.titular || '—' }}
-                    </dd>
-                  </div>
+              <div class="grid gap-5 lg:grid-cols-2">
+                <!-- Coluna: situação atual -->
+                <div class="flex flex-col gap-3">
+                  <template v-if="certificateView">
+                    <dl
+                      class="grid grid-cols-1 gap-x-6 gap-y-2 rounded-xl border border-line-2 bg-muted/30 p-4 text-sm"
+                    >
+                      <div class="flex justify-between gap-4">
+                        <dt class="text-muted-foreground">Situação</dt>
+                        <dd class="font-medium text-success-600">Configurado</dd>
+                      </div>
+                      <div class="flex justify-between gap-4">
+                        <dt class="text-muted-foreground">Válido até</dt>
+                        <dd class="text-right tabular-nums text-foreground">
+                          {{ certificateView.validade }}
+                        </dd>
+                      </div>
+                      <div class="flex justify-between gap-4">
+                        <dt class="shrink-0 text-muted-foreground">Titular</dt>
+                        <dd class="min-w-0 truncate text-right text-foreground">
+                          {{ certificateView.titular || '—' }}
+                        </dd>
+                      </div>
+                      <div
+                        v-if="certificateView.subject"
+                        class="flex justify-between gap-4"
+                      >
+                        <dt class="shrink-0 text-muted-foreground">Subject</dt>
+                        <dd class="min-w-0 truncate text-right text-foreground">
+                          {{ certificateView.subject }}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div
+                      v-if="certificateView.vencido"
+                      class="flex items-start gap-2 rounded-lg bg-error-500/10 px-4 py-3 text-sm text-error-600"
+                    >
+                      <Icon
+                        name="TriangleAlert"
+                        size="sm"
+                        class="mt-0.5 shrink-0"
+                      />
+                      <span>
+                        Certificado vencido. A emissão de NFC-e falhará até a
+                        substituição.
+                      </span>
+                    </div>
+                    <div
+                      v-else-if="certificateView.isExpiring"
+                      class="flex items-start gap-2 rounded-lg bg-warning-500/10 px-4 py-3 text-sm text-warning-700"
+                    >
+                      <Icon
+                        name="TriangleAlert"
+                        size="sm"
+                        class="mt-0.5 shrink-0"
+                      />
+                      <span>
+                        Certificado vence em
+                        {{ certificateView.diasParaVencer }}
+                        {{
+                          certificateView.diasParaVencer === 1 ? 'dia' : 'dias'
+                        }}. Programe a substituição.
+                      </span>
+                    </div>
+                  </template>
+
                   <div
-                    v-if="certificateView.subject"
-                    class="flex justify-between gap-4"
+                    v-else
+                    class="flex h-full min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-3 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground"
                   >
-                    <dt class="shrink-0 text-muted-foreground">Subject</dt>
-                    <dd class="min-w-0 truncate text-right text-foreground">
-                      {{ certificateView.subject }}
-                    </dd>
+                    <Icon name="ShieldOff" size="md" class="opacity-60" />
+                    <span>Nenhum certificado configurado.</span>
                   </div>
-                </dl>
-
-                <!-- Alerta de vencimento -->
-                <div
-                  v-if="certificateView.vencido"
-                  class="mt-3 flex items-start gap-2 rounded-lg bg-error-500/10 px-4 py-3 text-sm text-error-600"
-                >
-                  <Icon
-                    name="TriangleAlert"
-                    size="sm"
-                    class="mt-0.5 shrink-0"
-                  />
-                  <span>
-                    Certificado vencido. A emissão de NFC-e falhará até a
-                    substituição.
-                  </span>
                 </div>
-                <div
-                  v-else-if="certificateView.isExpiring"
-                  class="mt-3 flex items-start gap-2 rounded-lg bg-warning-500/10 px-4 py-3 text-sm text-warning-700"
-                >
-                  <Icon
-                    name="TriangleAlert"
-                    size="sm"
-                    class="mt-0.5 shrink-0"
-                  />
-                  <span>
-                    Certificado vence em
-                    {{ certificateView.diasParaVencer }}
-                    {{ certificateView.diasParaVencer === 1 ? 'dia' : 'dias' }}.
-                    Programe a substituição.
-                  </span>
-                </div>
-              </template>
 
-              <!-- Sem certificado -->
-              <div
-                v-else
-                class="flex items-start gap-2 rounded-lg border border-line-2 bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
-              >
-                <Icon name="ShieldOff" size="sm" class="mt-0.5 shrink-0" />
-                <span>
-                  Nenhum certificado configurado para este estabelecimento.
-                </span>
-              </div>
+                <!-- Coluna: envio / substituição -->
+                <div v-if="canEdit" class="space-y-3">
+                  <p class="text-sm font-medium text-foreground">
+                    {{ uploadLabel }}
+                  </p>
 
-              <!-- Upload (gated fiscal.settings.edit) -->
-              <div
-                v-if="canEdit"
-                class="mt-5 space-y-3 border-t border-line-2 pt-5"
-              >
-                <p class="text-sm font-medium text-foreground">
-                  {{ uploadLabel }}
-                </p>
-
-                <div>
                   <input
                     ref="fileInput"
                     type="file"
@@ -664,34 +664,26 @@ const item = {
                     class="hidden"
                     @change="onFileChange"
                   />
-                  <div class="flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      class="inline-flex items-center gap-1.5 rounded-lg border border-line-2 bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                      @click="fileInput?.click()"
-                    >
-                      <Icon name="Upload" size="sm" />
-                      Escolher arquivo
-                    </button>
-                    <span
-                      class="min-w-0 flex-1 truncate text-sm text-muted-foreground"
-                    >
-                      {{
-                        selectedFile
-                          ? selectedFile.name
-                          : 'Nenhum arquivo (.pfx ou .p12, até 512 KB)'
-                      }}
+                  <button
+                    type="button"
+                    class="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-3 bg-muted/20 px-4 py-6 text-center transition-colors hover:border-primary/40 hover:bg-muted/40"
+                    @click="fileInput?.click()"
+                  >
+                    <Icon name="Upload" size="md" class="text-muted-foreground" />
+                    <span class="max-w-full truncate text-sm font-medium text-foreground">
+                      {{ selectedFile ? selectedFile.name : 'Escolher arquivo' }}
                     </span>
-                  </div>
+                    <span class="text-xs text-muted-foreground">
+                      .pfx ou .p12, até 512 KB
+                    </span>
+                  </button>
                   <p
                     v-if="fileError"
-                    class="mt-1.5 text-sm font-medium text-error-500"
+                    class="text-sm font-medium text-error-500"
                   >
                     {{ fileError }}
                   </p>
-                </div>
 
-                <div class="grid grid-cols-1 gap-3 sm:max-w-md">
                   <PasswordInput
                     v-model="certSenha"
                     autocomplete="new-password"
@@ -700,24 +692,36 @@ const item = {
                   >
                     <template #label>Senha do certificado</template>
                   </PasswordInput>
+
+                  <Button
+                    variant="primary"
+                    text-class="text-white"
+                    class="w-full"
+                    :loading="controller.uploading.value"
+                    loading-text="Enviando…"
+                    @click="submitCertificate"
+                  >
+                    <template #icon>
+                      <Icon name="ShieldCheck" size="sm" />
+                    </template>
+                    {{ uploadLabel }}
+                  </Button>
                 </div>
 
-                <Button
-                  variant="primary"
-                  text-class="text-white"
-                  :loading="controller.uploading.value"
-                  loading-text="Enviando…"
-                  @click="submitCertificate"
+                <!-- Somente leitura -->
+                <div
+                  v-else
+                  class="flex items-start gap-2 rounded-xl border border-line-2 bg-muted/30 px-4 py-3 text-sm text-muted-foreground"
                 >
-                  <template #icon>
-                    <Icon name="ShieldCheck" size="sm" />
-                  </template>
-                  {{ uploadLabel }}
-                </Button>
+                  <Icon name="Lock" size="sm" class="mt-0.5 shrink-0" />
+                  <span>
+                    Você não tem permissão para alterar o certificado.
+                  </span>
+                </div>
               </div>
 
-              <!-- Histórico (expansível) -->
-              <div class="mt-5 border-t border-line-2 pt-5">
+              <!-- Histórico (expansível, largura total) -->
+              <div class="border-t border-line-2 pt-5">
                 <button
                   type="button"
                   class="flex w-full items-center justify-between gap-2 text-sm font-medium text-foreground"
@@ -758,7 +762,7 @@ const item = {
                   >
                     Nenhum evento de certificado registrado.
                   </p>
-                  <ul v-else class="space-y-2">
+                  <ul v-else class="grid gap-2 sm:grid-cols-2">
                     <li
                       v-for="(event, index) in controller.certificateHistory
                         .value"
@@ -797,21 +801,75 @@ const item = {
               </div>
             </template>
           </FormSection>
-        </motion.div>
 
-        <!-- Seção 3: Comunicação com a SEFAZ -->
-        <motion.div :variants="item">
+          <!-- Comunicação com a SEFAZ -->
           <FormSection
             icon="RadioTower"
             title="Comunicação com a SEFAZ"
-            description="Testa a disponibilidade do serviço usando o certificado e a UF deste estabelecimento."
+            description="Disponibilidade do serviço via certificado e UF do estabelecimento."
           >
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <p class="text-sm text-muted-foreground">
-                Verifique se a SEFAZ está respondendo antes de emitir.
-              </p>
+            <div class="space-y-4">
+              <div
+                v-if="controller.sefazResult.value"
+                :class="[
+                  'flex items-start gap-2 rounded-xl px-4 py-3 text-sm',
+                  controller.sefazResult.value.disponivel
+                    ? 'bg-success-500/10 text-success-600'
+                    : 'bg-error-500/10 text-error-600',
+                ]"
+              >
+                <Icon
+                  :name="
+                    controller.sefazResult.value.disponivel
+                      ? 'CircleCheck'
+                      : 'CircleX'
+                  "
+                  size="sm"
+                  class="mt-0.5 shrink-0"
+                />
+                <span class="min-w-0">
+                  <span class="block font-medium">
+                    {{
+                      controller.sefazResult.value.disponivel
+                        ? 'SEFAZ disponível'
+                        : 'SEFAZ indisponível'
+                    }}
+                  </span>
+                  <span
+                    v-if="controller.sefazResult.value.mensagem"
+                    class="block"
+                  >
+                    {{ controller.sefazResult.value.mensagem }}
+                  </span>
+                  <span
+                    v-if="
+                      controller.sefazResult.value.tempoMedioResposta !== null
+                    "
+                    class="block text-xs opacity-80"
+                  >
+                    Tempo médio:
+                    <span class="tabular-nums">
+                      {{ controller.sefazResult.value.tempoMedioResposta }}
+                    </span>
+                    ms
+                  </span>
+                </span>
+              </div>
+
+              <div
+                v-else
+                class="flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-3 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground"
+              >
+                <Icon name="RadioTower" size="md" class="opacity-60" />
+                <span>Nenhum teste realizado ainda.</span>
+                <span class="text-xs">
+                  Confirme a resposta da SEFAZ antes de emitir.
+                </span>
+              </div>
+
               <Button
                 variant="ghost"
+                class="w-full"
                 :loading="controller.sefazTesting.value"
                 loading-text="Testando…"
                 @click="onTestSefaz"
@@ -821,53 +879,6 @@ const item = {
                 </template>
                 Testar comunicação
               </Button>
-            </div>
-
-            <div
-              v-if="controller.sefazResult.value"
-              :class="[
-                'mt-4 flex items-start gap-2 rounded-lg px-4 py-3 text-sm',
-                controller.sefazResult.value.disponivel
-                  ? 'bg-success-500/10 text-success-600'
-                  : 'bg-error-500/10 text-error-600',
-              ]"
-            >
-              <Icon
-                :name="
-                  controller.sefazResult.value.disponivel
-                    ? 'CircleCheck'
-                    : 'CircleX'
-                "
-                size="sm"
-                class="mt-0.5 shrink-0"
-              />
-              <span class="min-w-0">
-                <span class="block font-medium">
-                  {{
-                    controller.sefazResult.value.disponivel
-                      ? 'SEFAZ disponível'
-                      : 'SEFAZ indisponível'
-                  }}
-                </span>
-                <span
-                  v-if="controller.sefazResult.value.mensagem"
-                  class="block"
-                >
-                  {{ controller.sefazResult.value.mensagem }}
-                </span>
-                <span
-                  v-if="
-                    controller.sefazResult.value.tempoMedioResposta !== null
-                  "
-                  class="block text-xs opacity-80"
-                >
-                  Tempo médio de resposta:
-                  <span class="tabular-nums">
-                    {{ controller.sefazResult.value.tempoMedioResposta }}
-                  </span>
-                  ms
-                </span>
-              </span>
             </div>
           </FormSection>
         </motion.div>
