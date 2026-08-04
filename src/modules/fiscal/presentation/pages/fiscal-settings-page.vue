@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { motion } from 'motion-v'
 import { Icon, Skeleton } from '@/shared/ui'
-import FiscalSettingsDialog from '@/modules/fiscal/presentation/components/fiscal-settings-dialog.vue'
 import { makeFiscalSettingsController } from '@/modules/fiscal/factories/fiscal.factory'
 import type { FiscalSettingsRow } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
-import type { FiscalSettingsFormValues } from '@/modules/fiscal/presentation/schemas/fiscal-settings-schema'
-import { CreateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/create-fiscal-settings-dto'
-import { UpdateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/update-fiscal-settings-dto'
 import { fiscalEnvironmentLabels } from '@/enums/fiscal-environment.enum'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useProgress } from '@/shared/composables'
+import { routeNames } from '@/router/route-names'
 
 const controller = makeFiscalSettingsController()
 const progress = useProgress()
@@ -18,75 +15,17 @@ const { can } = usePermissions()
 
 const canEdit = computed(() => can('fiscal.settings.edit'))
 
-const dialogOpen = ref(false)
-
 onMounted(() => {
   progress.track(controller.load())
   controller.loadEngineHealth()
 })
 
-/** Trim que devolve `undefined` quando vazio (para não enviar campos em branco). */
-function optional(value: string): string | undefined {
-  const trimmed = value.trim()
-  return trimmed === '' ? undefined : trimmed
-}
-
-async function openRow(row: FiscalSettingsRow): Promise<void> {
-  const ok = await progress.track(controller.prepare(row.establishment))
-  if (!ok) return
-  dialogOpen.value = true
-  // Carrega certificado + histórico do estabelecimento em paralelo.
-  controller.loadCertificate(row.establishment.id)
-  controller.loadCertificateHistory(row.establishment.id)
-}
-
-async function onUploadCertificate(payload: {
-  file: File
-  senha: string
-}): Promise<void> {
-  const establishment = controller.editing.value?.establishment
-  if (!establishment) return
-  await controller.uploadCertificate(
-    establishment.id,
-    payload.file,
-    payload.senha,
-  )
-}
-
-async function onTestSefaz(): Promise<void> {
-  const establishment = controller.editing.value?.establishment
-  if (!establishment) return
-  await controller.testSefaz(establishment.id)
-}
-
-async function onSubmit(values: FiscalSettingsFormValues): Promise<void> {
-  const editing = controller.editing.value
-  if (!editing) return
-
-  const ok = editing.settings
-    ? await controller.update(
-        editing.establishment.id,
-        new UpdateFiscalSettingsDto({
-          ambiente: values.ambiente,
-          serieNfce: Number(values.serieNfce),
-          proximoNumeroNfce: Number(values.proximoNumeroNfce),
-          codigoCsc: optional(values.codigoCsc),
-          idCsc: optional(values.idCsc),
-          ativo: values.ativo,
-        }),
-      )
-    : await controller.create(
-        new CreateFiscalSettingsDto({
-          establishmentId: editing.establishment.id,
-          ambiente: values.ambiente,
-          serieNfce: Number(values.serieNfce),
-          codigoCsc: optional(values.codigoCsc),
-          idCsc: optional(values.idCsc),
-          ativo: values.ativo,
-        }),
-      )
-
-  if (ok) dialogOpen.value = false
+/** Abre a página dedicada de configuração do estabelecimento. */
+function openRow(row: FiscalSettingsRow): void {
+  controller.router.push({
+    name: routeNames.FISCAL_SETTINGS_DETAIL,
+    params: { establishmentId: row.establishment.id },
+  })
 }
 
 /** Um estabelecimento está "completo" quando tem certificado + CSC + ID. */
@@ -139,13 +78,6 @@ function statusBadge(row: FiscalSettingsRow): Badge {
     classes: 'bg-success-500/10 text-success-600',
   }
 }
-
-const dialogEstablishmentName = computed(
-  () => controller.editing.value?.establishment.name ?? '',
-)
-const dialogSettings = computed(
-  () => controller.editing.value?.settings ?? null,
-)
 
 /** Badge de saúde do motor fiscal exibido no topo da página. */
 const engineBadge = computed(() => {
@@ -330,7 +262,6 @@ const rowItem = {
         v-if="canEdit"
         type="button"
         class="inline-flex items-center gap-1.5 rounded-lg border border-line-2 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-        :disabled="controller.preparing.value"
         @click="openRow(row)"
       >
         <Icon :name="row.settings ? 'Pencil' : 'Settings'" size="sm" />
@@ -340,7 +271,6 @@ const rowItem = {
         v-else-if="row.settings"
         type="button"
         class="inline-flex items-center gap-1.5 rounded-lg border border-line-2 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-        :disabled="controller.preparing.value"
         @click="openRow(row)"
       >
         <Icon name="Eye" size="sm" />
@@ -348,23 +278,4 @@ const rowItem = {
       </button>
     </motion.div>
   </motion.div>
-
-  <!-- Diálogo de configuração -->
-  <FiscalSettingsDialog
-    v-model="dialogOpen"
-    :establishment-name="dialogEstablishmentName"
-    :settings="dialogSettings"
-    :readonly="!canEdit"
-    :loading="controller.saving.value"
-    :certificate="controller.certificate.value"
-    :certificate-loading="controller.certificateLoading.value"
-    :uploading="controller.uploading.value"
-    :certificate-history="controller.certificateHistory.value"
-    :history-loading="controller.historyLoading.value"
-    :sefaz-result="controller.sefazResult.value"
-    :sefaz-testing="controller.sefazTesting.value"
-    @submit="onSubmit"
-    @upload-certificate="onUploadCertificate"
-    @test-sefaz="onTestSefaz"
-  />
 </template>

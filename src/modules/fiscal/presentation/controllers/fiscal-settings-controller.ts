@@ -168,6 +168,26 @@ export class FiscalSettingsController extends BaseController {
     return ok
   }
 
+  /**
+   * Carrega a configuração de um estabelecimento diretamente pelo id (acesso via
+   * URL / atualização de página). Deve ser chamado após `load()`. Acha o
+   * estabelecimento entre as linhas, prepara a edição e busca o certificado e o
+   * histórico em paralelo. Retorna `false` quando o id não corresponde a nenhum
+   * estabelecimento — a página usa isso para o estado "não encontrado".
+   */
+  async prepareById(establishmentId: string): Promise<boolean> {
+    const row = this.rows.value.find(
+      (item) => item.establishment.id === establishmentId,
+    )
+    if (!row) return false
+    const ok = await this.prepare(row.establishment)
+    if (ok) {
+      void this.loadCertificate(establishmentId)
+      void this.loadCertificateHistory(establishmentId)
+    }
+    return true
+  }
+
   async create(dto: CreateFiscalSettingsDto): Promise<boolean> {
     this.saving.value = true
     let ok = false

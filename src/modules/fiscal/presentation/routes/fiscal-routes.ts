@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 import FiscalSettingsPage from '@/modules/fiscal/presentation/pages/fiscal-settings-page.vue'
+import FiscalSettingsDetailPage from '@/modules/fiscal/presentation/pages/fiscal-settings-detail-page.vue'
 import FiscalDocumentsPage from '@/modules/fiscal/presentation/pages/fiscal-documents-page.vue'
 import FiscalDocumentDetailPage from '@/modules/fiscal/presentation/pages/fiscal-document-detail-page.vue'
 import { routeNames } from '@/router/route-names'
@@ -11,6 +12,16 @@ export const fiscalRoutes: RouteRecordRaw[] = [
     component: FiscalSettingsPage,
     meta: {
       title: 'Configuração fiscal',
+      icon: 'ScrollText',
+      requiresPermission: 'fiscal.settings.read',
+    },
+  },
+  {
+    path: 'configuracao-fiscal/:establishmentId',
+    name: routeNames.FISCAL_SETTINGS_DETAIL,
+    component: FiscalSettingsDetailPage,
+    meta: {
+      title: 'Configuração do estabelecimento',
       icon: 'ScrollText',
       requiresPermission: 'fiscal.settings.read',
     },
