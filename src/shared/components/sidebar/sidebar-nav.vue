@@ -8,11 +8,7 @@
     </SidebarLink>
 
     <!-- Grupos: seção → sub-itens -->
-    <div
-      v-for="group in visibleGroups"
-      :key="group.id"
-      class="mt-2 first:mt-1"
-    >
+    <div v-for="group in visibleGroups" :key="group.id" class="mt-2 first:mt-1">
       <!-- Cabeçalho da seção (colapsa/expande) — mesma cara do item "Início" -->
       <button
         type="button"
@@ -92,9 +88,24 @@ const groups: NavGroup[] = [
     label: 'Operação',
     icon: 'Zap',
     links: [
-      { to: '/pdv', label: 'PDV', icon: 'ScanBarcode', permission: 'sales.create' },
-      { to: '/vendas', label: 'Vendas', icon: 'ShoppingBag', permission: 'sales.list' },
-      { to: '/compras', label: 'Compras', icon: 'ShoppingCart', permission: 'purchases.list' },
+      {
+        to: '/pdv',
+        label: 'PDV',
+        icon: 'ScanBarcode',
+        permission: 'sales.create',
+      },
+      {
+        to: '/vendas',
+        label: 'Vendas',
+        icon: 'ShoppingBag',
+        permission: 'sales.list',
+      },
+      {
+        to: '/compras',
+        label: 'Compras',
+        icon: 'ShoppingCart',
+        permission: 'purchases.list',
+      },
       {
         to: '/sessoes-de-caixa',
         label: 'Sessões de caixa',
@@ -123,14 +134,47 @@ const groups: NavGroup[] = [
     ],
   },
   {
+    id: 'fiscal',
+    label: 'Fiscal',
+    icon: 'ScrollText',
+    links: [
+      {
+        to: '/configuracao-fiscal',
+        label: 'Configuração fiscal',
+        icon: 'ScrollText',
+        permission: 'fiscal.settings.read',
+      },
+    ],
+  },
+  {
     id: 'cadastros',
     label: 'Cadastros',
     icon: 'Database',
     links: [
-      { to: '/produtos', label: 'Produtos', icon: 'Package', permission: 'products.list' },
-      { to: '/parceiros', label: 'Parceiros', icon: 'Users', permission: 'partners.list' },
-      { to: '/estoque', label: 'Estoque', icon: 'Layers', permission: 'stock.list' },
-      { to: '/caixas', label: 'Caixas', icon: 'Monitor', permission: 'cash-registers.list' },
+      {
+        to: '/produtos',
+        label: 'Produtos',
+        icon: 'Package',
+        permission: 'products.list',
+      },
+      {
+        to: '/parceiros',
+        label: 'Parceiros',
+        icon: 'Users',
+        permission: 'partners.list',
+      },
+      {
+        to: '/estoque',
+        label: 'Estoque',
+        icon: 'Layers',
+        permission: 'stock.list',
+      },
+      {
+        to: '/caixas',
+        label: 'Caixas',
+        icon: 'Monitor',
+        permission: 'cash-registers.list',
+      },
       {
         to: '/estabelecimentos',
         label: 'Estabelecimentos',
@@ -144,8 +188,18 @@ const groups: NavGroup[] = [
     label: 'Configurações',
     icon: 'Settings',
     links: [
-      { to: '/empresa', label: 'Empresa', icon: 'Building', permission: 'company.read' },
-      { to: '/usuarios', label: 'Usuários', icon: 'Users', permission: 'users.list' },
+      {
+        to: '/empresa',
+        label: 'Empresa',
+        icon: 'Building',
+        permission: 'company.read',
+      },
+      {
+        to: '/usuarios',
+        label: 'Usuários',
+        icon: 'Users',
+        permission: 'users.list',
+      },
       {
         to: '/perfis-de-permissao',
         label: 'Perfis',

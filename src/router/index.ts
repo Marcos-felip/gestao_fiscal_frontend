@@ -14,10 +14,14 @@ import { partnersRoutes } from '@/modules/partners/presentation/routes/partners-
 import { productsRoutes } from '@/modules/products/presentation/routes/products-routes'
 import { stockRoutes } from '@/modules/stock/presentation/routes/stock-routes'
 import { purchasesRoutes } from '@/modules/purchases/presentation/routes/purchases-routes'
-import { salesRoutes, pdvRoutes } from '@/modules/sales/presentation/routes/sales-routes'
+import {
+  salesRoutes,
+  pdvRoutes,
+} from '@/modules/sales/presentation/routes/sales-routes'
 import { receivablesRoutes } from '@/modules/receivables/presentation/routes/receivables-routes'
 import { payablesRoutes } from '@/modules/payables/presentation/routes/payables-routes'
 import { cashRoutes } from '@/modules/cash/presentation/routes/cash-routes'
+import { fiscalRoutes } from '@/modules/fiscal/presentation/routes/fiscal-routes'
 import { membershipsRoutes } from '@/modules/memberships/presentation/routes/memberships-routes'
 import { permissionsRoutes } from '@/modules/permissions/presentation/routes/permissions-routes'
 import { errorRoutes } from '@/modules/errors/presentation/routes/error-routes'
@@ -44,6 +48,7 @@ const router = createRouter({
         ...receivablesRoutes,
         ...payablesRoutes,
         ...cashRoutes,
+        ...fiscalRoutes,
         ...membershipsRoutes,
         ...permissionsRoutes,
       ],

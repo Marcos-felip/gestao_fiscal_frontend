@@ -11,10 +11,14 @@ import { EmitNfceUseCase } from '@/modules/fiscal/application/use-cases/emit-nfc
 import { GetFiscalDocumentHistoryUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-history.use-case'
 import { GetFiscalDocumentEventsUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-events.use-case'
 import { DownloadFiscalXmlUseCase } from '@/modules/fiscal/application/use-cases/download-fiscal-xml.use-case'
+import { FiscalSettingsController } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
+import type { FiscalEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
+import { EstablishmentRepository } from '@/modules/establishments/data/repositories/establishment-repository'
+import { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
 
 /**
- * Composition root do módulo fiscal. Monta repositórios e use-cases; os
- * controllers virão numa etapa posterior (ainda não há camada de apresentação).
+ * Composition root do módulo fiscal. Monta repositórios, use-cases e os
+ * controllers da camada de apresentação.
  */
 
 export function makeFiscalSettingsRepository(): FiscalSettingsRepository {
@@ -69,4 +73,33 @@ export function makeGetFiscalDocumentEventsUseCase(): GetFiscalDocumentEventsUse
 
 export function makeDownloadFiscalXmlUseCase(): DownloadFiscalXmlUseCase {
   return new DownloadFiscalXmlUseCase(makeFiscalDocumentsRepository())
+}
+
+/**
+ * Adapta a listagem de estabelecimentos (outro módulo) para o formato mínimo
+ * `{ id, name, type }` que a tela de configuração fiscal precisa. A costura
+ * entre módulos vive na factory — o único ponto autorizado a cruzar fronteiras.
+ */
+function makeFiscalEstablishmentsLoader(): FiscalEstablishmentsLoader {
+  const listEstablishments = new ListEstablishmentsUseCase(
+    new EstablishmentRepository(),
+  )
+  return async () => {
+    const result = await listEstablishments.execute()
+    return result.map((items) =>
+      items.map((e) => ({ id: e.id, name: e.name, type: e.type })),
+    )
+  }
+}
+
+export function makeFiscalSettingsController(): FiscalSettingsController {
+  const repository = makeFiscalSettingsRepository()
+
+  return new FiscalSettingsController(
+    new ListFiscalSettingsUseCase(repository),
+    new GetFiscalSettingsByEstablishmentUseCase(repository),
+    new CreateFiscalSettingsUseCase(repository),
+    new UpdateFiscalSettingsUseCase(repository),
+    makeFiscalEstablishmentsLoader(),
+  )
 }

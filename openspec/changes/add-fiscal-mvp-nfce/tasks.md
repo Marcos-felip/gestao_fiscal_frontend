@@ -8,15 +8,15 @@
 - [x] 1.3 Entidades: `FiscalDocument`, `FiscalStatusHistory`, `FiscalDocumentEvent`, `FiscalSettings` (decimais string → `toNumber`; datas ISO → Date/format)
 - [x] 1.4 Mappers (+specs) tolerando `valorTotal`/alíquotas como string e campos `null`; repositórios (httpClient → Either) e interfaces
 - [x] 1.5 Response paginada `{ data, total, page, limit }` para documentos (mapper calcula `totalPages`/`hasNext`)
-- [ ] 1.6 Route names + rotas (gated por `fiscal.*`) + item(ns) de sidebar
+- [x] 1.6 Route names + rotas (gated por `fiscal.*`) + item(ns) de sidebar
 
 ## 2. Configuração fiscal do estabelecimento
 
-- [ ] 2.1 Tela de configuração fiscal por estabelecimento (`GET /fiscal/settings` + `GET/POST/PATCH /fiscal/settings/:establishmentId`): ambiente, série, próximo número, CSC/idCSC
-- [ ] 2.2 Tratar `GET /fiscal/settings/:establishmentId` retornando `null` (200) → estado "sem configuração" com ação de criar
-- [ ] 2.3 Formulário read-only quando sem `fiscal.settings.edit` (padrão de gating do app)
-- [ ] 2.4 Exibir metadados do certificado (validade/titular) quando presentes; alerta a ≤30 dias do vencimento / vencido
-- [ ] 2.5 Indicador visual de "configuração fiscal completa/incompleta" do estabelecimento
+- [x] 2.1 Tela de configuração fiscal por estabelecimento (`GET /fiscal/settings` + `GET/POST/PATCH /fiscal/settings/:establishmentId`): ambiente, série, próximo número, CSC/idCSC
+- [x] 2.2 Tratar `GET /fiscal/settings/:establishmentId` retornando `null` (200) → estado "sem configuração" com ação de criar
+- [x] 2.3 Formulário read-only quando sem `fiscal.settings.edit` (padrão de gating do app)
+- [x] 2.4 Exibir metadados do certificado (validade/titular) quando presentes; alerta a ≤30 dias do vencimento / vencido
+- [x] 2.5 Indicador visual de "configuração fiscal completa/incompleta" do estabelecimento
 
 ## 3. Dados fiscais da empresa
 

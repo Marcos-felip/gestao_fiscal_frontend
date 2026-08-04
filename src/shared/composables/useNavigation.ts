@@ -91,6 +91,11 @@ const navigationItems = computed((): NavigationItem[] => {
       to: '/sessoes-de-caixa',
     },
     {
+      id: 'fiscal-settings',
+      label: 'Configuração fiscal',
+      to: '/configuracao-fiscal',
+    },
+    {
       id: 'account',
       label: 'Conta',
       children: [
