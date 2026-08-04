@@ -7,6 +7,10 @@ import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
 import { unitOfMeasureOptions } from '@/enums/unit-of-measure.enum'
 import { productOriginOptions } from '@/enums/product-origin.enum'
+import {
+  csosnOptions,
+  cstIcmsOptions,
+} from '@/enums/fiscal-tax-situation.enum'
 import { formatDecimalInput, onlyDigits } from '@/shared/ui/utils/masks'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {
@@ -50,6 +54,16 @@ watch(
 const originOptions = [
   { value: '', label: 'Não informar' },
   ...productOriginOptions,
+]
+
+// CSOSN/CST ICMS restritos aos valores aceitos pelo motor fiscal.
+const csosnSelectOptions = [
+  { value: '', label: 'Não informar' },
+  ...csosnOptions,
+]
+const cstIcmsSelectOptions = [
+  { value: '', label: 'Não informar' },
+  ...cstIcmsOptions,
 ]
 
 function addAttribute(): void {
@@ -345,27 +359,23 @@ const item = {
 
               <!-- Situação tributária: CSOSN / CST ICMS / PIS / COFINS -->
               <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                <Input
+                <Select
                   v-model="form.csosn"
-                  maxlength="4"
-                  inputmode="numeric"
-                  :sanitize="onlyDigits"
-                  placeholder="102"
+                  :options="csosnSelectOptions"
+                  placeholder="CSOSN"
                   :error="errors.csosn"
                 >
                   <template #label>CSOSN</template>
-                </Input>
+                </Select>
 
-                <Input
+                <Select
                   v-model="form.cstIcms"
-                  maxlength="3"
-                  inputmode="numeric"
-                  :sanitize="onlyDigits"
-                  placeholder="00"
+                  :options="cstIcmsSelectOptions"
+                  placeholder="CST ICMS"
                   :error="errors.cstIcms"
                 >
                   <template #label>CST ICMS</template>
-                </Input>
+                </Select>
 
                 <Input
                   v-model="form.cstPis"
