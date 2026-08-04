@@ -10,6 +10,7 @@ import type {
 } from '@/modules/companies/presentation/schemas/company-schema'
 import type { CompanyType } from '@/enums/company-type.enum'
 import type { TaxRegime } from '@/enums/tax-regime.enum'
+import type { TaxRegimeCode } from '@/enums/tax-regime-code.enum'
 import type { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
 import type { UpdateEstablishmentUseCase } from '@/modules/establishments/application/use-cases/update-establishment.use-case'
 import { UpdateEstablishmentDto } from '@/modules/establishments/domain/dto/update-establishment-dto'
@@ -57,11 +58,21 @@ export class CompanyController extends BaseController {
     stateRegistration: '',
     phone: '',
     taxRegime: '',
+    razaoSocial: '',
+    nomeFantasia: '',
+    crt: '',
+    contribuinteIcms: false,
+    inscricaoEstadual: '',
+    inscricaoMunicipal: '',
+    codigoIbgeMunicipio: '',
+    telefoneFiscal: '',
+    emailFiscal: '',
   })
 
   readonly sede = ref<SedeFormValues>(emptySede())
   readonly hasMatriz = ref(false)
   readonly loaded = ref(false)
+  readonly fiscalConfigComplete = ref(false)
 
   constructor(
     getCompanyUseCase: GetCompanyUseCase,
@@ -114,6 +125,15 @@ export class CompanyController extends BaseController {
       taxRegime: (input.company.taxRegime || undefined) as
         | TaxRegime
         | undefined,
+      razaoSocial: input.company.razaoSocial || undefined,
+      nomeFantasia: input.company.nomeFantasia || undefined,
+      crt: (input.company.crt || undefined) as TaxRegimeCode | undefined,
+      contribuinteIcms: input.company.contribuinteIcms,
+      inscricaoEstadual: input.company.inscricaoEstadual || undefined,
+      inscricaoMunicipal: input.company.inscricaoMunicipal || undefined,
+      codigoIbgeMunicipio: input.company.codigoIbgeMunicipio || undefined,
+      telefoneFiscal: input.company.telefoneFiscal || undefined,
+      emailFiscal: input.company.emailFiscal || undefined,
     })
 
     const companyResult = await this.updateCompanyUseCase.execute(
@@ -184,7 +204,19 @@ export class CompanyController extends BaseController {
       stateRegistration: company.stateRegistration ?? '',
       phone: company.phone ? formatPhone(company.phone) : '',
       taxRegime: company.taxRegime ?? '',
+      razaoSocial: company.razaoSocial ?? '',
+      nomeFantasia: company.nomeFantasia ?? '',
+      crt: company.crt ?? '',
+      contribuinteIcms: company.contribuinteIcms,
+      inscricaoEstadual: company.inscricaoEstadual ?? '',
+      inscricaoMunicipal: company.inscricaoMunicipal ?? '',
+      codigoIbgeMunicipio: company.codigoIbgeMunicipio ?? '',
+      telefoneFiscal: company.telefoneFiscal
+        ? formatPhone(company.telefoneFiscal)
+        : '',
+      emailFiscal: company.emailFiscal ?? '',
     }
+    this.fiscalConfigComplete.value = company.fiscalConfigComplete
   }
 
   private applySede(matriz: Establishment): void {

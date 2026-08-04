@@ -20,15 +20,12 @@
 
 ## 3. Dados fiscais da empresa
 
-> ⚠️ BLOQUEADO (backend): `UpdateCompanyDto` (PATCH `/companies/:id`) NÃO aceita os
-> campos fiscais (CRT, IBGE, contribuinte ICMS, IE/IM, razão social, tel/e-mail
-> fiscal) — eles só existem no `onboarding.dto` (one-time). Precisa o backend
-> estender `UpdateCompanyDto` ou expor `PATCH /companies/:id/fiscal` antes de 3.1.
-> Enquanto isso, exibir só leitura do indicador `fiscalConfigComplete`.
+> ✅ Destravado: o backend passou a aceitar os campos fiscais no `UpdateCompanyDto`
+> (`PATCH /companies/:id`).
 
-- [ ] 3.1 (bloqueado) Complementar dados fiscais da empresa (CRT, IE/IM, código IBGE, contribuinte ICMS, tel/e-mail fiscal) na página de Empresa — aguarda endpoint de update
-- [ ] 3.2 Indicador `fiscalConfigComplete` da empresa (somente leitura por enquanto)
-- [ ] 3.3 Máscaras/validações client-side (CNPJ, IE, IBGE, CEP) — quando 3.1 desbloquear
+- [x] 3.1 Complementar dados fiscais da empresa (CRT, IE/IM, código IBGE, contribuinte ICMS, tel/e-mail fiscal) na página de Empresa
+- [x] 3.2 Indicador `fiscalConfigComplete` da empresa
+- [x] 3.3 Máscaras/validações client-side (IE, IBGE, e-mail)
 
 ## 4. Dados e pendências fiscais dos produtos
 
