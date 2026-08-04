@@ -3,11 +3,11 @@
 
 ## 1. Fundação do módulo fiscal (frontend)
 
-- [ ] 1.1 Criar `src/modules/fiscal/**` (domain/data/application/factories/presentation)
-- [ ] 1.2 Enums espelho: `fiscal-document-model` (NFE/NFCE), `fiscal-environment` (HOMOLOGACAO/PRODUCAO), `fiscal-document-status` (10 valores), `sale-fiscal-status` (5 valores — o `FiscalStatus` da venda), `tax-regime-code` (CRT), `fiscal-payment-code`
-- [ ] 1.3 Entidades: `FiscalDocument`, `FiscalStatusHistory`, `FiscalDocumentEvent`, `FiscalSettings` (decimais string → `toNumber`; datas ISO → Date/format)
-- [ ] 1.4 Mappers (+specs) tolerando `valorTotal`/alíquotas como string e campos `null`; repositórios (httpClient → Either) e interfaces
-- [ ] 1.5 Response paginada `{ data, total, page, limit }` para documentos (mapper calcula `totalPages`/`hasNext`)
+- [x] 1.1 Criar `src/modules/fiscal/**` (domain/data/application/factories/presentation)
+- [x] 1.2 Enums espelho: `fiscal-document-model` (NFE/NFCE), `fiscal-environment` (HOMOLOGACAO/PRODUCAO), `fiscal-document-status` (10 valores), `sale-fiscal-status` (5 valores — o `FiscalStatus` da venda), `tax-regime-code` (CRT), `fiscal-payment-code`
+- [x] 1.3 Entidades: `FiscalDocument`, `FiscalStatusHistory`, `FiscalDocumentEvent`, `FiscalSettings` (decimais string → `toNumber`; datas ISO → Date/format)
+- [x] 1.4 Mappers (+specs) tolerando `valorTotal`/alíquotas como string e campos `null`; repositórios (httpClient → Either) e interfaces
+- [x] 1.5 Response paginada `{ data, total, page, limit }` para documentos (mapper calcula `totalPages`/`hasNext`)
 - [ ] 1.6 Route names + rotas (gated por `fiscal.*`) + item(ns) de sidebar
 
 ## 2. Configuração fiscal do estabelecimento
