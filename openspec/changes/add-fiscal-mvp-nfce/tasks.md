@@ -60,10 +60,10 @@
 
 ## 7. Verificação
 
-- [ ] 7.1 `npm run verify` verde (lint + testes + build); specs dos mappers
-- [ ] 7.2 Gating por permissão conferido (esconder/desabilitar conforme `fiscal.*`; OWNER sempre passa; backend semeia só ADMIN)
-- [ ] 7.3 Dark mode e responsividade conferidos
-- [ ] 7.4 Atualizar `AGENTS.md` com o módulo fiscal
+- [x] 7.1 `npm run verify` verde (lint + testes + build); specs dos mappers
+- [x] 7.2 Gating por permissão conferido (esconder/desabilitar conforme `fiscal.*`; OWNER sempre passa; backend semeia só ADMIN)
+- [ ] 7.3 Dark mode e responsividade conferidos (pendente: conferência visual com `npm run dev` — código usa só tokens theme-aware)
+- [x] 7.4 Atualizar `AGENTS.md` com o módulo fiscal
 
 ## 8. Diferido — Fase B/C (aguardando endpoints do backend)
 

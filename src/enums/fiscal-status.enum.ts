@@ -1,3 +1,9 @@
+import type { FiscalStatusTone } from '@/enums/fiscal-document-status.enum'
+
+/**
+ * Status fiscal resumido de uma venda. É diferente do `FiscalDocumentStatus`
+ * (10 estágios do documento): aqui há apenas 5 estágios visíveis no fluxo da venda.
+ */
 export const FiscalStatus = {
   NAO_EMITIDO: 'NAO_EMITIDO',
   PROCESSANDO: 'PROCESSANDO',
@@ -14,6 +20,14 @@ export const fiscalStatusLabels: Record<FiscalStatus, string> = {
   AUTORIZADO: 'Autorizado',
   REJEITADO: 'Rejeitado',
   CANCELADO: 'Cancelado',
+}
+
+export const fiscalStatusTones: Record<FiscalStatus, FiscalStatusTone> = {
+  NAO_EMITIDO: 'muted',
+  PROCESSANDO: 'warning',
+  AUTORIZADO: 'success',
+  REJEITADO: 'error',
+  CANCELADO: 'muted',
 }
 
 export const fiscalStatusOptions: { value: FiscalStatus; label: string }[] = [

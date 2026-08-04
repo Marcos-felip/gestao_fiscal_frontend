@@ -3,12 +3,12 @@ import { computed } from 'vue'
 import { Icon } from '@/shared/ui'
 import type { FiscalStatusTone } from '@/enums/fiscal-document-status.enum'
 import {
-  saleFiscalStatusLabels,
-  saleFiscalStatusTones,
-  type SaleFiscalStatus,
-} from '@/enums/sale-fiscal-status.enum'
+  fiscalStatusLabels,
+  fiscalStatusTones,
+  type FiscalStatus,
+} from '@/enums/fiscal-status.enum'
 
-const props = defineProps<{ status: SaleFiscalStatus }>()
+const props = defineProps<{ status: FiscalStatus }>()
 
 /** Classe (token sólido) e ícone por tom visual. */
 const toneConfig: Record<FiscalStatusTone, { classes: string; icon: string }> =
@@ -22,9 +22,9 @@ const toneConfig: Record<FiscalStatusTone, { classes: string; icon: string }> =
     muted: { classes: 'bg-muted text-muted-foreground', icon: 'CircleDashed' },
   }
 
-const tone = computed(() => saleFiscalStatusTones[props.status])
+const tone = computed(() => fiscalStatusTones[props.status])
 const config = computed(() => toneConfig[tone.value])
-const label = computed(() => saleFiscalStatusLabels[props.status])
+const label = computed(() => fiscalStatusLabels[props.status])
 </script>
 
 <template>
