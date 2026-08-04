@@ -67,8 +67,8 @@
 
 ## 8. Diferido — Fase B/C (aguardando endpoints do backend)
 
-- [ ] 8.1 Upload/substituição de certificado A1 (.pfx) — quando existir rota de upload
-- [ ] 8.2 Botão "testar comunicação com a SEFAZ" — quando existir endpoint
+- [x] 8.1 Upload/substituição de certificado A1 (.pfx) + status/validade/histórico — `POST/GET /fiscal/settings/:establishmentId/certificate`
+- [x] 8.2 Botão "testar comunicação com a SEFAZ" + saúde do motor — `POST /fiscal/settings/:establishmentId/sefaz-status`, `GET /fiscal/engine/health`
 - [x] 8.3 Cancelamento com justificativa (mín. 15, máx. 255 caracteres) — `POST /fiscal/documents/:id/cancel`
 - [x] 8.4 Central de rejeições (lista filtrada por status) + ação de retry — `POST /fiscal/documents/:id/retry`
 - [x] 8.5 Consulta de situação na SEFAZ a partir do detalhe — `POST /fiscal/documents/:id/consulta`

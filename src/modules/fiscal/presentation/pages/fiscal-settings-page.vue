@@ -20,7 +20,10 @@ const canEdit = computed(() => can('fiscal.settings.edit'))
 
 const dialogOpen = ref(false)
 
-onMounted(() => progress.track(controller.load()))
+onMounted(() => {
+  progress.track(controller.load())
+  controller.loadEngineHealth()
+})
 
 /** Trim que devolve `undefined` quando vazio (para não enviar campos em branco). */
 function optional(value: string): string | undefined {
@@ -30,7 +33,30 @@ function optional(value: string): string | undefined {
 
 async function openRow(row: FiscalSettingsRow): Promise<void> {
   const ok = await progress.track(controller.prepare(row.establishment))
-  if (ok) dialogOpen.value = true
+  if (!ok) return
+  dialogOpen.value = true
+  // Carrega certificado + histórico do estabelecimento em paralelo.
+  controller.loadCertificate(row.establishment.id)
+  controller.loadCertificateHistory(row.establishment.id)
+}
+
+async function onUploadCertificate(payload: {
+  file: File
+  senha: string
+}): Promise<void> {
+  const establishment = controller.editing.value?.establishment
+  if (!establishment) return
+  await controller.uploadCertificate(
+    establishment.id,
+    payload.file,
+    payload.senha,
+  )
+}
+
+async function onTestSefaz(): Promise<void> {
+  const establishment = controller.editing.value?.establishment
+  if (!establishment) return
+  await controller.testSefaz(establishment.id)
 }
 
 async function onSubmit(values: FiscalSettingsFormValues): Promise<void> {
@@ -121,6 +147,32 @@ const dialogSettings = computed(
   () => controller.editing.value?.settings ?? null,
 )
 
+/** Badge de saúde do motor fiscal exibido no topo da página. */
+const engineBadge = computed(() => {
+  const health = controller.engineHealth.value
+  if (!health) {
+    return {
+      label: 'Motor fiscal: indisponível',
+      icon: 'ServerOff',
+      classes: 'bg-error-500/10 text-error-600',
+      latency: null as number | null,
+    }
+  }
+  return health.disponivel
+    ? {
+        label: 'Motor fiscal: online',
+        icon: 'Server',
+        classes: 'bg-success-500/10 text-success-600',
+        latency: health.latenciaMs,
+      }
+    : {
+        label: 'Motor fiscal: offline',
+        icon: 'ServerOff',
+        classes: 'bg-error-500/10 text-error-600',
+        latency: health.latenciaMs,
+      }
+})
+
 const container = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } },
@@ -136,14 +188,34 @@ const rowItem = {
 </script>
 
 <template>
-  <header class="mb-6">
-    <h1 class="font-display text-2xl font-bold tracking-tight text-foreground">
-      Configuração fiscal
-    </h1>
-    <p class="mt-1 text-sm text-muted-foreground">
-      Ambiente, numeração da NFC-e, CSC e certificado digital de cada
-      estabelecimento.
-    </p>
+  <header class="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1
+        class="font-display text-2xl font-bold tracking-tight text-foreground"
+      >
+        Configuração fiscal
+      </h1>
+      <p class="mt-1 text-sm text-muted-foreground">
+        Ambiente, numeração da NFC-e, CSC e certificado digital de cada
+        estabelecimento.
+      </p>
+    </div>
+
+    <!-- Saúde do motor fiscal -->
+    <span
+      v-if="!controller.engineHealthLoading.value"
+      :class="[
+        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium',
+        engineBadge.classes,
+      ]"
+      :title="controller.engineHealth.value?.mensagem ?? undefined"
+    >
+      <Icon :name="engineBadge.icon" size="sm" />
+      {{ engineBadge.label }}
+      <span v-if="engineBadge.latency !== null" class="tabular-nums opacity-80">
+        · {{ engineBadge.latency }} ms
+      </span>
+    </span>
   </header>
 
   <!-- Aviso somente leitura -->
@@ -284,6 +356,15 @@ const rowItem = {
     :settings="dialogSettings"
     :readonly="!canEdit"
     :loading="controller.saving.value"
+    :certificate="controller.certificate.value"
+    :certificate-loading="controller.certificateLoading.value"
+    :uploading="controller.uploading.value"
+    :certificate-history="controller.certificateHistory.value"
+    :history-loading="controller.historyLoading.value"
+    :sefaz-result="controller.sefazResult.value"
+    :sefaz-testing="controller.sefazTesting.value"
     @submit="onSubmit"
+    @upload-certificate="onUploadCertificate"
+    @test-sefaz="onTestSefaz"
   />
 </template>

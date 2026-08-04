@@ -4,6 +4,11 @@ import { ListFiscalSettingsUseCase } from '@/modules/fiscal/application/use-case
 import { GetFiscalSettingsByEstablishmentUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-settings-by-establishment.use-case'
 import { CreateFiscalSettingsUseCase } from '@/modules/fiscal/application/use-cases/create-fiscal-settings.use-case'
 import { UpdateFiscalSettingsUseCase } from '@/modules/fiscal/application/use-cases/update-fiscal-settings.use-case'
+import { UploadFiscalCertificate } from '@/modules/fiscal/application/use-cases/upload-fiscal-certificate.use-case'
+import { GetFiscalCertificate } from '@/modules/fiscal/application/use-cases/get-fiscal-certificate.use-case'
+import { GetFiscalCertificateHistory } from '@/modules/fiscal/application/use-cases/get-fiscal-certificate-history.use-case'
+import { TestSefazStatus } from '@/modules/fiscal/application/use-cases/test-sefaz-status.use-case'
+import { GetFiscalEngineHealth } from '@/modules/fiscal/application/use-cases/get-fiscal-engine-health.use-case'
 import { ListFiscalDocumentsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-documents.use-case'
 import { GetFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document.use-case'
 import { GetFiscalDocumentBySaleUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-by-sale.use-case'
@@ -169,6 +174,11 @@ export function makeFiscalSettingsController(): FiscalSettingsController {
     new GetFiscalSettingsByEstablishmentUseCase(repository),
     new CreateFiscalSettingsUseCase(repository),
     new UpdateFiscalSettingsUseCase(repository),
+    new UploadFiscalCertificate(repository),
+    new GetFiscalCertificate(repository),
+    new GetFiscalCertificateHistory(repository),
+    new TestSefazStatus(repository),
+    new GetFiscalEngineHealth(repository),
     makeFiscalEstablishmentsLoader(),
   )
 }
