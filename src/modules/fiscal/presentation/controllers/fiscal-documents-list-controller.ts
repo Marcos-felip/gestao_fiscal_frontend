@@ -3,12 +3,14 @@ import { BaseController } from '@/core/controllers/base-controller'
 import type { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import type { ListFiscalDocumentsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-documents.use-case'
+import type { RetryFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/retry-fiscal-document.use-case'
 import { QueryFiscalDocumentsDto } from '@/modules/fiscal/domain/dto/query-fiscal-documents-dto'
 import type { FiscalDocument } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import type { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
 import type { FiscalDocumentModel } from '@/enums/fiscal-document-model.enum'
 import type { SelectOption } from '@/shared/ui'
 import { dateInputToIso } from '@/core/utils/date'
+import { useToast } from '@/shared/composables'
 
 const PAGE_LIMIT = 20
 
@@ -25,7 +27,9 @@ export type FiscalDocumentsEstablishmentsLoader = () => Promise<
 
 export class FiscalDocumentsListController extends BaseController {
   private readonly listUseCase: ListFiscalDocumentsUseCase
+  private readonly retryUseCase: RetryFiscalDocumentUseCase
   private readonly loadEstablishments: FiscalDocumentsEstablishmentsLoader
+  private readonly toast = useToast()
 
   readonly documents = ref<FiscalDocument[]>([])
   readonly loaded = ref(false)
@@ -34,6 +38,8 @@ export class FiscalDocumentsListController extends BaseController {
   readonly limit = ref(PAGE_LIMIT)
   readonly totalPages = ref(1)
   readonly hasNext = ref(false)
+  /** Id do documento sendo reprocessado (desabilita só a linha certa). */
+  readonly retryingId = ref<string | null>(null)
 
   readonly statusFilter = ref<FiscalDocumentStatus | ''>('')
   readonly modeloFilter = ref<FiscalDocumentModel | ''>('')
@@ -54,11 +60,39 @@ export class FiscalDocumentsListController extends BaseController {
 
   constructor(
     listUseCase: ListFiscalDocumentsUseCase,
+    retryUseCase: RetryFiscalDocumentUseCase,
     loadEstablishments: FiscalDocumentsEstablishmentsLoader,
   ) {
     super()
     this.listUseCase = listUseCase
+    this.retryUseCase = retryUseCase
     this.loadEstablishments = loadEstablishments
+  }
+
+  /**
+   * Reprocessa um documento rejeitado/erro direto da lista. Em sucesso recarrega
+   * a página para refletir o novo status (agora PENDENTE).
+   */
+  async retry(document: FiscalDocument): Promise<void> {
+    if (this.retryingId.value) return
+
+    this.retryingId.value = document.id
+    const result = await this.retryUseCase.execute(document.id)
+    this.handleResult(
+      result,
+      () => {
+        this.toast.info('Reprocessamento iniciado.')
+        void this.loadList()
+      },
+      (error) => {
+        this.toast.error(
+          error.isUserFacing
+            ? error.message
+            : 'Não foi possível reprocessar o documento.',
+        )
+      },
+    )
+    this.retryingId.value = null
   }
 
   async loadEstablishmentOptions(): Promise<void> {

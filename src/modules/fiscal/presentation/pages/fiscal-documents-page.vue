@@ -16,8 +16,24 @@ import {
 import { formatDateTime } from '@/core/utils/date'
 import { formatMoney } from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'
+import { usePermissions } from '@/shared/composables'
 
 const controller = makeFiscalDocumentsListController()
+const { can } = usePermissions()
+
+const canEmit = computed(() => can('fiscal.emit'))
+
+/** Documentos em falha podem ser reprocessados direto da lista. */
+function canRetry(document: FiscalDocument): boolean {
+  return (
+    canEmit.value &&
+    (document.status === 'REJEITADO' || document.status === 'ERRO')
+  )
+}
+
+function onRetry(document: FiscalDocument): void {
+  void controller.retry(document)
+}
 
 const statusOptions = computed<SelectOption[]>(() => [
   { value: '', label: 'Todos os status' },
@@ -146,12 +162,15 @@ function modeloLabel(modelo: FiscalDocumentModel): string {
     :initial="{ opacity: 0 }"
     :animate="{ opacity: 1 }"
   >
-    <button
+    <div
       v-for="document in controller.documents.value"
       :key="document.id"
-      type="button"
-      class="flex w-full items-center gap-4 border-b border-line-2 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/40"
+      role="button"
+      tabindex="0"
+      class="flex w-full cursor-pointer items-center gap-4 border-b border-line-2 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/40 focus:outline-none focus-visible:bg-muted/40"
       @click="goDetail(document)"
+      @keydown.enter="goDetail(document)"
+      @keydown.space.prevent="goDetail(document)"
     >
       <span
         class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
@@ -188,12 +207,32 @@ function modeloLabel(modelo: FiscalDocumentModel): string {
         </p>
       </div>
 
+      <!-- Ação rápida: reprocessar rejeitados/erros -->
+      <button
+        v-if="canRetry(document)"
+        type="button"
+        class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line-2 px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+        :disabled="controller.retryingId.value !== null"
+        @click.stop="onRetry(document)"
+      >
+        <Icon
+          name="RefreshCw"
+          size="xs"
+          :class="
+            controller.retryingId.value === document.id
+              ? 'animate-spin text-primary'
+              : 'text-primary'
+          "
+        />
+        Reprocessar
+      </button>
+
       <Icon
         name="ChevronRight"
         size="sm"
         class="shrink-0 text-muted-foreground"
       />
-    </button>
+    </div>
   </motion.div>
 
   <!-- Paginação -->

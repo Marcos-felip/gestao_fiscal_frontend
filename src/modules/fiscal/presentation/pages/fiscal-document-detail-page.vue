@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { Button, Icon, Skeleton } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
 import FiscalDocumentStatusBadge from '@/modules/fiscal/presentation/components/fiscal-document-status-badge.vue'
+import CancelFiscalDocumentDialog from '@/modules/fiscal/presentation/components/cancel-fiscal-document-dialog.vue'
 import { makeFiscalDocumentDetailController } from '@/modules/fiscal/factories/fiscal.factory'
 import type { FiscalXmlType } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import { fiscalDocumentModelLabels } from '@/enums/fiscal-document-model.enum'
@@ -12,16 +13,65 @@ import { fiscalDocumentStatusLabels } from '@/enums/fiscal-document-status.enum'
 import { formatDateTime } from '@/core/utils/date'
 import { formatMoney, formatQuantity } from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'
+import { usePermissions } from '@/shared/composables'
 
 const controller = makeFiscalDocumentDetailController()
 const route = useRoute()
+const { can } = usePermissions()
 
 const document = computed(() => controller.document.value)
 
+const canCancel = computed(() => can('fiscal.cancel'))
+const canRead = computed(() => can('fiscal.read'))
+const canEmit = computed(() => can('fiscal.emit'))
+
+/** Cancelar só faz sentido para documento autorizado. */
+const showCancel = computed(
+  () => canCancel.value && document.value?.status === 'AUTORIZADO',
+)
+/** Reprocessar disponível para documentos em falha. */
+const showRetry = computed(
+  () =>
+    canEmit.value &&
+    (document.value?.status === 'REJEITADO' ||
+      document.value?.status === 'ERRO'),
+)
+/** DANFE só quando autorizado e há URL de DANFE. */
+const showDanfe = computed(
+  () =>
+    canRead.value &&
+    document.value?.status === 'AUTORIZADO' &&
+    Boolean(document.value?.danfeUrl),
+)
+const hasActions = computed(
+  () => showCancel.value || canRead.value || showRetry.value,
+)
+
+const cancelOpen = ref(false)
+const qrCopied = ref(false)
+
 onMounted(() => controller.load(String(route.params.id)))
+onUnmounted(() => controller.dispose())
 
 function goBack(): void {
   controller.router.push({ name: routeNames.FISCAL_DOCUMENTS })
+}
+
+async function onCancelConfirm(justificativa: string): Promise<void> {
+  const ok = await controller.cancel(justificativa)
+  if (ok) cancelOpen.value = false
+}
+
+async function copyQrCode(): Promise<void> {
+  const url = document.value?.qrCode
+  if (!url) return
+  try {
+    await navigator.clipboard.writeText(url)
+    qrCopied.value = true
+    window.setTimeout(() => (qrCopied.value = false), 2000)
+  } catch {
+    qrCopied.value = false
+  }
 }
 
 /** Documento em falha (rejeição/erro) — destaca o motivo. */
@@ -398,7 +448,121 @@ function ncmOf(item: { ncm?: string; ncm_code?: string }): string {
         </div>
       </div>
 
-      <!-- Fase B: cancelar, reprocessar, consultar SEFAZ, DANFE/QR Code -->
+      <!-- QR Code (NFC-e) -->
+      <div
+        v-if="document.qrCode"
+        class="rounded-xl border border-line-2 bg-background p-5"
+      >
+        <p
+          class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+        >
+          QR Code
+        </p>
+        <p class="mt-2 font-mono text-xs break-all text-foreground">
+          {{ document.qrCode }}
+        </p>
+        <div class="mt-3 flex items-center gap-2">
+          <a
+            :href="document.qrCode"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-lg border border-line-2 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            <Icon name="ExternalLink" size="sm" class="text-primary" />
+            Abrir link
+          </a>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-lg border border-line-2 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            @click="copyQrCode"
+          >
+            <Icon
+              :name="qrCopied ? 'Check' : 'Copy'"
+              size="sm"
+              :class="qrCopied ? 'text-success-600' : 'text-muted-foreground'"
+            />
+            {{ qrCopied ? 'Copiado' : 'Copiar' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Ações -->
+      <div
+        v-if="hasActions"
+        class="rounded-xl border border-line-2 bg-background p-5"
+      >
+        <p
+          class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
+        >
+          Ações
+        </p>
+        <div class="mt-3 space-y-2">
+          <!-- Baixar DANFE -->
+          <Button
+            v-if="showDanfe"
+            variant="primary"
+            text-class="text-white"
+            class="w-full justify-center"
+            :loading="controller.downloadingDanfe.value"
+            @click="controller.downloadDanfe()"
+          >
+            <template #icon><Icon name="Download" size="sm" /></template>
+            Baixar DANFE
+          </Button>
+
+          <!-- Reprocessar -->
+          <Button
+            v-if="showRetry"
+            variant="ghost"
+            class="w-full justify-center"
+            :loading="controller.retrying.value"
+            @click="controller.retry()"
+          >
+            <template #icon><Icon name="RefreshCw" size="sm" /></template>
+            Reprocessar
+          </Button>
+
+          <!-- Consultar situação -->
+          <Button
+            v-if="canRead"
+            variant="ghost"
+            class="w-full justify-center"
+            :loading="controller.consulting.value"
+            @click="controller.consult()"
+          >
+            <template #icon><Icon name="Search" size="sm" /></template>
+            Consultar situação
+          </Button>
+
+          <!-- Cancelar -->
+          <Button
+            v-if="showCancel"
+            variant="ghost"
+            class="w-full justify-center text-error-600 hover:bg-error-500/10"
+            :disabled="controller.cancelling.value"
+            @click="cancelOpen = true"
+          >
+            <template #icon><Icon name="Ban" size="sm" /></template>
+            Cancelar documento
+          </Button>
+        </div>
+
+        <!-- Indicador de processamento (polling) -->
+        <div
+          v-if="controller.polling.value"
+          class="mt-3 flex items-center gap-2 rounded-lg bg-warning-500/10 px-3 py-2 text-xs text-warning-700"
+        >
+          <Icon name="LoaderCircle" size="sm" class="animate-spin" />
+          Acompanhando o processamento na SEFAZ…
+        </div>
+      </div>
     </aside>
   </div>
+
+  <!-- Diálogo de cancelamento -->
+  <CancelFiscalDocumentDialog
+    v-model="cancelOpen"
+    :loading="controller.cancelling.value"
+    @confirm="onCancelConfirm"
+  />
 </template>

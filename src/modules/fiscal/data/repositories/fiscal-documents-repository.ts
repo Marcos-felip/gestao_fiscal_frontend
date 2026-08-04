@@ -8,6 +8,7 @@ import type {
 import type { FiscalStatusHistory } from '@/modules/fiscal/domain/entities/fiscal-status-history.entity'
 import type { FiscalDocumentEvent } from '@/modules/fiscal/domain/entities/fiscal-document-event.entity'
 import type { FiscalDocumentListResponse } from '@/modules/fiscal/domain/responses/fiscal-document-list-response'
+import type { FiscalConsultaResult } from '@/modules/fiscal/domain/responses/fiscal-consulta-result'
 import type { QueryFiscalDocumentsDto } from '@/modules/fiscal/domain/dto/query-fiscal-documents-dto'
 import type { EmitNfceDto } from '@/modules/fiscal/domain/dto/emit-nfce-dto'
 import { httpClient } from '@/core/client/http-client'
@@ -18,6 +19,7 @@ import {
   toFiscalStatusHistory,
   toFiscalDocumentEvent,
 } from '@/modules/fiscal/data/mappers/fiscal-document.mapper'
+import { toFiscalConsultaResult } from '@/modules/fiscal/data/mappers/fiscal-consulta.mapper'
 
 export class FiscalDocumentsRepository implements IFiscalDocumentsRepository {
   async list(
@@ -95,6 +97,40 @@ export class FiscalDocumentsRepository implements IFiscalDocumentsRepository {
     // O XML volta como texto cru, não JSON.
     return httpClient.get<string>(`/fiscal/documents/${id}/xml/${tipo}`, {
       responseType: 'text',
+    })
+  }
+
+  async cancel(
+    id: string,
+    justificativa: string,
+  ): Promise<Either<DomainError, FiscalDocument>> {
+    const result = await httpClient.post<unknown>(
+      `/fiscal/documents/${id}/cancel`,
+      { justificativa },
+    )
+    return result.flatMap(toFiscalDocument)
+  }
+
+  async consulta(
+    id: string,
+  ): Promise<Either<DomainError, FiscalConsultaResult>> {
+    const result = await httpClient.post<unknown>(
+      `/fiscal/documents/${id}/consulta`,
+    )
+    return result.flatMap(toFiscalConsultaResult)
+  }
+
+  async retry(id: string): Promise<Either<DomainError, FiscalDocument>> {
+    const result = await httpClient.post<unknown>(
+      `/fiscal/documents/${id}/retry`,
+    )
+    return result.flatMap(toFiscalDocument)
+  }
+
+  async downloadDanfe(id: string): Promise<Either<DomainError, Blob>> {
+    // A DANFE volta como PDF binário (stream), não JSON — pede blob ao Axios.
+    return httpClient.get<Blob>(`/fiscal/documents/${id}/danfe`, {
+      responseType: 'blob',
     })
   }
 }
