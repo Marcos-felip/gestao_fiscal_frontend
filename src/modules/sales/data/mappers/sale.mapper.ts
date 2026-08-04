@@ -34,7 +34,10 @@ const itemSchema = z.object({
   total: decimal,
 })
 
-const nullableDecimal = z.union([z.number(), z.string()]).nullable().default(null)
+const nullableDecimal = z
+  .union([z.number(), z.string()])
+  .nullable()
+  .default(null)
 
 const paymentSchema = z.object({
   id: z.string(),
@@ -46,6 +49,12 @@ const paymentSchema = z.object({
 
 const namedRefSchema = z
   .object({ id: z.string(), name: z.string().nullable().default(null) })
+  .nullable()
+  .default(null)
+
+// Relação opcional: quando presente, expõe só o id do documento fiscal.
+const fiscalDocumentRefSchema = z
+  .object({ id: z.string() })
   .nullable()
   .default(null)
 
@@ -71,6 +80,7 @@ const saleSchema = z.object({
   updatedAt: z.string().nullable().default(null),
   items: z.array(itemSchema).default([]),
   payments: z.array(paymentSchema).default([]),
+  fiscalDocument: fiscalDocumentRefSchema,
 })
 
 type SalePayload = z.infer<typeof saleSchema>
@@ -140,6 +150,7 @@ function build(value: SalePayload): Sale {
     value.items.map(buildItem),
     value.payments.map(buildPayment),
     (value.paymentCondition ?? 'A_VISTA') as PaymentCondition,
+    value.fiscalDocument?.id ?? null,
   )
 }
 

@@ -45,6 +45,7 @@ describe('toSale', () => {
     expect(sale.customerName).toBe('Cliente ACME')
     expect(sale.status).toBe('CONCLUIDA')
     expect(sale.paymentStatus).toBe('APROVADO')
+    expect(sale.fiscalStatus).toBe('AUTORIZADO')
     expect(sale.subtotal).toBe(520)
     expect(sale.discount).toBe(20)
     expect(sale.totalAmount).toBe(500)
@@ -78,6 +79,29 @@ describe('toSale', () => {
     expect(sale.items).toEqual([])
     expect(sale.payments).toEqual([])
     expect(sale.paymentCondition).toBe('A_VISTA')
+    expect(sale.fiscalDocumentId).toBeNull()
+  })
+
+  it('vincula o documento fiscal e habilita a emissão manual quando cabível', () => {
+    const semNota = toSale({
+      ...respostaValida,
+      status: 'CONCLUIDA',
+      fiscalStatus: 'NAO_EMITIDO',
+    })
+    expect(semNota.isRight).toBe(true)
+    expect(semNota.right.canEmitFiscal).toBe(true)
+    expect(semNota.right.fiscalDocumentId).toBeNull()
+
+    const comNota = toSale({
+      ...respostaValida,
+      status: 'CONCLUIDA',
+      fiscalStatus: 'AUTORIZADO',
+      fiscalDocument: { id: 'doc-1' },
+    })
+    expect(comNota.isRight).toBe(true)
+    expect(comNota.right.fiscalDocumentId).toBe('doc-1')
+    // Já autorizada → não oferece emissão manual.
+    expect(comNota.right.canEmitFiscal).toBe(false)
   })
 
   it('mapeia as formas de pagamento com troco e a condição', () => {
@@ -85,8 +109,20 @@ describe('toSale', () => {
       ...respostaValida,
       paymentCondition: 'A_VISTA',
       payments: [
-        { id: 'p-1', method: 'PIX', amount: '460', amountReceived: null, changeGiven: null },
-        { id: 'p-2', method: 'DINHEIRO', amount: '40', amountReceived: '50', changeGiven: '10' },
+        {
+          id: 'p-1',
+          method: 'PIX',
+          amount: '460',
+          amountReceived: null,
+          changeGiven: null,
+        },
+        {
+          id: 'p-2',
+          method: 'DINHEIRO',
+          amount: '40',
+          amountReceived: '50',
+          changeGiven: '10',
+        },
       ],
     })
 

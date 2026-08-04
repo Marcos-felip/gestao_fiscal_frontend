@@ -46,10 +46,10 @@
 
 ## 5. Emissão de NFC-e (a partir da venda)
 
-- [ ] 5.1 Gatilho de emissão na venda concluída — `POST /fiscal/documents/nfce { saleId, establishmentId?, payments? }` (PDV e/ou detalhe da venda), gated por `fiscal.emit`
-- [ ] 5.2 Acompanhar status assíncrono por **polling** (`GET /fiscal/documents/:id` ou `/documents/sale/:saleId`): PENDENTE → PROCESSANDO → AUTORIZADO/REJEITADO/ERRO
-- [ ] 5.3 Pré-checagem/aviso quando empresa, estabelecimento ou produtos estiverem incompletos + tratar erro 400 de configuração incompleta do backend
-- [ ] 5.4 Badge de status fiscal na venda (enum `FiscalStatus` de 5 valores) e exibir código/mensagem de rejeição quando REJEITADO/ERRO
+- [x] 5.1 Gatilho de emissão na venda concluída — `POST /fiscal/documents/nfce { saleId, establishmentId?, payments? }` (detalhe da venda; PDV auto-emite no backend), gated por `fiscal.emit`
+- [x] 5.2 Acompanhar status assíncrono por **polling** (`GET /fiscal/documents/:id` ou `/documents/sale/:saleId`): PENDENTE → PROCESSANDO → AUTORIZADO/REJEITADO/ERRO
+- [x] 5.3 Pré-checagem/aviso quando empresa, estabelecimento ou produtos estiverem incompletos + tratar erro 400 de configuração incompleta do backend
+- [x] 5.4 Badge de status fiscal na venda (enum `FiscalStatus` de 5 valores) e exibir código/mensagem de rejeição quando REJEITADO/ERRO
 
 ## 6. Documentos fiscais (lista e detalhe)
 

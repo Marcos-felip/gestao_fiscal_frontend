@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { motion } from 'motion-v'
 import { Button, Icon, Skeleton } from '@/shared/ui'
 import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import FormSection from '@/shared/components/form/form-section.vue'
 import SaleStatusBadge from '@/modules/sales/presentation/components/sale-status-badge.vue'
+import SaleFiscalStatusBadge from '@/modules/fiscal/presentation/components/sale-fiscal-status-badge.vue'
+import FiscalDocumentStatusBadge from '@/modules/fiscal/presentation/components/fiscal-document-status-badge.vue'
 import SalePaymentDialog from '@/modules/sales/presentation/components/sale-payment-dialog.vue'
 import { makeSaleDetailController } from '@/modules/sales/factories/sales.factory'
+import { makeSaleFiscalController } from '@/modules/fiscal/factories/fiscal.factory'
 import type { CreateSalePaymentInput } from '@/modules/sales/domain/dto/create-sale-dto'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { PaymentStatus, paymentStatusLabels } from '@/enums/payment-status.enum'
 import { paymentMethodLabels } from '@/enums/payment-method.enum'
 import { PaymentCondition } from '@/enums/payment-condition.enum'
 import { unitOfMeasureShortLabels } from '@/enums/unit-of-measure.enum'
+import { fiscalDocumentModelLabels } from '@/enums/fiscal-document-model.enum'
 import { formatMoney, formatQuantity } from '@/shared/ui/utils/masks'
 import { formatDate } from '@/core/utils/date'
 import { routeNames } from '@/router/route-names'
@@ -21,12 +25,37 @@ import { useProgress } from '@/shared/composables'
 
 const route = useRoute()
 const controller = makeSaleDetailController()
+const fiscalController = makeSaleFiscalController()
 const progress = useProgress()
 const { can } = usePermissions()
 
 const canConfirm = computed(() => can('sales.confirm'))
 const canCancel = computed(() => can('sales.cancel'))
 const canDelete = computed(() => can('sales.delete'))
+const canReadFiscal = computed(() => can('fiscal.read'))
+const canEmitFiscal = computed(() => can('fiscal.emit'))
+
+/** Documento fiscal vinculado (após carregar). */
+const fiscalDocument = computed(() => fiscalController.document.value)
+
+/** Rejeição/erro do documento — destaca código + mensagem. */
+const fiscalRejection = computed(() => {
+  const doc = fiscalDocument.value
+  if (!doc) return null
+  if (doc.status !== 'REJEITADO' && doc.status !== 'ERRO') return null
+  return {
+    code: doc.rejeicaoCodigo,
+    message: doc.rejeicaoMensagem ?? 'Falha na emissão do documento fiscal.',
+  }
+})
+
+/** Oferece emissão manual (fallback) só quando cabe e há permissão. */
+const showEmitButton = computed(
+  () =>
+    canEmitFiscal.value &&
+    Boolean(controller.sale.value?.canEmitFiscal) &&
+    !fiscalController.hasDocument.value,
+)
 
 const paymentChip = computed(() => {
   const status = controller.sale.value?.paymentStatus
@@ -57,6 +86,7 @@ type PendingAction = 'confirm' | 'cancel' | 'delete'
 const pendingAction = ref<PendingAction | null>(null)
 const dialogOpen = ref(false)
 const paymentDialogOpen = ref(false)
+const emitDialogOpen = ref(false)
 
 const dialogConfig = computed(() => {
   switch (pendingAction.value) {
@@ -82,7 +112,8 @@ const dialogConfig = computed(() => {
     default:
       return {
         title: 'Excluir venda',
-        description: 'Excluir permanentemente esta venda? Não pode ser desfeito.',
+        description:
+          'Excluir permanentemente esta venda? Não pode ser desfeito.',
         label: 'Excluir',
         variant: 'destructive' as const,
         icon: 'Trash2',
@@ -92,8 +123,29 @@ const dialogConfig = computed(() => {
 
 onMounted(() => {
   const id = typeof route.params.id === 'string' ? route.params.id : ''
-  if (id) progress.track(controller.load(id))
+  if (!id) return
+  progress.track(controller.load(id))
+  // O status fiscal só é lido por quem tem permissão (evita 403 do getBySale).
+  if (canReadFiscal.value) void fiscalController.load(id)
 })
+
+onUnmounted(() => fiscalController.dispose())
+
+function goFiscalDocument(): void {
+  const doc = fiscalDocument.value
+  if (!doc) return
+  controller.router.push({
+    name: routeNames.FISCAL_DOCUMENT_DETAIL,
+    params: { id: doc.id },
+  })
+}
+
+async function onEmitConfirm(): Promise<void> {
+  const sale = controller.sale.value
+  if (!sale) return
+  await fiscalController.emit(sale.id, sale.establishmentId)
+  emitDialogOpen.value = false
+}
 
 function ask(action: PendingAction): void {
   // Finalizar à vista → checkout de pagamento; a prazo → confirmação simples.
@@ -151,6 +203,10 @@ function goBack(): void {
       >
         {{ paymentChip.label }}
       </span>
+      <SaleFiscalStatusBadge
+        v-if="controller.sale.value"
+        :status="controller.sale.value.fiscalStatus"
+      />
     </div>
 
     <Button variant="ghost" @click="goBack">
@@ -172,7 +228,9 @@ function goBack(): void {
     v-if="!controller.loaded.value"
     class="grid grid-cols-1 gap-6 lg:grid-cols-3"
   >
-    <div class="rounded-xl border border-line-2 bg-background p-6 lg:col-span-2">
+    <div
+      class="rounded-xl border border-line-2 bg-background p-6 lg:col-span-2"
+    >
       <Skeleton class="h-5 w-40 rounded" />
       <div class="mt-6 space-y-3">
         <Skeleton v-for="n in 3" :key="n" class="h-10 w-full rounded" />
@@ -354,12 +412,109 @@ function goBack(): void {
               <span class="font-medium tabular-nums text-foreground">
                 R$ {{ formatMoney(pay.amount) }}
               </span>
-              <span v-if="pay.changeGiven" class="ml-2 text-xs text-success-600">
+              <span
+                v-if="pay.changeGiven"
+                class="ml-2 text-xs text-success-600"
+              >
                 troco R$ {{ formatMoney(pay.changeGiven) }}
               </span>
             </span>
           </li>
         </ul>
+      </FormSection>
+
+      <!-- Situação fiscal (NFC-e) -->
+      <FormSection
+        v-if="canReadFiscal"
+        icon="FileText"
+        title="Fiscal"
+        description="Status da NFC-e desta venda."
+      >
+        <div class="space-y-4">
+          <!-- Status resumido da venda -->
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-sm text-muted-foreground">Status fiscal</span>
+            <SaleFiscalStatusBadge
+              :status="controller.sale.value.fiscalStatus"
+            />
+          </div>
+
+          <!-- Indicador de processamento -->
+          <div
+            v-if="fiscalController.isProcessing.value"
+            class="flex items-center gap-2 rounded-lg bg-warning-500/10 px-3 py-2 text-sm text-warning-700"
+          >
+            <Icon name="LoaderCircle" size="sm" class="animate-spin" />
+            <span>Processando na SEFAZ…</span>
+          </div>
+
+          <!-- Documento fiscal vinculado -->
+          <div
+            v-if="fiscalDocument"
+            class="space-y-3 border-t border-line-2 pt-3"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-sm text-muted-foreground">Documento</span>
+              <FiscalDocumentStatusBadge :status="fiscalDocument.status" />
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-sm text-muted-foreground">Modelo</span>
+              <span class="text-sm font-medium text-foreground">
+                {{ fiscalDocumentModelLabels[fiscalDocument.modelo] }}
+              </span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-sm text-muted-foreground">Série / Número</span>
+              <span class="text-sm font-medium tabular-nums text-foreground">
+                {{ fiscalDocument.serie }} / {{ fiscalDocument.numero }}
+              </span>
+            </div>
+
+            <!-- Rejeição / erro em destaque -->
+            <div
+              v-if="fiscalRejection"
+              class="rounded-lg border border-error-500/30 bg-error-500/10 p-3"
+            >
+              <div class="flex items-center gap-2 text-error-600">
+                <Icon name="TriangleAlert" size="sm" />
+                <p class="text-sm font-semibold">
+                  {{
+                    fiscalRejection.code
+                      ? `Rejeição ${fiscalRejection.code}`
+                      : 'Falha na emissão'
+                  }}
+                </p>
+              </div>
+              <p class="mt-1 text-sm text-foreground">
+                {{ fiscalRejection.message }}
+              </p>
+            </div>
+
+            <Button variant="secondary" full-width @click="goFiscalDocument">
+              <template #icon><Icon name="FileText" size="sm" /></template>
+              Ver documento fiscal
+            </Button>
+          </div>
+
+          <!-- Emissão manual (fallback) -->
+          <div v-if="showEmitButton" class="border-t border-line-2 pt-3">
+            <p class="mb-2 text-xs text-muted-foreground">
+              A NFC-e desta venda ainda não foi emitida. Emita manualmente se
+              necessário.
+            </p>
+            <Button
+              variant="primary"
+              text-class="text-white"
+              full-width
+              :loading="fiscalController.emitting.value"
+              loading-text="Emitindo…"
+              @click="emitDialogOpen = true"
+            >
+              <template #icon><Icon name="FileUp" size="sm" /></template>
+              Emitir NFC-e
+            </Button>
+          </div>
+        </div>
       </FormSection>
 
       <!-- Ações de ciclo de vida -->
@@ -427,5 +582,18 @@ function goBack(): void {
     :total="controller.sale.value.totalAmount"
     :loading="controller.acting.value"
     @confirm="onPaymentsConfirm"
+  />
+
+  <!-- Confirmação de emissão manual da NFC-e -->
+  <ConfirmDialog
+    v-model="emitDialogOpen"
+    title="Emitir NFC-e"
+    description="A NFC-e será enviada para autorização na SEFAZ. Deseja continuar?"
+    confirm-label="Emitir"
+    cancel-label="Voltar"
+    variant="primary"
+    icon="FileUp"
+    :loading="fiscalController.emitting.value"
+    @confirm="onEmitConfirm"
   />
 </template>

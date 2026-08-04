@@ -16,6 +16,7 @@ import type { FiscalEstablishmentsLoader } from '@/modules/fiscal/presentation/c
 import { FiscalDocumentsListController } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
 import type { FiscalDocumentsEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
 import { FiscalDocumentDetailController } from '@/modules/fiscal/presentation/controllers/fiscal-document-detail-controller'
+import { SaleFiscalController } from '@/modules/fiscal/presentation/controllers/sale-fiscal-controller'
 import { EstablishmentRepository } from '@/modules/establishments/data/repositories/establishment-repository'
 import { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
 
@@ -120,6 +121,18 @@ export function makeFiscalDocumentDetailController(): FiscalDocumentDetailContro
   return new FiscalDocumentDetailController(
     makeGetFiscalDocumentUseCase(),
     makeDownloadFiscalXmlUseCase(),
+  )
+}
+
+/**
+ * Controller que orquestra o status fiscal na página de detalhe da venda:
+ * documento vinculado, emissão manual (fallback) e polling do processamento.
+ */
+export function makeSaleFiscalController(): SaleFiscalController {
+  return new SaleFiscalController(
+    makeGetFiscalDocumentBySaleUseCase(),
+    makeGetFiscalDocumentUseCase(),
+    makeEmitNfceUseCase(),
   )
 }
 
