@@ -7,7 +7,7 @@ import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
 import { unitOfMeasureOptions } from '@/enums/unit-of-measure.enum'
 import { productOriginOptions } from '@/enums/product-origin.enum'
-import { formatDecimalInput } from '@/shared/ui/utils/masks'
+import { formatDecimalInput, onlyDigits } from '@/shared/ui/utils/masks'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {
   productSchema,
@@ -74,6 +74,13 @@ function handleSubmit(): void {
     cest: form.cest,
     cfop: form.cfop,
     origin: form.origin,
+    csosn: form.csosn,
+    cstIcms: form.cstIcms,
+    cstPis: form.cstPis,
+    cstCofins: form.cstCofins,
+    aliquotaIcms: form.aliquotaIcms,
+    aliquotaPis: form.aliquotaPis,
+    aliquotaCofins: form.aliquotaCofins,
   })
   if (!result.success) {
     errors.value = toFormErrors(result.error)
@@ -144,8 +151,9 @@ const item = {
 
                   <Input
                     v-model="form.barcode"
-                    maxlength="60"
+                    maxlength="14"
                     inputmode="numeric"
+                    :sanitize="onlyDigits"
                     placeholder="EAN / GTIN"
                     :error="errors.barcode"
                   >
@@ -204,10 +212,14 @@ const item = {
                   inputmode="decimal"
                   placeholder="0,00"
                   :error="errors.costPrice"
-                  @update:model-value="form.costPrice = formatDecimalInput($event)"
+                  @update:model-value="
+                    form.costPrice = formatDecimalInput($event)
+                  "
                 >
                   <template #prefix
-                    ><span class="text-sm text-muted-foreground">R$</span></template
+                    ><span class="text-sm text-muted-foreground"
+                      >R$</span
+                    ></template
                   >
                   <template #label>Preço de custo</template>
                 </Input>
@@ -217,10 +229,14 @@ const item = {
                   inputmode="decimal"
                   placeholder="0,00"
                   :error="errors.salePrice"
-                  @update:model-value="form.salePrice = formatDecimalInput($event)"
+                  @update:model-value="
+                    form.salePrice = formatDecimalInput($event)
+                  "
                 >
                   <template #prefix
-                    ><span class="text-sm text-muted-foreground">R$</span></template
+                    ><span class="text-sm text-muted-foreground"
+                      >R$</span
+                    ></template
                   >
                   <template #label>Preço de venda</template>
                 </Input>
@@ -230,7 +246,9 @@ const item = {
                   inputmode="decimal"
                   placeholder="0"
                   :error="errors.minStock"
-                  @update:model-value="form.minStock = formatDecimalInput($event)"
+                  @update:model-value="
+                    form.minStock = formatDecimalInput($event)
+                  "
                 >
                   <template #prefix
                     ><Icon name="TriangleAlert" size="sm"
@@ -250,49 +268,181 @@ const item = {
         <!-- Seção fiscal -->
         <motion.div :variants="item">
           <FormSection
-            icon="ReceiptText"
-            title="Fiscal"
-            description="Códigos usados na emissão de documentos fiscais (opcionais)."
+            icon="ScrollText"
+            title="Dados fiscais"
+            description="Códigos e alíquotas usados na emissão de documentos fiscais (opcionais). A unidade comercial e o GTIN ficam em “Informações do produto”."
           >
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              <Input
-                v-model="form.ncm"
-                maxlength="10"
-                inputmode="numeric"
-                placeholder="0000.00.00"
-                :error="errors.ncm"
-              >
-                <template #label>NCM</template>
-              </Input>
+            <div class="space-y-5">
+              <!-- Indicador de completude fiscal (somente leitura) -->
+              <div>
+                <span
+                  :class="[
+                    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
+                    form.fiscalComplete
+                      ? 'bg-success-500/10 text-success-600'
+                      : 'bg-warning-500/10 text-warning-700',
+                  ]"
+                >
+                  <Icon
+                    :name="form.fiscalComplete ? 'CircleCheck' : 'CircleAlert'"
+                    size="sm"
+                  />
+                  {{
+                    form.fiscalComplete
+                      ? 'Fiscalmente completo'
+                      : 'Fiscalmente pendente'
+                  }}
+                </span>
+                <p class="mt-1.5 text-xs text-muted-foreground">
+                  Calculado automaticamente pelo sistema ao salvar.
+                </p>
+              </div>
 
-              <Input
-                v-model="form.cest"
-                maxlength="10"
-                inputmode="numeric"
-                placeholder="00.000.00"
-                :error="errors.cest"
-              >
-                <template #label>CEST</template>
-              </Input>
+              <!-- Classificação: NCM / CEST / CFOP / Origem -->
+              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <Input
+                  v-model="form.ncm"
+                  maxlength="8"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="00000000"
+                  :error="errors.ncm"
+                >
+                  <template #label>NCM</template>
+                </Input>
 
-              <Input
-                v-model="form.cfop"
-                maxlength="6"
-                inputmode="numeric"
-                placeholder="5102"
-                :error="errors.cfop"
-              >
-                <template #label>CFOP</template>
-              </Input>
+                <Input
+                  v-model="form.cest"
+                  maxlength="7"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="0000000"
+                  :error="errors.cest"
+                >
+                  <template #label>CEST</template>
+                </Input>
 
-              <Select
-                v-model="form.origin"
-                :options="originOptions"
-                placeholder="Origem"
-                :error="errors.origin"
-              >
-                <template #label>Origem</template>
-              </Select>
+                <Input
+                  v-model="form.cfop"
+                  maxlength="4"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="5102"
+                  :error="errors.cfop"
+                >
+                  <template #label>CFOP</template>
+                </Input>
+
+                <Select
+                  v-model="form.origin"
+                  :options="originOptions"
+                  placeholder="Origem"
+                  :error="errors.origin"
+                >
+                  <template #label>Origem</template>
+                </Select>
+              </div>
+
+              <!-- Situação tributária: CSOSN / CST ICMS / PIS / COFINS -->
+              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <Input
+                  v-model="form.csosn"
+                  maxlength="4"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="102"
+                  :error="errors.csosn"
+                >
+                  <template #label>CSOSN</template>
+                </Input>
+
+                <Input
+                  v-model="form.cstIcms"
+                  maxlength="3"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="00"
+                  :error="errors.cstIcms"
+                >
+                  <template #label>CST ICMS</template>
+                </Input>
+
+                <Input
+                  v-model="form.cstPis"
+                  maxlength="2"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="01"
+                  :error="errors.cstPis"
+                >
+                  <template #label>CST PIS</template>
+                </Input>
+
+                <Input
+                  v-model="form.cstCofins"
+                  maxlength="2"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="01"
+                  :error="errors.cstCofins"
+                >
+                  <template #label>CST COFINS</template>
+                </Input>
+              </div>
+
+              <!-- Alíquotas (%) -->
+              <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <Input
+                  :model-value="form.aliquotaIcms"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  :error="errors.aliquotaIcms"
+                  @update:model-value="
+                    form.aliquotaIcms = formatDecimalInput($event)
+                  "
+                >
+                  <template #label>Alíquota ICMS</template>
+                  <template #suffix
+                    ><span class="text-sm text-muted-foreground"
+                      >%</span
+                    ></template
+                  >
+                </Input>
+
+                <Input
+                  :model-value="form.aliquotaPis"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  :error="errors.aliquotaPis"
+                  @update:model-value="
+                    form.aliquotaPis = formatDecimalInput($event)
+                  "
+                >
+                  <template #label>Alíquota PIS</template>
+                  <template #suffix
+                    ><span class="text-sm text-muted-foreground"
+                      >%</span
+                    ></template
+                  >
+                </Input>
+
+                <Input
+                  :model-value="form.aliquotaCofins"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  :error="errors.aliquotaCofins"
+                  @update:model-value="
+                    form.aliquotaCofins = formatDecimalInput($event)
+                  "
+                >
+                  <template #label>Alíquota COFINS</template>
+                  <template #suffix
+                    ><span class="text-sm text-muted-foreground"
+                      >%</span
+                    ></template
+                  >
+                </Input>
+              </div>
             </div>
           </FormSection>
         </motion.div>

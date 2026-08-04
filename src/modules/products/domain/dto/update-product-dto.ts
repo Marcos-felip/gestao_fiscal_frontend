@@ -14,6 +14,13 @@ export class UpdateProductDto {
   cest?: string
   cfop?: string
   origin?: number
+  csosn?: string
+  cstIcms?: string
+  cstPis?: string
+  cstCofins?: string
+  aliquotaIcms?: number
+  aliquotaPis?: number
+  aliquotaCofins?: number
   technicalAttributes?: TechnicalAttributes
   isActive?: boolean
 
@@ -30,6 +37,13 @@ export class UpdateProductDto {
     cest?: string
     cfop?: string
     origin?: number
+    csosn?: string
+    cstIcms?: string
+    cstPis?: string
+    cstCofins?: string
+    aliquotaIcms?: number
+    aliquotaPis?: number
+    aliquotaCofins?: number
     technicalAttributes?: TechnicalAttributes
     isActive?: boolean
   }) {
@@ -45,6 +59,13 @@ export class UpdateProductDto {
     this.cest = fields.cest
     this.cfop = fields.cfop
     this.origin = fields.origin
+    this.csosn = fields.csosn
+    this.cstIcms = fields.cstIcms
+    this.cstPis = fields.cstPis
+    this.cstCofins = fields.cstCofins
+    this.aliquotaIcms = fields.aliquotaIcms
+    this.aliquotaPis = fields.aliquotaPis
+    this.aliquotaCofins = fields.aliquotaCofins
     this.technicalAttributes = fields.technicalAttributes
     this.isActive = fields.isActive
   }

@@ -15,7 +15,11 @@ import type {
 } from '@/modules/products/presentation/schemas/product-schema'
 import { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
 import { useToast } from '@/shared/composables'
-import { formatMoney, formatQuantity, parseDecimal } from '@/shared/ui/utils/masks'
+import {
+  formatMoney,
+  formatQuantity,
+  parseDecimal,
+} from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'
 
 function emptyValues(): ProductFormValues {
@@ -32,6 +36,14 @@ function emptyValues(): ProductFormValues {
     cest: '',
     cfop: '',
     origin: '',
+    csosn: '',
+    cstIcms: '',
+    cstPis: '',
+    cstCofins: '',
+    aliquotaIcms: '',
+    aliquotaPis: '',
+    aliquotaCofins: '',
+    fiscalComplete: false,
     attributes: [],
   }
 }
@@ -82,7 +94,10 @@ export class ProductFormController extends BaseController {
   async save(input: ProductFormValues): Promise<void> {
     this.setLoading(true)
     const result = this.editingId
-      ? await this.updateUseCase.execute(this.editingId, this.toUpdateDto(input))
+      ? await this.updateUseCase.execute(
+          this.editingId,
+          this.toUpdateDto(input),
+        )
       : await this.createUseCase.execute(this.toCreateDto(input))
 
     this.handleResult(result, () => {
@@ -97,7 +112,9 @@ export class ProductFormController extends BaseController {
   }
 
   /** Monta o JSON de atributos técnicos a partir das linhas com chave. */
-  private buildAttributes(rows: AttributeRow[]): TechnicalAttributes | undefined {
+  private buildAttributes(
+    rows: AttributeRow[],
+  ): TechnicalAttributes | undefined {
     const attributes: TechnicalAttributes = {}
     for (const row of rows) {
       const key = row.key.trim()
@@ -118,6 +135,13 @@ export class ProductFormController extends BaseController {
       cest: input.cest || undefined,
       cfop: input.cfop || undefined,
       origin: input.origin ? Number(input.origin) : undefined,
+      csosn: input.csosn || undefined,
+      cstIcms: input.cstIcms || undefined,
+      cstPis: input.cstPis || undefined,
+      cstCofins: input.cstCofins || undefined,
+      aliquotaIcms: parseDecimal(input.aliquotaIcms),
+      aliquotaPis: parseDecimal(input.aliquotaPis),
+      aliquotaCofins: parseDecimal(input.aliquotaCofins),
       technicalAttributes: this.buildAttributes(input.attributes),
     }
   }
@@ -159,6 +183,16 @@ export class ProductFormController extends BaseController {
       cest: p.cest ?? '',
       cfop: p.cfop ?? '',
       origin: p.origin !== null ? String(p.origin) : '',
+      csosn: p.csosn ?? '',
+      cstIcms: p.cstIcms ?? '',
+      cstPis: p.cstPis ?? '',
+      cstCofins: p.cstCofins ?? '',
+      aliquotaIcms:
+        p.aliquotaIcms !== null ? formatQuantity(p.aliquotaIcms) : '',
+      aliquotaPis: p.aliquotaPis !== null ? formatQuantity(p.aliquotaPis) : '',
+      aliquotaCofins:
+        p.aliquotaCofins !== null ? formatQuantity(p.aliquotaCofins) : '',
+      fiscalComplete: p.fiscalComplete,
       attributes,
     }
   }

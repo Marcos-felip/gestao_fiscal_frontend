@@ -22,6 +22,17 @@ const canView = computed(() => can('products.read'))
 
 const searchTerm = ref('')
 
+// Filtro de pendências fiscais: aplicado no client sobre a página carregada.
+// Não há endpoint dedicado; a listagem é paginada no servidor, então o filtro
+// atua apenas sobre os itens já trazidos (a nota na UI deixa isso claro).
+const onlyFiscalPending = ref(false)
+
+const displayedProducts = computed(() =>
+  onlyFiscalPending.value
+    ? controller.products.value.filter((p) => p.isFiscalPending)
+    : controller.products.value,
+)
+
 const confirmOpen = ref(false)
 const target = ref<Product | null>(null)
 
@@ -102,8 +113,8 @@ function nextPage(): void {
     </Button>
   </header>
 
-  <!-- Toolbar: busca por nome -->
-  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+  <!-- Toolbar: busca por nome + filtro fiscal -->
+  <div class="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center">
     <div class="sm:max-w-xs sm:flex-1">
       <SearchInput
         :model-value="searchTerm"
@@ -111,7 +122,33 @@ function nextPage(): void {
         @update:model-value="onSearch"
       />
     </div>
+
+    <button
+      type="button"
+      :aria-pressed="onlyFiscalPending"
+      :class="[
+        'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+        onlyFiscalPending
+          ? 'border-warning-500/40 bg-warning-500/10 text-warning-700'
+          : 'border-line-2 text-muted-foreground hover:bg-muted hover:text-foreground',
+      ]"
+      @click="onlyFiscalPending = !onlyFiscalPending"
+    >
+      <Icon name="Filter" size="sm" />
+      Somente pendências fiscais
+    </button>
   </div>
+
+  <!-- Nota: o filtro fiscal atua no client, sobre a página atual -->
+  <p
+    v-if="onlyFiscalPending"
+    class="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground"
+  >
+    <Icon name="Info" size="xs" />
+    O filtro fiscal atua apenas sobre a página atual (a listagem é paginada no
+    servidor).
+  </p>
+  <div v-else class="mb-4"></div>
 
   <!-- Erro -->
   <div
@@ -141,7 +178,34 @@ function nextPage(): void {
     </div>
   </div>
 
-  <!-- Empty -->
+  <!-- Empty: nenhuma pendência na página (filtro ativo) -->
+  <div
+    v-else-if="
+      displayedProducts.length === 0 && controller.products.value.length > 0
+    "
+    class="rounded-2xl border border-dashed border-line-3 bg-background px-6 py-16 text-center"
+  >
+    <span
+      class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-success-500/10 text-success-600"
+    >
+      <Icon name="CircleCheck" size="lg" />
+    </span>
+    <h2 class="font-display mt-4 text-lg font-semibold text-foreground">
+      Nenhuma pendência fiscal nesta página
+    </h2>
+    <p class="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+      Todos os produtos desta página estão fiscalmente completos. Desative o
+      filtro para ver todos.
+    </p>
+    <div class="mt-5">
+      <Button variant="ghost" @click="onlyFiscalPending = false">
+        <template #icon><Icon name="Filter" size="sm" /></template>
+        Limpar filtro
+      </Button>
+    </div>
+  </div>
+
+  <!-- Empty: catálogo vazio -->
   <div
     v-else-if="controller.products.value.length === 0"
     class="rounded-2xl border border-dashed border-line-3 bg-background px-6 py-16 text-center"
@@ -188,12 +252,22 @@ function nextPage(): void {
         </thead>
         <tbody class="divide-y divide-line-2">
           <tr
-            v-for="product in controller.products.value"
+            v-for="product in displayedProducts"
             :key="product.id"
             class="transition-colors hover:bg-muted/40"
           >
             <td class="px-4 py-3">
-              <p class="font-medium text-foreground">{{ product.name }}</p>
+              <div class="flex items-center gap-2">
+                <p class="font-medium text-foreground">{{ product.name }}</p>
+                <span
+                  v-if="product.isFiscalPending"
+                  class="inline-flex items-center gap-1 rounded-full bg-warning-500/10 px-2 py-0.5 text-xs font-medium text-warning-700"
+                  title="Dados fiscais incompletos para emissão"
+                >
+                  <Icon name="CircleAlert" size="xs" />
+                  Fiscal pendente
+                </span>
+              </div>
               <p v-if="product.sku" class="text-xs text-muted-foreground">
                 SKU {{ product.sku }}
               </p>

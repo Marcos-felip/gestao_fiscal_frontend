@@ -20,6 +20,15 @@ export class Product {
   readonly cest: string | null
   readonly cfop: string | null
   readonly origin: number | null
+  readonly csosn: string | null
+  readonly cstIcms: string | null
+  readonly cstPis: string | null
+  readonly cstCofins: string | null
+  readonly aliquotaIcms: number | null
+  readonly aliquotaPis: number | null
+  readonly aliquotaCofins: number | null
+  /** Derivado no backend: indica se o produto tem dados fiscais completos. */
+  readonly fiscalComplete: boolean
   readonly technicalAttributes: TechnicalAttributes | null
   readonly createdAt: string | null
   readonly updatedAt: string | null
@@ -41,6 +50,14 @@ export class Product {
     cest: string | null,
     cfop: string | null,
     origin: number | null,
+    csosn: string | null,
+    cstIcms: string | null,
+    cstPis: string | null,
+    cstCofins: string | null,
+    aliquotaIcms: number | null,
+    aliquotaPis: number | null,
+    aliquotaCofins: number | null,
+    fiscalComplete: boolean,
     technicalAttributes: TechnicalAttributes | null,
     createdAt: string | null,
     updatedAt: string | null,
@@ -61,6 +78,14 @@ export class Product {
     this.cest = cest
     this.cfop = cfop
     this.origin = origin
+    this.csosn = csosn
+    this.cstIcms = cstIcms
+    this.cstPis = cstPis
+    this.cstCofins = cstCofins
+    this.aliquotaIcms = aliquotaIcms
+    this.aliquotaPis = aliquotaPis
+    this.aliquotaCofins = aliquotaCofins
+    this.fiscalComplete = fiscalComplete
     this.technicalAttributes = technicalAttributes
     this.createdAt = createdAt
     this.updatedAt = updatedAt
@@ -69,5 +94,10 @@ export class Product {
   /** Estoque no ou abaixo do mínimo configurado (quando há mínimo). */
   get isLowStock(): boolean {
     return this.minStock !== null && this.currentStock <= this.minStock
+  }
+
+  /** Produto sem dados fiscais completos para emissão. */
+  get isFiscalPending(): boolean {
+    return !this.fiscalComplete
   }
 }

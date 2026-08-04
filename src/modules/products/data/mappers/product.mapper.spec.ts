@@ -23,6 +23,14 @@ const respostaValida = {
   cest: '2810400',
   cfop: '5102',
   origin: 0,
+  csosn: '102',
+  cstIcms: '00',
+  cstPis: '01',
+  cstCofins: '01',
+  aliquotaIcms: '18.0000',
+  aliquotaPis: '1.6500',
+  aliquotaCofins: '7.6000',
+  fiscalComplete: true,
   technicalAttributes: { cor: 'amarelo', numeracao: 42 },
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-02T00:00:00.000Z',
@@ -39,7 +47,26 @@ describe('toProduct', () => {
     expect(product.salePrice).toBe(249.9)
     expect(product.currentStock).toBe(8)
     expect(product.minStock).toBe(10)
-    expect(product.technicalAttributes).toEqual({ cor: 'amarelo', numeracao: 42 })
+    expect(product.technicalAttributes).toEqual({
+      cor: 'amarelo',
+      numeracao: 42,
+    })
+  })
+
+  it('converte alíquotas fiscais (string) para número e lê fiscalComplete', () => {
+    const result = toProduct(respostaValida)
+
+    expect(result.isRight).toBe(true)
+    const product = result.right
+    expect(product.csosn).toBe('102')
+    expect(product.cstIcms).toBe('00')
+    expect(product.cstPis).toBe('01')
+    expect(product.cstCofins).toBe('01')
+    expect(product.aliquotaIcms).toBe(18)
+    expect(product.aliquotaPis).toBe(1.65)
+    expect(product.aliquotaCofins).toBe(7.6)
+    expect(product.fiscalComplete).toBe(true)
+    expect(product.isFiscalPending).toBe(false)
   })
 
   it('marca estoque baixo quando currentStock <= minStock', () => {
@@ -66,6 +93,13 @@ describe('toProduct', () => {
     expect(product.isActive).toBe(true)
     expect(product.isLowStock).toBe(false)
     expect(product.technicalAttributes).toBeNull()
+    expect(product.csosn).toBeNull()
+    expect(product.cstIcms).toBeNull()
+    expect(product.aliquotaIcms).toBeNull()
+    expect(product.aliquotaPis).toBeNull()
+    expect(product.aliquotaCofins).toBeNull()
+    expect(product.fiscalComplete).toBe(false)
+    expect(product.isFiscalPending).toBe(true)
   })
 
   it('rejeita resposta com campo de tipo errado (ContractError)', () => {

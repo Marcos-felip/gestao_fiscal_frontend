@@ -32,10 +32,17 @@
 
 ## 4. Dados e pendências fiscais dos produtos
 
-- [ ] 4.1 Seção fiscal no formulário de produto (NCM, CEST, origem, CFOP, CSOSN/CST ICMS/PIS/COFINS, alíquotas, unidade, GTIN)
-- [ ] 4.2 Máscaras/validações client-side dos campos fiscais
-- [ ] 4.3 Indicador `fiscalComplete` na lista/detalhe de produto
-- [ ] 4.4 Lista/painel de produtos com pendência fiscal (filtro client-side por `fiscalComplete=false`; sem endpoint dedicado na Fase A)
+> ⚠️ PARCIALMENTE BLOQUEADO (backend): o `CreateProductDto` só declara `ncm`, `cest`,
+> `cfop` e `origin` entre os campos fiscais; com `ValidationPipe({ whitelist: true })`,
+> `csosn`, `cstIcms/Pis/Cofins` e as alíquotas enviados são DESCARTADOS no save. Além
+> disso, `fiscalComplete` NÃO é derivado por nenhuma lógica (fica sempre `false`).
+> O frontend já envia/exibe tudo com os nomes corretos, mas só persiste/valida quando
+> o backend adicionar esses campos ao `CreateProductDto` e derivar `fiscalComplete`.
+
+- [x] 4.1 Seção fiscal no formulário de produto (NCM, CEST, origem, CFOP, CSOSN/CST ICMS/PIS/COFINS, alíquotas, unidade, GTIN) — frontend pronto
+- [x] 4.2 Máscaras/validações client-side dos campos fiscais
+- [x] 4.3 Indicador `fiscalComplete` na lista/detalhe de produto (somente leitura)
+- [x] 4.4 Lista/painel de produtos com pendência fiscal (filtro client-side na página atual; sem endpoint dedicado na Fase A)
 
 ## 5. Emissão de NFC-e (a partir da venda)
 
