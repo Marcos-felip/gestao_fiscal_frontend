@@ -139,6 +139,12 @@ const groups: NavGroup[] = [
     icon: 'ScrollText',
     links: [
       {
+        to: '/documentos-fiscais',
+        label: 'Documentos fiscais',
+        icon: 'FileText',
+        permission: 'fiscal.read',
+      },
+      {
         to: '/configuracao-fiscal',
         label: 'Configuração fiscal',
         icon: 'ScrollText',

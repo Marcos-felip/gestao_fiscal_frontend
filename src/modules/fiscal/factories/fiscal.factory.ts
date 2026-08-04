@@ -13,6 +13,9 @@ import { GetFiscalDocumentEventsUseCase } from '@/modules/fiscal/application/use
 import { DownloadFiscalXmlUseCase } from '@/modules/fiscal/application/use-cases/download-fiscal-xml.use-case'
 import { FiscalSettingsController } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
 import type { FiscalEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
+import { FiscalDocumentsListController } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
+import type { FiscalDocumentsEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
+import { FiscalDocumentDetailController } from '@/modules/fiscal/presentation/controllers/fiscal-document-detail-controller'
 import { EstablishmentRepository } from '@/modules/establishments/data/repositories/establishment-repository'
 import { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
 
@@ -90,6 +93,34 @@ function makeFiscalEstablishmentsLoader(): FiscalEstablishmentsLoader {
       items.map((e) => ({ id: e.id, name: e.name, type: e.type })),
     )
   }
+}
+
+/**
+ * Adapta a listagem de estabelecimentos para o formato `{ id, name }` usado no
+ * filtro da tela de documentos fiscais.
+ */
+function makeFiscalDocumentsEstablishmentsLoader(): FiscalDocumentsEstablishmentsLoader {
+  const listEstablishments = new ListEstablishmentsUseCase(
+    new EstablishmentRepository(),
+  )
+  return async () => {
+    const result = await listEstablishments.execute()
+    return result.map((items) => items.map((e) => ({ id: e.id, name: e.name })))
+  }
+}
+
+export function makeFiscalDocumentsListController(): FiscalDocumentsListController {
+  return new FiscalDocumentsListController(
+    makeListFiscalDocumentsUseCase(),
+    makeFiscalDocumentsEstablishmentsLoader(),
+  )
+}
+
+export function makeFiscalDocumentDetailController(): FiscalDocumentDetailController {
+  return new FiscalDocumentDetailController(
+    makeGetFiscalDocumentUseCase(),
+    makeDownloadFiscalXmlUseCase(),
+  )
 }
 
 export function makeFiscalSettingsController(): FiscalSettingsController {

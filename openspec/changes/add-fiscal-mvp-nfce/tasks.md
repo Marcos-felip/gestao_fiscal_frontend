@@ -46,10 +46,10 @@
 
 ## 6. Documentos fiscais (lista e detalhe)
 
-- [ ] 6.1 Lista de documentos fiscais (`GET /fiscal/documents`) paginada, filtros: status, período (createdAt), estabelecimento, modelo
-- [ ] 6.2 Badge de status fiscal do documento (`FiscalDocumentStatus`, cores por situação)
-- [ ] 6.3 Detalhe do documento (`GET /fiscal/documents/:id`): chave, protocolo, datas, `valorTotal`, snapshot dos itens/pagamentos, `statusHistory[]` e `events[]`
-- [ ] 6.4 Download do **XML** (`GET /fiscal/documents/:id/xml/:tipo` — string crua → blob `text/xml`), com `:tipo ∈ enviado|autorizado|cancelamento` conforme disponível
+- [x] 6.1 Lista de documentos fiscais (`GET /fiscal/documents`) paginada, filtros: status, período (createdAt), estabelecimento, modelo
+- [x] 6.2 Badge de status fiscal do documento (`FiscalDocumentStatus`, cores por situação)
+- [x] 6.3 Detalhe do documento (`GET /fiscal/documents/:id`): chave, protocolo, datas, `valorTotal`, snapshot dos itens/pagamentos, `statusHistory[]` e `events[]`
+- [x] 6.4 Download do **XML** (`GET /fiscal/documents/:id/xml/:tipo` — string crua → blob `text/xml`), com `:tipo ∈ enviado|autorizado|cancelamento` conforme disponível
 
 ## 7. Verificação
 

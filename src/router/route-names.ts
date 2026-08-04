@@ -32,6 +32,8 @@ export const routeNames = {
   CASH_SESSIONS: 'cash-sessions',
   CASH_SESSION_DETAIL: 'cash-session-detail',
   FISCAL_SETTINGS: 'fiscal-settings',
+  FISCAL_DOCUMENTS: 'fiscal-documents',
+  FISCAL_DOCUMENT_DETAIL: 'fiscal-document-detail',
   FORBIDDEN: 'forbidden',
   NOT_FOUND: 'not-found',
   SERVER_ERROR: 'server-error',
