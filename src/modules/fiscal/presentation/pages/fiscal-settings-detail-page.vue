@@ -219,6 +219,62 @@ async function onTestSefaz(): Promise<void> {
   await controller.testSefaz(current.establishment.id)
 }
 
+const checklistOkCount = computed(() => {
+  const items = controller.checklist.value?.itens ?? []
+  return items.filter((i) => i.ok).length
+})
+
+const checklistTotalCount = computed(
+  () => controller.checklist.value?.itens.length ?? 0,
+)
+
+async function onReleaseProduction(): Promise<void> {
+  const current = editing.value
+  if (!current) return
+  const ok = await controller.releaseProduction(current.establishment.id)
+  if (ok) {
+    await controller.prepareById(establishmentId)
+    void controller.loadChecklist(establishmentId)
+  }
+}
+
+async function onRevokeProduction(): Promise<void> {
+  const current = editing.value
+  if (!current) return
+  const ok = await controller.revokeProduction(current.establishment.id)
+  if (ok) {
+    await controller.prepareById(establishmentId)
+    void controller.loadChecklist(establishmentId)
+  }
+}
+
+async function onActivateEnvironment(ambiente: FiscalEnvironment): Promise<void> {
+  const current = editing.value
+  if (!current) return
+  const ok = await controller.activateEnvironment(
+    current.establishment.id,
+    ambiente,
+  )
+  if (ok) {
+    await controller.prepareById(establishmentId)
+  }
+}
+
+async function onValidateConsulta(): Promise<void> {
+  const current = editing.value
+  if (!current) return
+  await controller.validateConsulta(current.establishment.id)
+}
+
+const settingsHistoryOpen = ref(false)
+
+function onToggleSettingsHistory(): void {
+  settingsHistoryOpen.value = !settingsHistoryOpen.value
+  if (settingsHistoryOpen.value && controller.settingsHistory.value.length === 0) {
+    void controller.loadSettingsHistory(establishmentId)
+  }
+}
+
 const certificateView = computed(() => {
   const cert = controller.certificate.value
   if (!cert || !cert.configurado) return null
@@ -297,6 +353,9 @@ onMounted(async () => {
   const found = await controller.prepareById(establishmentId)
   notFound.value = !found
   ready.value = true
+  if (found) {
+    void controller.loadChecklist(establishmentId)
+  }
 })
 
 // Entrada em cascata das seções.
@@ -879,6 +938,272 @@ const item = {
                 </template>
                 Testar comunicação
               </Button>
+            </div>
+          </FormSection>
+        </motion.div>
+
+        <!-- Seção: Produção -->
+        <motion.div :variants="item">
+          <FormSection
+            icon="Rocket"
+            title="Produção"
+            description="Checklist de pré-requisitos, liberação e validação para emissão em produção."
+          >
+            <div class="space-y-5">
+              <p
+                v-if="controller.checklistLoading.value"
+                class="flex items-center gap-2 text-sm text-muted-foreground"
+              >
+                <Icon name="LoaderCircle" size="sm" class="animate-spin" />
+                Carregando checklist…
+              </p>
+
+              <template v-else-if="controller.checklist.value">
+                <div
+                  v-if="controller.checklist.value.liberada"
+                  class="flex items-start gap-2 rounded-xl bg-success-500/10 px-4 py-3 text-sm text-success-600"
+                >
+                  <Icon name="BadgeCheck" size="sm" class="mt-0.5 shrink-0" />
+                  <span>
+                    Produção liberada
+                    <span
+                      v-if="controller.checklist.value.liberadaEm"
+                      class="opacity-80"
+                    >
+                      em
+                      {{
+                        formatDate(controller.checklist.value.liberadaEm)
+                      }}
+                    </span>
+                  </span>
+                </div>
+
+                <div
+                  v-else
+                  class="flex items-start gap-2 rounded-xl bg-warning-500/10 px-4 py-3 text-sm text-warning-700"
+                >
+                  <Icon name="CircleAlert" size="sm" class="mt-0.5 shrink-0" />
+                  <span>
+                    Produção bloqueada —
+                    {{ checklistOkCount }}/{{ checklistTotalCount }} itens
+                    concluídos.
+                  </span>
+                </div>
+
+                <ul class="grid gap-2 sm:grid-cols-2">
+                  <li
+                    v-for="(checkItem, index) in controller.checklist.value
+                      .itens"
+                    :key="index"
+                    :class="[
+                      'flex items-start gap-2 rounded-lg border px-3 py-2 text-sm',
+                      checkItem.ok
+                        ? 'border-success-500/20 bg-success-500/5 text-success-600'
+                        : checkItem.bloqueante
+                          ? 'border-error-500/20 bg-error-500/5 text-error-600'
+                          : 'border-warning-500/20 bg-warning-500/5 text-warning-700',
+                    ]"
+                  >
+                    <Icon
+                      :name="checkItem.ok ? 'CircleCheck' : 'CircleX'"
+                      size="sm"
+                      class="mt-0.5 shrink-0"
+                    />
+                    <span class="min-w-0">
+                      <span class="block font-medium">{{ checkItem.item }}</span>
+                      <span
+                        v-if="checkItem.detalhe"
+                        class="block text-xs opacity-80"
+                      >
+                        {{ checkItem.detalhe }}
+                      </span>
+                    </span>
+                  </li>
+                </ul>
+
+                <div class="flex flex-wrap gap-2 border-t border-line-2 pt-4">
+                  <Button
+                    v-if="!controller.checklist.value.liberada && canEdit"
+                    variant="primary"
+                    text-class="text-white"
+                    :loading="controller.releasingProduction.value"
+                    loading-text="Liberando…"
+                    :disabled="checklistOkCount < checklistTotalCount"
+                    @click="onReleaseProduction"
+                  >
+                    <template #icon
+                      ><Icon name="Rocket" size="sm"
+                    /></template>
+                    Liberar produção
+                  </Button>
+
+                  <Button
+                    v-if="controller.checklist.value.liberada && canEdit"
+                    variant="ghost"
+                    :loading="controller.revokingProduction.value"
+                    loading-text="Revogando…"
+                    @click="onRevokeProduction"
+                  >
+                    <template #icon><Icon name="Ban" size="sm" /></template>
+                    Revogar produção
+                  </Button>
+
+                  <Button
+                    v-if="canEdit"
+                    variant="ghost"
+                    :loading="controller.consultaValidating.value"
+                    loading-text="Validando…"
+                    @click="onValidateConsulta"
+                  >
+                    <template #icon
+                      ><Icon name="Globe" size="sm"
+                    /></template>
+                    Validar consulta pública
+                  </Button>
+
+                  <Button
+                    v-if="canEdit"
+                    variant="ghost"
+                    :loading="controller.activatingEnvironment.value"
+                    loading-text="Ativando…"
+                    @click="onActivateEnvironment(FiscalEnvironment.PRODUCAO)"
+                  >
+                    <template #icon
+                      ><Icon name="BadgeCheck" size="sm"
+                    /></template>
+                    Ativar produção
+                  </Button>
+                </div>
+
+                <div
+                  v-if="controller.consultaResult.value"
+                  :class="[
+                    'flex items-start gap-2 rounded-xl px-4 py-3 text-sm',
+                    controller.consultaResult.value.validada
+                      ? 'bg-success-500/10 text-success-600'
+                      : 'bg-error-500/10 text-error-600',
+                  ]"
+                >
+                  <Icon
+                    :name="
+                      controller.consultaResult.value.validada
+                        ? 'CircleCheck'
+                        : 'CircleX'
+                    "
+                    size="sm"
+                    class="mt-0.5 shrink-0"
+                  />
+                  <span class="min-w-0">
+                    <span class="block font-medium">
+                      {{
+                        controller.consultaResult.value.validada
+                          ? 'Consulta pública validada'
+                          : 'Consulta pública não validada'
+                      }}
+                    </span>
+                    <span class="block text-xs opacity-80">
+                      Chave:
+                      <span class="font-mono tabular-nums">
+                        {{ controller.consultaResult.value.chaveAcesso }}
+                      </span>
+                    </span>
+                    <span class="block">
+                      {{ controller.consultaResult.value.situacao }}
+                    </span>
+                  </span>
+                </div>
+              </template>
+
+              <div
+                v-else
+                class="flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-3 bg-muted/20 px-4 py-8 text-center text-sm text-muted-foreground"
+              >
+                <Icon name="Rocket" size="md" class="opacity-60" />
+                <span>Checklist indisponível.</span>
+              </div>
+            </div>
+          </FormSection>
+        </motion.div>
+
+        <!-- Seção: Histórico de configurações -->
+        <motion.div :variants="item">
+          <FormSection
+            icon="History"
+            title="Histórico de configurações"
+            description="Registro de alterações nas configurações fiscais deste estabelecimento."
+          >
+            <button
+              type="button"
+              class="flex w-full items-center justify-between gap-2 text-sm font-medium text-foreground"
+              @click="onToggleSettingsHistory"
+            >
+              <span class="inline-flex items-center gap-1.5">
+                <Icon
+                  name="History"
+                  size="sm"
+                  class="text-muted-foreground"
+                />
+                {{ settingsHistoryOpen ? 'Ocultar histórico' : 'Exibir histórico' }}
+                <span
+                  v-if="controller.settingsHistory.value.length"
+                  class="rounded-full bg-muted px-1.5 text-xs tabular-nums text-muted-foreground"
+                >
+                  {{ controller.settingsHistory.value.length }}
+                </span>
+              </span>
+              <Icon
+                :name="settingsHistoryOpen ? 'ChevronUp' : 'ChevronDown'"
+                size="sm"
+                class="text-muted-foreground"
+              />
+            </button>
+
+            <div v-if="settingsHistoryOpen" class="mt-3">
+              <p
+                v-if="controller.settingsHistoryLoading.value"
+                class="flex items-center gap-2 text-sm text-muted-foreground"
+              >
+                <Icon name="LoaderCircle" size="sm" class="animate-spin" />
+                Carregando histórico…
+              </p>
+              <p
+                v-else-if="controller.settingsHistory.value.length === 0"
+                class="text-sm text-muted-foreground"
+              >
+                Nenhuma alteração registrada.
+              </p>
+              <ul v-else class="grid gap-2 sm:grid-cols-2">
+                <li
+                  v-for="event in controller.settingsHistory.value"
+                  :key="event.id"
+                  class="rounded-lg border border-line-2 bg-background px-3 py-2 text-sm"
+                >
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="font-medium text-foreground">
+                      {{ event.tipo }}
+                    </span>
+                    <span
+                      class="shrink-0 text-xs tabular-nums text-muted-foreground"
+                    >
+                      {{ formatDateTime(event.createdAt.toISOString()) }}
+                    </span>
+                  </div>
+                  <p
+                    v-if="event.valorAnterior || event.valorNovo"
+                    class="mt-0.5 text-xs text-muted-foreground"
+                  >
+                    <span v-if="event.valorAnterior">
+                      De: {{ event.valorAnterior }}
+                    </span>
+                    <span v-if="event.valorAnterior && event.valorNovo">
+                      →
+                    </span>
+                    <span v-if="event.valorNovo">
+                      Para: {{ event.valorNovo }}
+                    </span>
+                  </p>
+                </li>
+              </ul>
             </div>
           </FormSection>
         </motion.div>

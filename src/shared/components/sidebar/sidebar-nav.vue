@@ -145,6 +145,12 @@ const groups: NavGroup[] = [
         permission: 'fiscal.read',
       },
       {
+        to: '/rejeicoes-fiscais',
+        label: 'Central de rejeições',
+        icon: 'TriangleAlert',
+        permission: 'fiscal.read',
+      },
+      {
         to: '/configuracao-fiscal',
         label: 'Configuração fiscal',
         icon: 'ScrollText',

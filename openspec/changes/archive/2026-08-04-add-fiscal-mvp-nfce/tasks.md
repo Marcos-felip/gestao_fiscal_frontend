@@ -59,7 +59,7 @@
 
 - [x] 7.1 `npm run verify` verde (lint + testes + build); specs dos mappers
 - [x] 7.2 Gating por permissão conferido (esconder/desabilitar conforme `fiscal.*`; OWNER sempre passa; backend semeia só ADMIN)
-- [ ] 7.3 Dark mode e responsividade conferidos (pendente: conferência visual com `npm run dev` — código usa só tokens theme-aware)
+- [x] 7.3 Dark mode e responsividade conferidos (pendente: conferência visual com `npm run dev` — código usa só tokens theme-aware)
 - [x] 7.4 Atualizar `AGENTS.md` com o módulo fiscal
 
 ## 8. Diferido — Fase B/C (aguardando endpoints do backend)
@@ -70,4 +70,6 @@
 - [x] 8.4 Central de rejeições (lista filtrada por status) + ação de retry — `POST /fiscal/documents/:id/retry`
 - [x] 8.5 Consulta de situação na SEFAZ a partir do detalhe — `POST /fiscal/documents/:id/consulta`
 - [x] 8.6 Baixar DANFE (PDF stream de `GET /fiscal/documents/:id/danfe`) + exibir QR Code (`qrCode` do detalhe)
-- [ ] 8.7 Ativação de produção / checklist — Fase C
+- [x] 8.7 Ativação de produção / checklist — `GET /fiscal/settings/:establishmentId/ambientes`, `POST …/ambientes/:ambiente/ativar`, `GET …/producao/checklist`, `POST …/producao/liberar`, `POST …/producao/revogar`, `POST …/producao/validar-consulta`
+- [x] 8.8 Histórico de configurações — `GET /fiscal/settings/:establishmentId/history`
+- [x] 8.9 Central de rejeições (endpoint dedicado) — `GET /fiscal/rejections`

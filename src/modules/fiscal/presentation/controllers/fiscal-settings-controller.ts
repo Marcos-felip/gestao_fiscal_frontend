@@ -11,34 +11,43 @@ import type { GetFiscalCertificate } from '@/modules/fiscal/application/use-case
 import type { GetFiscalCertificateHistory } from '@/modules/fiscal/application/use-cases/get-fiscal-certificate-history.use-case'
 import type { TestSefazStatus } from '@/modules/fiscal/application/use-cases/test-sefaz-status.use-case'
 import type { GetFiscalEngineHealth } from '@/modules/fiscal/application/use-cases/get-fiscal-engine-health.use-case'
+import type { ListSettingsByEnvironmentUseCase } from '@/modules/fiscal/application/use-cases/list-settings-by-environment.use-case'
+import type { ActivateEnvironmentUseCase } from '@/modules/fiscal/application/use-cases/activate-environment.use-case'
+import type { GetProductionChecklistUseCase } from '@/modules/fiscal/application/use-cases/get-production-checklist.use-case'
+import type { ReleaseProductionUseCase } from '@/modules/fiscal/application/use-cases/release-production.use-case'
+import type { RevokeProductionUseCase } from '@/modules/fiscal/application/use-cases/revoke-production.use-case'
+import type { ValidatePublicConsultationUseCase } from '@/modules/fiscal/application/use-cases/validate-public-consultation.use-case'
+import type { GetSettingsHistoryUseCase } from '@/modules/fiscal/application/use-cases/get-settings-history.use-case'
 import type { FiscalSettings } from '@/modules/fiscal/domain/entities/fiscal-settings.entity'
 import type { CertificateStatus } from '@/modules/fiscal/domain/entities/certificate-status.entity'
 import type { FiscalCertificateEvent } from '@/modules/fiscal/domain/entities/fiscal-certificate-event.entity'
+import type { FiscalSettingsEvent } from '@/modules/fiscal/domain/entities/fiscal-settings-event.entity'
 import type { StatusServicoResult } from '@/modules/fiscal/domain/responses/status-servico-result'
 import type { FiscalEngineHealth } from '@/modules/fiscal/domain/responses/fiscal-engine-health'
+import type {
+  ProductionChecklist,
+  ConsultaPublicaResult,
+} from '@/modules/fiscal/domain/responses/production-checklist'
+import type { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
 import type { CreateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/create-fiscal-settings-dto'
 import type { UpdateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/update-fiscal-settings-dto'
 import { useToast } from '@/shared/composables'
 
-/** Estabelecimento simplificado usado nas linhas da tela de configuração. */
 export interface FiscalEstablishmentOption {
   id: string
   name: string
   type: string
 }
 
-/** Fornece os estabelecimentos (injetado pela factory — cruzamento de módulo). */
 export type FiscalEstablishmentsLoader = () => Promise<
   Either<DomainError, FiscalEstablishmentOption[]>
 >
 
-/** Linha da tela: um estabelecimento e sua configuração fiscal (ou `null`). */
 export interface FiscalSettingsRow {
   establishment: FiscalEstablishmentOption
   settings: FiscalSettings | null
 }
 
-/** Estabelecimento em edição/visualização no diálogo. */
 export interface FiscalSettingsEditing {
   establishment: FiscalEstablishmentOption
   settings: FiscalSettings | null
@@ -54,6 +63,13 @@ export class FiscalSettingsController extends BaseController {
   private readonly getCertificateHistoryUseCase: GetFiscalCertificateHistory
   private readonly testSefazUseCase: TestSefazStatus
   private readonly getEngineHealthUseCase: GetFiscalEngineHealth
+  private readonly listByEnvironmentUseCase: ListSettingsByEnvironmentUseCase
+  private readonly activateEnvironmentUseCase: ActivateEnvironmentUseCase
+  private readonly getProductionChecklistUseCase: GetProductionChecklistUseCase
+  private readonly releaseProductionUseCase: ReleaseProductionUseCase
+  private readonly revokeProductionUseCase: RevokeProductionUseCase
+  private readonly validatePublicConsultationUseCase: ValidatePublicConsultationUseCase
+  private readonly getSettingsHistoryUseCase: GetSettingsHistoryUseCase
   private readonly loadEstablishments: FiscalEstablishmentsLoader
   private readonly toast = useToast()
 
@@ -64,22 +80,35 @@ export class FiscalSettingsController extends BaseController {
   readonly saving = ref(false)
   readonly editing = ref<FiscalSettingsEditing | null>(null)
 
-  // --- Certificado A1 (por estabelecimento, no diálogo) ---
   readonly certificate = ref<CertificateStatus | null>(null)
   readonly certificateLoading = ref(false)
   readonly uploading = ref(false)
   readonly certificateHistory = ref<FiscalCertificateEvent[]>([])
   readonly historyLoading = ref(false)
 
-  // --- Teste SEFAZ (por estabelecimento, no diálogo) ---
   readonly sefazResult = ref<StatusServicoResult | null>(null)
   readonly sefazTesting = ref(false)
 
-  // --- Saúde do motor fiscal (topo da página) ---
   readonly engineHealth = ref<FiscalEngineHealth | null>(null)
   readonly engineHealthLoading = ref(false)
 
-  /** Estabelecimentos com sua configuração fiscal correspondente (ou `null`). */
+  // --- Produção ---
+  readonly checklist = ref<ProductionChecklist | null>(null)
+  readonly checklistLoading = ref(false)
+  readonly releasingProduction = ref(false)
+  readonly revokingProduction = ref(false)
+  readonly consultaResult = ref<ConsultaPublicaResult | null>(null)
+  readonly consultaValidating = ref(false)
+  readonly activatingEnvironment = ref(false)
+
+  // --- Histórico de configurações ---
+  readonly settingsHistory = ref<FiscalSettingsEvent[]>([])
+  readonly settingsHistoryLoading = ref(false)
+
+  // --- Ambientes ---
+  readonly ambientesSettings = ref<FiscalSettings[]>([])
+  readonly ambientesLoading = ref(false)
+
   readonly rows = computed<FiscalSettingsRow[]>(() =>
     this.establishments.value.map((establishment) => ({
       establishment,
@@ -100,6 +129,13 @@ export class FiscalSettingsController extends BaseController {
     getCertificateHistoryUseCase: GetFiscalCertificateHistory,
     testSefazUseCase: TestSefazStatus,
     getEngineHealthUseCase: GetFiscalEngineHealth,
+    listByEnvironmentUseCase: ListSettingsByEnvironmentUseCase,
+    activateEnvironmentUseCase: ActivateEnvironmentUseCase,
+    getProductionChecklistUseCase: GetProductionChecklistUseCase,
+    releaseProductionUseCase: ReleaseProductionUseCase,
+    revokeProductionUseCase: RevokeProductionUseCase,
+    validatePublicConsultationUseCase: ValidatePublicConsultationUseCase,
+    getSettingsHistoryUseCase: GetSettingsHistoryUseCase,
     loadEstablishments: FiscalEstablishmentsLoader,
   ) {
     super()
@@ -112,6 +148,13 @@ export class FiscalSettingsController extends BaseController {
     this.getCertificateHistoryUseCase = getCertificateHistoryUseCase
     this.testSefazUseCase = testSefazUseCase
     this.getEngineHealthUseCase = getEngineHealthUseCase
+    this.listByEnvironmentUseCase = listByEnvironmentUseCase
+    this.activateEnvironmentUseCase = activateEnvironmentUseCase
+    this.getProductionChecklistUseCase = getProductionChecklistUseCase
+    this.releaseProductionUseCase = releaseProductionUseCase
+    this.revokeProductionUseCase = revokeProductionUseCase
+    this.validatePublicConsultationUseCase = validatePublicConsultationUseCase
+    this.getSettingsHistoryUseCase = getSettingsHistoryUseCase
     this.loadEstablishments = loadEstablishments
   }
 
@@ -136,16 +179,15 @@ export class FiscalSettingsController extends BaseController {
     this.setLoading(false)
   }
 
-  /**
-   * Carrega a configuração fresca do estabelecimento (`null` = ainda não
-   * configurado) e prepara o diálogo. Retorna `true` quando pronto para abrir.
-   */
   async prepare(establishment: FiscalEstablishmentOption): Promise<boolean> {
     this.preparing.value = true
-    // Estado do certificado/SEFAZ é por estabelecimento — limpa ao trocar.
     this.certificate.value = null
     this.certificateHistory.value = []
     this.sefazResult.value = null
+    this.checklist.value = null
+    this.consultaResult.value = null
+    this.settingsHistory.value = []
+    this.ambientesSettings.value = []
     let ok = false
     const result = await this.getByEstablishmentUseCase.execute(
       establishment.id,
@@ -168,13 +210,6 @@ export class FiscalSettingsController extends BaseController {
     return ok
   }
 
-  /**
-   * Carrega a configuração de um estabelecimento diretamente pelo id (acesso via
-   * URL / atualização de página). Deve ser chamado após `load()`. Acha o
-   * estabelecimento entre as linhas, prepara a edição e busca o certificado e o
-   * histórico em paralelo. Retorna `false` quando o id não corresponde a nenhum
-   * estabelecimento — a página usa isso para o estado "não encontrado".
-   */
   async prepareById(establishmentId: string): Promise<boolean> {
     const row = this.rows.value.find(
       (item) => item.establishment.id === establishmentId,
@@ -248,9 +283,6 @@ export class FiscalSettingsController extends BaseController {
       : [...this.settings.value, saved]
   }
 
-  // --- Saúde do motor fiscal ---
-
-  /** Carrega o indicador de saúde do motor (badge no topo da página). */
   async loadEngineHealth(): Promise<void> {
     this.engineHealthLoading.value = true
     const result = await this.getEngineHealthUseCase.execute()
@@ -265,9 +297,6 @@ export class FiscalSettingsController extends BaseController {
     this.engineHealthLoading.value = false
   }
 
-  // --- Certificado A1 ---
-
-  /** Busca a situação do certificado do estabelecimento em edição. */
   async loadCertificate(establishmentId: string): Promise<void> {
     this.certificateLoading.value = true
     const result = await this.getCertificateUseCase.execute(establishmentId)
@@ -284,7 +313,6 @@ export class FiscalSettingsController extends BaseController {
     this.certificateLoading.value = false
   }
 
-  /** Carrega o histórico de trocas do certificado. */
   async loadCertificateHistory(establishmentId: string): Promise<void> {
     this.historyLoading.value = true
     const result =
@@ -300,10 +328,6 @@ export class FiscalSettingsController extends BaseController {
     this.historyLoading.value = false
   }
 
-  /**
-   * Envia um novo certificado A1. Em sucesso, atualiza a situação exibida e
-   * recarrega o histórico. Retorna `true` quando o upload deu certo.
-   */
   async uploadCertificate(
     establishmentId: string,
     file: File,
@@ -336,9 +360,6 @@ export class FiscalSettingsController extends BaseController {
     return ok
   }
 
-  // --- Teste SEFAZ ---
-
-  /** Testa a comunicação com a SEFAZ para o estabelecimento em edição. */
   async testSefaz(establishmentId: string): Promise<void> {
     this.sefazTesting.value = true
     this.sefazResult.value = null
@@ -357,5 +378,150 @@ export class FiscalSettingsController extends BaseController {
       },
     )
     this.sefazTesting.value = false
+  }
+
+  // --- Produção ---
+
+  async loadChecklist(establishmentId: string): Promise<void> {
+    this.checklistLoading.value = true
+    const result =
+      await this.getProductionChecklistUseCase.execute(establishmentId)
+    result.fold(
+      (error) => {
+        this.checklist.value = null
+        if (error.isUserFacing) this.toast.error(error.message)
+      },
+      (checklist) => {
+        this.checklist.value = checklist
+      },
+    )
+    this.checklistLoading.value = false
+  }
+
+  async releaseProduction(establishmentId: string): Promise<boolean> {
+    this.releasingProduction.value = true
+    let ok = false
+    const result =
+      await this.releaseProductionUseCase.execute(establishmentId)
+    this.handleResult(
+      result,
+      (saved) => {
+        ok = true
+        this.upsertSettings(saved)
+        this.toast.success('Produção liberada com sucesso.')
+      },
+      (error) => {
+        this.toast.error(
+          error.isUserFacing
+            ? error.message
+            : 'Não foi possível liberar a produção.',
+        )
+      },
+    )
+    this.releasingProduction.value = false
+    return ok
+  }
+
+  async revokeProduction(establishmentId: string): Promise<boolean> {
+    this.revokingProduction.value = true
+    let ok = false
+    const result = await this.revokeProductionUseCase.execute(establishmentId)
+    this.handleResult(
+      result,
+      (saved) => {
+        ok = true
+        this.upsertSettings(saved)
+        this.toast.success('Produção revogada.')
+      },
+      (error) => {
+        this.toast.error(
+          error.isUserFacing
+            ? error.message
+            : 'Não foi possível revogar a produção.',
+        )
+      },
+    )
+    this.revokingProduction.value = false
+    return ok
+  }
+
+  async activateEnvironment(
+    establishmentId: string,
+    ambiente: FiscalEnvironment,
+  ): Promise<boolean> {
+    this.activatingEnvironment.value = true
+    let ok = false
+    const result = await this.activateEnvironmentUseCase.execute(
+      establishmentId,
+      ambiente,
+    )
+    this.handleResult(
+      result,
+      (saved) => {
+        ok = true
+        this.upsertSettings(saved)
+        this.toast.success(`Ambiente ${ambiente} ativado.`)
+      },
+      (error) => {
+        this.toast.error(
+          error.isUserFacing
+            ? error.message
+            : 'Não foi possível ativar o ambiente.',
+        )
+      },
+    )
+    this.activatingEnvironment.value = false
+    return ok
+  }
+
+  async validateConsulta(establishmentId: string): Promise<void> {
+    this.consultaValidating.value = true
+    this.consultaResult.value = null
+    const result =
+      await this.validatePublicConsultationUseCase.execute(establishmentId)
+    this.handleResult(
+      result,
+      (result) => {
+        this.consultaResult.value = result
+      },
+      (error) => {
+        this.toast.error(
+          error.isUserFacing
+            ? error.message
+            : 'Não foi possível validar a consulta pública.',
+        )
+      },
+    )
+    this.consultaValidating.value = false
+  }
+
+  async loadSettingsHistory(establishmentId: string): Promise<void> {
+    this.settingsHistoryLoading.value = true
+    const result =
+      await this.getSettingsHistoryUseCase.execute(establishmentId)
+    result.fold(
+      () => {
+        this.settingsHistory.value = []
+      },
+      (events) => {
+        this.settingsHistory.value = events
+      },
+    )
+    this.settingsHistoryLoading.value = false
+  }
+
+  async loadAmbientes(establishmentId: string): Promise<void> {
+    this.ambientesLoading.value = true
+    const result =
+      await this.listByEnvironmentUseCase.execute(establishmentId)
+    result.fold(
+      () => {
+        this.ambientesSettings.value = []
+      },
+      (items) => {
+        this.ambientesSettings.value = items
+      },
+    )
+    this.ambientesLoading.value = false
   }
 }

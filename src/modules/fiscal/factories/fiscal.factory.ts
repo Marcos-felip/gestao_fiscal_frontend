@@ -9,6 +9,13 @@ import { GetFiscalCertificate } from '@/modules/fiscal/application/use-cases/get
 import { GetFiscalCertificateHistory } from '@/modules/fiscal/application/use-cases/get-fiscal-certificate-history.use-case'
 import { TestSefazStatus } from '@/modules/fiscal/application/use-cases/test-sefaz-status.use-case'
 import { GetFiscalEngineHealth } from '@/modules/fiscal/application/use-cases/get-fiscal-engine-health.use-case'
+import { ListSettingsByEnvironmentUseCase } from '@/modules/fiscal/application/use-cases/list-settings-by-environment.use-case'
+import { ActivateEnvironmentUseCase } from '@/modules/fiscal/application/use-cases/activate-environment.use-case'
+import { GetProductionChecklistUseCase } from '@/modules/fiscal/application/use-cases/get-production-checklist.use-case'
+import { ReleaseProductionUseCase } from '@/modules/fiscal/application/use-cases/release-production.use-case'
+import { RevokeProductionUseCase } from '@/modules/fiscal/application/use-cases/revoke-production.use-case'
+import { ValidatePublicConsultationUseCase } from '@/modules/fiscal/application/use-cases/validate-public-consultation.use-case'
+import { GetSettingsHistoryUseCase } from '@/modules/fiscal/application/use-cases/get-settings-history.use-case'
 import { ListFiscalDocumentsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-documents.use-case'
 import { GetFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document.use-case'
 import { GetFiscalDocumentBySaleUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-by-sale.use-case'
@@ -20,11 +27,13 @@ import { CancelFiscalDocumentUseCase } from '@/modules/fiscal/application/use-ca
 import { ConsultFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/consult-fiscal-document.use-case'
 import { RetryFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/retry-fiscal-document.use-case'
 import { DownloadFiscalDanfeUseCase } from '@/modules/fiscal/application/use-cases/download-fiscal-danfe.use-case'
+import { ListFiscalRejectionsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-rejections.use-case'
 import { FiscalSettingsController } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
 import type { FiscalEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
 import { FiscalDocumentsListController } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
 import type { FiscalDocumentsEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
 import { FiscalDocumentDetailController } from '@/modules/fiscal/presentation/controllers/fiscal-document-detail-controller'
+import { FiscalRejectionsController } from '@/modules/fiscal/presentation/controllers/fiscal-rejections-controller'
 import { SaleFiscalController } from '@/modules/fiscal/presentation/controllers/sale-fiscal-controller'
 import { EstablishmentRepository } from '@/modules/establishments/data/repositories/establishment-repository'
 import { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
@@ -179,6 +188,20 @@ export function makeFiscalSettingsController(): FiscalSettingsController {
     new GetFiscalCertificateHistory(repository),
     new TestSefazStatus(repository),
     new GetFiscalEngineHealth(repository),
+    new ListSettingsByEnvironmentUseCase(repository),
+    new ActivateEnvironmentUseCase(repository),
+    new GetProductionChecklistUseCase(repository),
+    new ReleaseProductionUseCase(repository),
+    new RevokeProductionUseCase(repository),
+    new ValidatePublicConsultationUseCase(repository),
+    new GetSettingsHistoryUseCase(repository),
     makeFiscalEstablishmentsLoader(),
+  )
+}
+
+export function makeFiscalRejectionsController(): FiscalRejectionsController {
+  return new FiscalRejectionsController(
+    new ListFiscalRejectionsUseCase(makeFiscalDocumentsRepository()),
+    new RetryFiscalDocumentUseCase(makeFiscalDocumentsRepository()),
   )
 }

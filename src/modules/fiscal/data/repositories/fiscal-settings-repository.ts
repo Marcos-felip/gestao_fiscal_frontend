@@ -4,8 +4,14 @@ import type { DomainError } from '@/core/errors/domain-error'
 import type { FiscalSettings } from '@/modules/fiscal/domain/entities/fiscal-settings.entity'
 import type { CertificateStatus } from '@/modules/fiscal/domain/entities/certificate-status.entity'
 import type { FiscalCertificateEvent } from '@/modules/fiscal/domain/entities/fiscal-certificate-event.entity'
+import type { FiscalSettingsEvent } from '@/modules/fiscal/domain/entities/fiscal-settings-event.entity'
 import type { StatusServicoResult } from '@/modules/fiscal/domain/responses/status-servico-result'
 import type { FiscalEngineHealth } from '@/modules/fiscal/domain/responses/fiscal-engine-health'
+import type {
+  ProductionChecklist,
+  ConsultaPublicaResult,
+} from '@/modules/fiscal/domain/responses/production-checklist'
+import type { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
 import type { CreateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/create-fiscal-settings-dto'
 import type { UpdateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/update-fiscal-settings-dto'
 import { httpClient } from '@/core/client/http-client'
@@ -20,6 +26,11 @@ import {
   toStatusServicoResult,
   toFiscalEngineHealth,
 } from '@/modules/fiscal/data/mappers/fiscal-certificate.mapper'
+import {
+  toProductionChecklist,
+  toConsultaPublicaResult,
+  toFiscalSettingsEventList,
+} from '@/modules/fiscal/data/mappers/fiscal-production.mapper'
 
 export class FiscalSettingsRepository implements IFiscalSettingsRepository {
   async list(): Promise<Either<DomainError, FiscalSettings[]>> {
@@ -89,11 +100,6 @@ export class FiscalSettingsRepository implements IFiscalSettingsRepository {
     file: File,
     senha: string,
   ): Promise<Either<DomainError, CertificateStatus>> {
-    // O upload é multipart/form-data: o campo `certificado` é o binário .pfx/.p12
-    // e `senha` acompanha. Definimos apenas o "hint" multipart/form-data no
-    // header — como o cliente compartilhado tem default application/json, isso
-    // impede o Axios de serializar o FormData para JSON; o boundary é aplicado
-    // automaticamente pelo navegador (NÃO montamos o boundary manualmente).
     const formData = new FormData()
     formData.append('certificado', file)
     formData.append('senha', senha)
@@ -136,5 +142,69 @@ export class FiscalSettingsRepository implements IFiscalSettingsRepository {
   async getEngineHealth(): Promise<Either<DomainError, FiscalEngineHealth>> {
     const result = await httpClient.get<unknown>('/fiscal/engine/health')
     return result.flatMap(toFiscalEngineHealth)
+  }
+
+  async listByEnvironment(
+    establishmentId: string,
+  ): Promise<Either<DomainError, FiscalSettings[]>> {
+    const result = await httpClient.get<unknown>(
+      `/fiscal/settings/${establishmentId}/ambientes`,
+    )
+    return result.flatMap(toFiscalSettingsList)
+  }
+
+  async activateEnvironment(
+    establishmentId: string,
+    ambiente: FiscalEnvironment,
+  ): Promise<Either<DomainError, FiscalSettings>> {
+    const result = await httpClient.post<unknown>(
+      `/fiscal/settings/${establishmentId}/ambientes/${ambiente}/ativar`,
+    )
+    return result.flatMap(toFiscalSettings)
+  }
+
+  async getProductionChecklist(
+    establishmentId: string,
+  ): Promise<Either<DomainError, ProductionChecklist>> {
+    const result = await httpClient.get<unknown>(
+      `/fiscal/settings/${establishmentId}/producao/checklist`,
+    )
+    return result.flatMap(toProductionChecklist)
+  }
+
+  async releaseProduction(
+    establishmentId: string,
+  ): Promise<Either<DomainError, FiscalSettings>> {
+    const result = await httpClient.post<unknown>(
+      `/fiscal/settings/${establishmentId}/producao/liberar`,
+    )
+    return result.flatMap(toFiscalSettings)
+  }
+
+  async revokeProduction(
+    establishmentId: string,
+  ): Promise<Either<DomainError, FiscalSettings>> {
+    const result = await httpClient.post<unknown>(
+      `/fiscal/settings/${establishmentId}/producao/revogar`,
+    )
+    return result.flatMap(toFiscalSettings)
+  }
+
+  async validatePublicConsultation(
+    establishmentId: string,
+  ): Promise<Either<DomainError, ConsultaPublicaResult>> {
+    const result = await httpClient.post<unknown>(
+      `/fiscal/settings/${establishmentId}/producao/validar-consulta`,
+    )
+    return result.flatMap(toConsultaPublicaResult)
+  }
+
+  async getSettingsHistory(
+    establishmentId: string,
+  ): Promise<Either<DomainError, FiscalSettingsEvent[]>> {
+    const result = await httpClient.get<unknown>(
+      `/fiscal/settings/${establishmentId}/history`,
+    )
+    return result.flatMap(toFiscalSettingsEventList)
   }
 }
