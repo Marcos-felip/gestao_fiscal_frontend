@@ -6,8 +6,8 @@ import FormSection from '@/shared/components/form/form-section.vue'
 import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
 import { brazilianStateOptions } from '@/core/constants/brazilian-states'
-import { partnerTypeOptions } from '@/enums/partner-type.enum'
-import { PersonType, personTypeOptions } from '@/enums/person-type.enum'
+import { partnerTypeOptions } from '@/core/enums/partner-type.enum'
+import { PersonType, personTypeOptions } from '@/core/enums/person-type.enum'
 import {
   formatCpf,
   formatCnpj,

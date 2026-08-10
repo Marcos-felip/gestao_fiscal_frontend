@@ -1,4 +1,4 @@
-import type { PurchaseStatus } from '@/enums/purchase-status.enum'
+import type { PurchaseStatus } from '@/core/enums/purchase-status.enum'
 import type { PurchaseItem } from '@/modules/purchases/domain/entities/purchase-item.entity'
 
 export class Purchase {

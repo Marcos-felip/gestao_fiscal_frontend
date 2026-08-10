@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 import {
   CSOSN_SUPORTADOS,
   CST_ICMS_SUPORTADOS,
-} from '@/enums/fiscal-tax-situation.enum'
+} from '@/core/enums/fiscal-tax-situation.enum'
 import { onlyDigits, parseDecimal } from '@/shared/ui/utils/masks'
 
 /** Refine: string vazia OU um dos códigos suportados pelo motor fiscal. */
@@ -76,7 +76,10 @@ export const productSchema = z.object({
   cfop: optionalDigits(4, 'CFOP deve ter 4 dígitos'),
   origin: z.string().optional(),
   csosn: optionalOneOf(CSOSN_SUPORTADOS, 'CSOSN não suportado pela emissão'),
-  cstIcms: optionalOneOf(CST_ICMS_SUPORTADOS, 'CST ICMS não suportado pela emissão'),
+  cstIcms: optionalOneOf(
+    CST_ICMS_SUPORTADOS,
+    'CST ICMS não suportado pela emissão',
+  ),
   cstPis: z.string().max(2, 'Máximo 2 dígitos').optional(),
   cstCofins: z.string().max(2, 'Máximo 2 dígitos').optional(),
   aliquotaIcms: optionalPercent('Alíquota deve estar entre 0 e 100'),

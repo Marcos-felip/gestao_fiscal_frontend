@@ -5,7 +5,7 @@ import type { GetFiscalDocumentUseCase } from '@/modules/fiscal/application/use-
 import type { EmitNfceUseCase } from '@/modules/fiscal/application/use-cases/emit-nfce.use-case'
 import type { FiscalDocument } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import { EmitNfceDto } from '@/modules/fiscal/domain/dto/emit-nfce-dto'
-import { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
+import { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
 import { useToast } from '@/shared/composables'
 
 /** Intervalo entre consultas de status (ms). */

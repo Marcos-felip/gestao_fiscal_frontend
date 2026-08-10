@@ -3,7 +3,7 @@ import { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { FiscalSettings } from '@/modules/fiscal/domain/entities/fiscal-settings.entity'
-import type { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
+import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 function toDate(value: string): Date {

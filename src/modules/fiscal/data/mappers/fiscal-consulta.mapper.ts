@@ -4,7 +4,7 @@ import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { toIssueList } from '@/core/utils/zod-errors'
 import type { FiscalConsultaResult } from '@/modules/fiscal/domain/responses/fiscal-consulta-result'
-import type { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
+import type { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
 
 const fiscalConsultaSchema = z.object({
   situacao: z.string().nullable().default(null),

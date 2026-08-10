@@ -4,7 +4,7 @@ import { Icon } from '@/shared/ui'
 import {
   FinancialStatus,
   financialStatusLabels,
-} from '@/enums/financial-status.enum'
+} from '@/core/enums/financial-status.enum'
 
 const props = withDefaults(
   defineProps<{ status: FinancialStatus; isOverdue?: boolean }>(),

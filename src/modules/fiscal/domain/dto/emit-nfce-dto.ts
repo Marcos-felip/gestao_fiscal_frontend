@@ -1,4 +1,4 @@
-import type { FiscalPaymentCode } from '@/enums/fiscal-payment-code.enum'
+import type { FiscalPaymentCode } from '@/core/enums/fiscal-payment-code.enum'
 
 /** Pagamento informado na emissão manual da NFC-e. */
 export interface EmitNfcePayment {

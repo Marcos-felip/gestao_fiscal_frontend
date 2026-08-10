@@ -11,7 +11,7 @@ import type {
   FiscalXmlType,
 } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import { CancelFiscalDocumentDto } from '@/modules/fiscal/domain/dto/cancel-fiscal-document-dto'
-import { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
+import { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
 import { useToast } from '@/shared/composables'
 
 /** Intervalo entre consultas de status durante o polling (ms). */

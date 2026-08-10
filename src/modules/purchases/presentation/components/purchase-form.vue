@@ -12,7 +12,7 @@ import {
   type PurchaseItemRow,
   type PurchaseFormValues,
 } from '@/modules/purchases/presentation/schemas/purchase-schema'
-import { PaymentCondition } from '@/enums/payment-condition.enum'
+import { PaymentCondition } from '@/core/enums/payment-condition.enum'
 import {
   formatDateBr,
   formatDecimalInput,

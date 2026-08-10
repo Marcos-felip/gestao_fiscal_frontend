@@ -1,8 +1,8 @@
-import { SaleStatus } from '@/enums/sale-status.enum'
-import type { PaymentStatus } from '@/enums/payment-status.enum'
-import { FiscalStatus } from '@/enums/fiscal-status.enum'
-import type { PaymentMethod } from '@/enums/payment-method.enum'
-import type { PaymentCondition } from '@/enums/payment-condition.enum'
+import { SaleStatus } from '@/core/enums/sale-status.enum'
+import type { PaymentStatus } from '@/core/enums/payment-status.enum'
+import { FiscalStatus } from '@/core/enums/fiscal-status.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
+import type { PaymentCondition } from '@/core/enums/payment-condition.enum'
 import type { SaleItem } from '@/modules/sales/domain/entities/sale-item.entity'
 import type { SalePayment } from '@/modules/sales/domain/entities/sale-payment.entity'
 

@@ -27,8 +27,8 @@ import {
   FiscalEnvironment,
   fiscalEnvironmentLabels,
   fiscalEnvironmentOptions,
-} from '@/enums/fiscal-environment.enum'
-import { establishmentTypeOptions } from '@/enums/establishment-type.enum'
+} from '@/core/enums/fiscal-environment.enum'
+import { establishmentTypeOptions } from '@/core/enums/establishment-type.enum'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useProgress } from '@/shared/composables'
 import { formatDate, formatDateTime } from '@/core/utils/date'

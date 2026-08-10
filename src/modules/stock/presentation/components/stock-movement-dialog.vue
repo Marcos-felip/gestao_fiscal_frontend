@@ -3,7 +3,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import Modal from '@/shared/components/dialog/modal.vue'
 import { Button, Icon, Input, Select } from '@/shared/ui'
 import type { SelectOption } from '@/shared/ui'
-import { StockMovementType, stockMovementTypeOptions } from '@/enums/stock-movement-type.enum'
+import { StockMovementType, stockMovementTypeOptions } from '@/core/enums/stock-movement-type.enum'
 import { formatDecimalInput } from '@/shared/ui/utils/masks'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {

@@ -11,7 +11,7 @@ import type { OpenCashSessionDto } from '@/modules/cash/domain/dto/open-cash-ses
 import type { CreateCashMovementDto } from '@/modules/cash/domain/dto/create-cash-movement-dto'
 import type { CloseCashSessionDto } from '@/modules/cash/domain/dto/close-cash-session-dto'
 import { ListCashRegistersDto } from '@/modules/cash/domain/dto/list-cash-registers-dto'
-import { cashMovementTypeLabels } from '@/enums/cash-movement-type.enum'
+import { cashMovementTypeLabels } from '@/core/enums/cash-movement-type.enum'
 import { useToast } from '@/shared/composables'
 
 /**

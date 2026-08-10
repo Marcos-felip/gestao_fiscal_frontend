@@ -1,6 +1,6 @@
-import type { CompanyType } from '@/enums/company-type.enum'
-import type { TaxRegime } from '@/enums/tax-regime.enum'
-import type { TaxRegimeCode } from '@/enums/tax-regime-code.enum'
+import type { CompanyType } from '@/core/enums/company-type.enum'
+import type { TaxRegime } from '@/core/enums/tax-regime.enum'
+import type { TaxRegimeCode } from '@/core/enums/tax-regime-code.enum'
 
 export class Company {
   readonly id: string

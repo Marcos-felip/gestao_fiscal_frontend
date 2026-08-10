@@ -1,6 +1,6 @@
 import type { Router } from 'vue-router'
 import { routeNames } from '../route-names'
-import type { MembershipRole } from '@/enums/membership-role.enum'
+import type { MembershipRole } from '@/core/enums/membership-role.enum'
 import { usePermissions } from '@/shared/composables/usePermissions'
 
 /**

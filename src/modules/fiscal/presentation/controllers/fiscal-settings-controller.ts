@@ -28,7 +28,7 @@ import type {
   ProductionChecklist,
   ConsultaPublicaResult,
 } from '@/modules/fiscal/domain/responses/production-checklist'
-import type { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
+import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 import type { CreateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/create-fiscal-settings-dto'
 import type { UpdateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/update-fiscal-settings-dto'
 import { useToast } from '@/shared/composables'
@@ -401,8 +401,7 @@ export class FiscalSettingsController extends BaseController {
   async releaseProduction(establishmentId: string): Promise<boolean> {
     this.releasingProduction.value = true
     let ok = false
-    const result =
-      await this.releaseProductionUseCase.execute(establishmentId)
+    const result = await this.releaseProductionUseCase.execute(establishmentId)
     this.handleResult(
       result,
       (saved) => {
@@ -497,8 +496,7 @@ export class FiscalSettingsController extends BaseController {
 
   async loadSettingsHistory(establishmentId: string): Promise<void> {
     this.settingsHistoryLoading.value = true
-    const result =
-      await this.getSettingsHistoryUseCase.execute(establishmentId)
+    const result = await this.getSettingsHistoryUseCase.execute(establishmentId)
     result.fold(
       () => {
         this.settingsHistory.value = []
@@ -512,8 +510,7 @@ export class FiscalSettingsController extends BaseController {
 
   async loadAmbientes(establishmentId: string): Promise<void> {
     this.ambientesLoading.value = true
-    const result =
-      await this.listByEnvironmentUseCase.execute(establishmentId)
+    const result = await this.listByEnvironmentUseCase.execute(establishmentId)
     result.fold(
       () => {
         this.ambientesSettings.value = []

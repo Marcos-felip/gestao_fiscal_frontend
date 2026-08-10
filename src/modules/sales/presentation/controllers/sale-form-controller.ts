@@ -14,8 +14,8 @@ import type {
   SaleFormValues,
   SaleProductOption,
 } from '@/modules/sales/presentation/schemas/sale-schema'
-import type { PaymentMethod } from '@/enums/payment-method.enum'
-import { PaymentCondition } from '@/enums/payment-condition.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
+import { PaymentCondition } from '@/core/enums/payment-condition.enum'
 import { dateBrToIso, parseDecimal } from '@/shared/ui/utils/masks'
 import { useToast } from '@/shared/composables'
 import { routeNames } from '@/router/route-names'
@@ -76,7 +76,9 @@ export class SaleFormController extends BaseController {
   }
 
   salePriceOf(productId: string): number | null {
-    return this.products.value.find((p) => p.id === productId)?.salePrice ?? null
+    return (
+      this.products.value.find((p) => p.id === productId)?.salePrice ?? null
+    )
   }
 
   /** Feedback pós-venda: destaca as parcelas geradas quando finalizada a prazo. */

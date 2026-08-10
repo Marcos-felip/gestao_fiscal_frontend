@@ -1,4 +1,4 @@
-import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 import type { TechnicalAttributes } from '@/modules/products/domain/entities/product.entity'
 
 export class CreateProductDto {

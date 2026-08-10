@@ -10,8 +10,8 @@ import { ListProductsDto } from '@/modules/products/domain/dto/list-products-dto
 import type { Product } from '@/modules/products/domain/entities/product.entity'
 import type { ListPartnersUseCase } from '@/modules/partners/application/use-cases/list-partners.use-case'
 import { ListPartnersDto } from '@/modules/partners/domain/dto/list-partners-dto'
-import { PartnerType } from '@/enums/partner-type.enum'
-import { PaymentCondition } from '@/enums/payment-condition.enum'
+import { PartnerType } from '@/core/enums/partner-type.enum'
+import { PaymentCondition } from '@/core/enums/payment-condition.enum'
 import { dateBrToIso, parseDecimal } from '@/shared/ui/utils/masks'
 import { dateInputToIso } from '@/core/utils/date'
 import { useToast } from '@/shared/composables'
@@ -93,7 +93,9 @@ export class PurchaseFormController extends BaseController {
 
   /** Preço de custo sugerido para prefill ao escolher um produto. */
   costPriceOf(productId: string): number | null {
-    return this.products.value.find((p) => p.id === productId)?.costPrice ?? null
+    return (
+      this.products.value.find((p) => p.id === productId)?.costPrice ?? null
+    )
   }
 
   async save(values: PurchaseFormValues): Promise<void> {

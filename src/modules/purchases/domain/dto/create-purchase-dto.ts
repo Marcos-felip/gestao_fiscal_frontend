@@ -1,4 +1,4 @@
-import type { PaymentCondition } from '@/enums/payment-condition.enum'
+import type { PaymentCondition } from '@/core/enums/payment-condition.enum'
 
 export interface CreatePurchaseItemInput {
   productId: string

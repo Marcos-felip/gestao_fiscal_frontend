@@ -1,4 +1,4 @@
-import type { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
+import type { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
 
 /**
  * Resultado da consulta de situação de um documento fiscal na SEFAZ.

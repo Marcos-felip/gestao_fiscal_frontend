@@ -4,7 +4,7 @@ import { Icon } from '@/shared/ui'
 import {
   CashSessionStatus,
   cashSessionStatusLabels,
-} from '@/enums/cash-session-status.enum'
+} from '@/core/enums/cash-session-status.enum'
 
 const props = defineProps<{ status: CashSessionStatus }>()
 

@@ -5,9 +5,9 @@ import { Icon, Input, Select, Spinner, Switch, Tooltip } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
 import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
-import { companyTypeOptions } from '@/enums/company-type.enum'
-import { taxRegimeOptions } from '@/enums/tax-regime.enum'
-import { taxRegimeCodeOptions } from '@/enums/tax-regime-code.enum'
+import { companyTypeOptions } from '@/core/enums/company-type.enum'
+import { taxRegimeOptions } from '@/core/enums/tax-regime.enum'
+import { taxRegimeCodeOptions } from '@/core/enums/tax-regime-code.enum'
 import { brazilianStateOptions } from '@/core/constants/brazilian-states'
 import {
   formatCnpj,

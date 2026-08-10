@@ -1,4 +1,4 @@
-import type { FiscalStatusTone } from '@/enums/fiscal-document-status.enum'
+import type { FiscalStatusTone } from '@/core/enums/fiscal-document-status.enum'
 
 /**
  * Status fiscal resumido de uma venda. É diferente do `FiscalDocumentStatus`

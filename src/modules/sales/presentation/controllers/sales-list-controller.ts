@@ -3,7 +3,7 @@ import { BaseController } from '@/core/controllers/base-controller'
 import type { ListSalesUseCase } from '@/modules/sales/application/use-cases/list-sales.use-case'
 import { ListSalesDto } from '@/modules/sales/domain/dto/list-sales-dto'
 import type { Sale } from '@/modules/sales/domain/entities/sale.entity'
-import type { SaleStatus } from '@/enums/sale-status.enum'
+import type { SaleStatus } from '@/core/enums/sale-status.enum'
 import { dateInputToIso } from '@/core/utils/date'
 
 const PAGE_LIMIT = 20

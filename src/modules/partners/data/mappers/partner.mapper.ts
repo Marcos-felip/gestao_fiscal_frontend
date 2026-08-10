@@ -4,8 +4,8 @@ import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { Partner } from '@/modules/partners/domain/entities/partner.entity'
 import type { PartnerList } from '@/modules/partners/domain/responses/partner-list-response'
-import type { PartnerType } from '@/enums/partner-type.enum'
-import type { PersonType } from '@/enums/person-type.enum'
+import type { PartnerType } from '@/core/enums/partner-type.enum'
+import type { PersonType } from '@/core/enums/person-type.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const partnerSchema = z.object({

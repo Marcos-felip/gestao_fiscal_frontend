@@ -6,7 +6,7 @@ import {
   fiscalDocumentStatusTones,
   type FiscalDocumentStatus,
   type FiscalStatusTone,
-} from '@/enums/fiscal-document-status.enum'
+} from '@/core/enums/fiscal-document-status.enum'
 
 const props = defineProps<{ status: FiscalDocumentStatus }>()
 

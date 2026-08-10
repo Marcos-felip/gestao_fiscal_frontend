@@ -3,7 +3,7 @@ import { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { toIssueList } from '@/core/utils/zod-errors'
-import type { MembershipRole } from '@/enums/membership-role.enum'
+import type { MembershipRole } from '@/core/enums/membership-role.enum'
 import { Membership } from '@/modules/memberships/domain/entities/membership.entity'
 import type { CreatedUser } from '@/modules/memberships/domain/responses/created-user'
 import type { UpdatedUser } from '@/modules/memberships/domain/responses/updated-user'
@@ -18,9 +18,7 @@ const membershipSchema = z.object({
     name: z.string(),
     email: z.string(),
   }),
-  profiles: z
-    .array(z.object({ id: z.string(), name: z.string() }))
-    .default([]),
+  profiles: z.array(z.object({ id: z.string(), name: z.string() })).default([]),
 })
 
 type MembershipPayload = z.infer<typeof membershipSchema>
@@ -40,7 +38,9 @@ function build(value: MembershipPayload): Membership {
 export function toMembership(data: unknown): Either<DomainError, Membership> {
   const parsed = membershipSchema.safeParse(data)
   if (!parsed.success) {
-    return Either.left(new ContractError('memberships', toIssueList(parsed.error)))
+    return Either.left(
+      new ContractError('memberships', toIssueList(parsed.error)),
+    )
   }
   return Either.right(build(parsed.data))
 }
@@ -50,7 +50,9 @@ export function toMembershipList(
 ): Either<DomainError, Membership[]> {
   const parsed = z.array(membershipSchema).safeParse(data)
   if (!parsed.success) {
-    return Either.left(new ContractError('memberships', toIssueList(parsed.error)))
+    return Either.left(
+      new ContractError('memberships', toIssueList(parsed.error)),
+    )
   }
   return Either.right(parsed.data.map(build))
 }
@@ -64,7 +66,9 @@ const updatedUserSchema = z.object({
 export function toUpdatedUser(data: unknown): Either<DomainError, UpdatedUser> {
   const parsed = updatedUserSchema.safeParse(data)
   if (!parsed.success) {
-    return Either.left(new ContractError('memberships', toIssueList(parsed.error)))
+    return Either.left(
+      new ContractError('memberships', toIssueList(parsed.error)),
+    )
   }
   const value = parsed.data
   return Either.right({ id: value.id, name: value.name, email: value.email })
@@ -81,7 +85,9 @@ const createdUserSchema = z.object({
 export function toCreatedUser(data: unknown): Either<DomainError, CreatedUser> {
   const parsed = createdUserSchema.safeParse(data)
   if (!parsed.success) {
-    return Either.left(new ContractError('memberships', toIssueList(parsed.error)))
+    return Either.left(
+      new ContractError('memberships', toIssueList(parsed.error)),
+    )
   }
   const value = parsed.data
   return Either.right({

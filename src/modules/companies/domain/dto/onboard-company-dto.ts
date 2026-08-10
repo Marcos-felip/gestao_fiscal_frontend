@@ -1,4 +1,4 @@
-import type { TaxRegime } from '@/enums/tax-regime.enum'
+import type { TaxRegime } from '@/core/enums/tax-regime.enum'
 
 export class OnboardCompanyDto {
   cnpj: string

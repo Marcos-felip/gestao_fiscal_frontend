@@ -1,4 +1,4 @@
-import type { PartnerType } from '@/enums/partner-type.enum'
+import type { PartnerType } from '@/core/enums/partner-type.enum'
 
 export class ListPartnersDto {
   page: number

@@ -1,6 +1,6 @@
-import type { SaleStatus } from '@/enums/sale-status.enum'
-import type { PaymentStatus } from '@/enums/payment-status.enum'
-import type { FiscalStatus } from '@/enums/fiscal-status.enum'
+import type { SaleStatus } from '@/core/enums/sale-status.enum'
+import type { PaymentStatus } from '@/core/enums/payment-status.enum'
+import type { FiscalStatus } from '@/core/enums/fiscal-status.enum'
 
 export class ListSalesDto {
   page: number

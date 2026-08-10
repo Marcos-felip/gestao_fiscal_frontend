@@ -10,7 +10,7 @@ import type {
   ProductionChecklist,
   ConsultaPublicaResult,
 } from '@/modules/fiscal/domain/responses/production-checklist'
-import type { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
+import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 import type { CreateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/create-fiscal-settings-dto'
 import type { UpdateFiscalSettingsDto } from '@/modules/fiscal/domain/dto/update-fiscal-settings-dto'
 

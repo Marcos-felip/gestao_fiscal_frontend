@@ -59,7 +59,7 @@ import { useRoute } from 'vue-router'
 import { SidebarLink, Icon } from '@/shared/ui'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { StorageKeys } from '@/core/constants/storage-keys'
-import type { MembershipRole } from '@/enums/membership-role.enum'
+import type { MembershipRole } from '@/core/enums/membership-role.enum'
 
 interface NavLink {
   to: string

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { Icon } from '@/shared/ui'
 import type { CashSessionSummary } from '@/modules/cash/domain/value-objects/cash-session-summary'
-import { paymentMethodLabels } from '@/enums/payment-method.enum'
+import { paymentMethodLabels } from '@/core/enums/payment-method.enum'
 import { formatMoney } from '@/shared/ui/utils/masks'
 
 const props = defineProps<{ summary: CashSessionSummary }>()

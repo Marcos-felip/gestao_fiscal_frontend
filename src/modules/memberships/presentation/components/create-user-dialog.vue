@@ -7,7 +7,7 @@ import { toFormErrors } from '@/core/utils/zod-errors'
 import {
   MembershipRole,
   membershipRoleLabels,
-} from '@/enums/membership-role.enum'
+} from '@/core/enums/membership-role.enum'
 import type { CreatedUser } from '@/modules/memberships/domain/responses/created-user'
 import type { PermissionProfile } from '@/modules/permissions/domain/entities/permission-profile.entity'
 import {

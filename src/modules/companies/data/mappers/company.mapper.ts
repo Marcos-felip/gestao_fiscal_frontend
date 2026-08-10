@@ -3,9 +3,9 @@ import { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { Company } from '@/modules/companies/domain/entities/company.entity'
-import type { CompanyType } from '@/enums/company-type.enum'
-import type { TaxRegime } from '@/enums/tax-regime.enum'
-import type { TaxRegimeCode } from '@/enums/tax-regime-code.enum'
+import type { CompanyType } from '@/core/enums/company-type.enum'
+import type { TaxRegime } from '@/core/enums/tax-regime.enum'
+import type { TaxRegimeCode } from '@/core/enums/tax-regime-code.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const companySchema = z.object({

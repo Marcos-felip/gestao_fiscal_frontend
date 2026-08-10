@@ -1,4 +1,4 @@
-import type { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
+import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 
 export class UpdateFiscalSettingsDto {
   ambiente?: FiscalEnvironment

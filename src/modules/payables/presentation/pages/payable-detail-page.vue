@@ -10,7 +10,7 @@ import PayPayableDialog from '@/modules/payables/presentation/components/pay-pay
 import { makePayableDetailController } from '@/modules/payables/factories/payables.factory'
 import type { PayPayableDto } from '@/modules/payables/domain/dto/pay-payable-dto'
 import { usePermissions } from '@/shared/composables/usePermissions'
-import { paymentMethodLabels } from '@/enums/payment-method.enum'
+import { paymentMethodLabels } from '@/core/enums/payment-method.enum'
 import { formatMoney } from '@/shared/ui/utils/masks'
 import { formatDate, formatDateTime } from '@/core/utils/date'
 import { routeNames } from '@/router/route-names'

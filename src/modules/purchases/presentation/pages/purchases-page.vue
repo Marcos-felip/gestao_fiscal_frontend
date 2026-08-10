@@ -10,7 +10,7 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 import {
   PurchaseStatus,
   purchaseStatusOptions,
-} from '@/enums/purchase-status.enum'
+} from '@/core/enums/purchase-status.enum'
 import { formatMoney } from '@/shared/ui/utils/masks'
 import { formatDate } from '@/core/utils/date'
 import { routeNames } from '@/router/route-names'

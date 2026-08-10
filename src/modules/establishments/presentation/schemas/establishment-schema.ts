@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { EstablishmentType } from '@/enums/establishment-type.enum'
+import { EstablishmentType } from '@/core/enums/establishment-type.enum'
 import { isValidCnpj, onlyDigits } from '@/shared/ui/utils/masks'
 
 export const establishmentSchema = z.object({

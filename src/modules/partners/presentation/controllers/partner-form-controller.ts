@@ -7,8 +7,8 @@ import { CreatePartnerDto } from '@/modules/partners/domain/dto/create-partner-d
 import { UpdatePartnerDto } from '@/modules/partners/domain/dto/update-partner-dto'
 import type { Partner } from '@/modules/partners/domain/entities/partner.entity'
 import type { PartnerFormValues } from '@/modules/partners/presentation/schemas/partner-schema'
-import type { PartnerType } from '@/enums/partner-type.enum'
-import { PersonType } from '@/enums/person-type.enum'
+import type { PartnerType } from '@/core/enums/partner-type.enum'
+import { PersonType } from '@/core/enums/person-type.enum'
 import { useToast } from '@/shared/composables'
 import {
   formatCpf,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Icon } from '@/shared/ui'
-import { SaleStatus, saleStatusLabels } from '@/enums/sale-status.enum'
+import { SaleStatus, saleStatusLabels } from '@/core/enums/sale-status.enum'
 
 const props = defineProps<{ status: SaleStatus }>()
 

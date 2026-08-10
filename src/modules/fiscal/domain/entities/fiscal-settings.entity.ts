@@ -1,4 +1,4 @@
-import type { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
+import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 
 /** Dados do estabelecimento referenciados na resposta de configuração fiscal. */
 export interface FiscalSettingsEstablishmentRef {

@@ -7,9 +7,9 @@ import { FiscalStatusHistory } from '@/modules/fiscal/domain/entities/fiscal-sta
 import { FiscalDocumentEvent } from '@/modules/fiscal/domain/entities/fiscal-document-event.entity'
 import type { FiscalSnapshot } from '@/modules/fiscal/domain/value-objects/fiscal-snapshot'
 import type { FiscalDocumentListResponse } from '@/modules/fiscal/domain/responses/fiscal-document-list-response'
-import type { FiscalDocumentModel } from '@/enums/fiscal-document-model.enum'
-import type { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
-import type { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
+import type { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
+import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
+import type { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 // `valorTotal` chega como STRING (Prisma.Decimal.toJSON); os valores DENTRO do

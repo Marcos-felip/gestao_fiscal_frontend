@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
 
 /** Uma forma de pagamento registrada numa venda à vista. */
 export class SalePayment {

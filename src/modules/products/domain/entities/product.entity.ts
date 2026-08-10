@@ -1,4 +1,4 @@
-import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 
 /** Atributos técnicos livres (chave → valor) armazenados como JSON. */
 export type TechnicalAttributes = Record<string, unknown>

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
+import { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 import { toFormErrors } from '@/core/utils/zod-errors'
 
 /** Valores do formulário de configuração fiscal (números como texto no input). */

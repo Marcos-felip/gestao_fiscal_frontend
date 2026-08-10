@@ -4,8 +4,8 @@ import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { StockMovement } from '@/modules/stock/domain/entities/stock-movement.entity'
 import type { StockMovementList } from '@/modules/stock/domain/responses/stock-movement-list-response'
-import type { StockMovementType } from '@/enums/stock-movement-type.enum'
-import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import type { StockMovementType } from '@/core/enums/stock-movement-type.enum'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const decimal = z.union([z.number(), z.string()])

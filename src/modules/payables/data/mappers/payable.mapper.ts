@@ -5,9 +5,9 @@ import { ContractError } from '@/core/errors/contract-error'
 import { Payable } from '@/modules/payables/domain/entities/payable.entity'
 import { PayablePayment } from '@/modules/payables/domain/entities/payable-payment.entity'
 import type { PayableList } from '@/modules/payables/domain/responses/payable-list-response'
-import type { FinancialStatus } from '@/enums/financial-status.enum'
-import type { FinancialType } from '@/enums/financial-type.enum'
-import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { FinancialStatus } from '@/core/enums/financial-status.enum'
+import type { FinancialType } from '@/core/enums/financial-type.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const decimal = z.union([z.number(), z.string()]).default(0)

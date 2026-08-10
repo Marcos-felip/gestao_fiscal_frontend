@@ -3,7 +3,7 @@ import { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { Establishment } from '@/modules/establishments/domain/entities/establishment.entity'
-import type { EstablishmentType } from '@/enums/establishment-type.enum'
+import type { EstablishmentType } from '@/core/enums/establishment-type.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const establishmentSchema = z.object({

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Icon } from '@/shared/ui'
-import type { FiscalStatusTone } from '@/enums/fiscal-document-status.enum'
+import type { FiscalStatusTone } from '@/core/enums/fiscal-document-status.enum'
 import {
   fiscalStatusLabels,
   fiscalStatusTones,
   type FiscalStatus,
-} from '@/enums/fiscal-status.enum'
+} from '@/core/enums/fiscal-status.enum'
 
 const props = defineProps<{ status: FiscalStatus }>()
 

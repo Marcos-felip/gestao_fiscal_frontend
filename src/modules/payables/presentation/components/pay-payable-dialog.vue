@@ -8,8 +8,8 @@ import {
   type PayPayableErrors,
 } from '@/modules/payables/presentation/schemas/payable-schema'
 import { PayPayableDto } from '@/modules/payables/domain/dto/pay-payable-dto'
-import type { PaymentMethod } from '@/enums/payment-method.enum'
-import { paymentMethodOptions } from '@/enums/payment-method.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
+import { paymentMethodOptions } from '@/core/enums/payment-method.enum'
 import { formatDecimalInput, formatMoney, parseDecimal } from '@/shared/ui/utils/masks'
 
 const props = withDefaults(

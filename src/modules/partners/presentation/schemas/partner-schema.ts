@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { PartnerType } from '@/enums/partner-type.enum'
-import { PersonType } from '@/enums/person-type.enum'
+import { PartnerType } from '@/core/enums/partner-type.enum'
+import { PersonType } from '@/core/enums/person-type.enum'
 import { onlyDigits } from '@/shared/ui/utils/masks'
 
 export const partnerSchema = z.object({

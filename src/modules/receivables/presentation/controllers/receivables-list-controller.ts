@@ -5,7 +5,7 @@ import type { CreateReceivableUseCase } from '@/modules/receivables/application/
 import { ListReceivablesDto } from '@/modules/receivables/domain/dto/list-receivables-dto'
 import type { CreateReceivableDto } from '@/modules/receivables/domain/dto/create-receivable-dto'
 import type { Receivable } from '@/modules/receivables/domain/entities/receivable.entity'
-import type { FinancialStatus } from '@/enums/financial-status.enum'
+import type { FinancialStatus } from '@/core/enums/financial-status.enum'
 import { dateInputToIso } from '@/core/utils/date'
 import { useToast } from '@/shared/composables'
 

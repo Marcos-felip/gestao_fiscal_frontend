@@ -16,7 +16,7 @@ import {
   assignableRoles,
   membershipRoleLabels,
   roleRank,
-} from '@/enums/membership-role.enum'
+} from '@/core/enums/membership-role.enum'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
 

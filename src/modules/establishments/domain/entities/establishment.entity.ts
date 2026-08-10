@@ -1,4 +1,4 @@
-import type { EstablishmentType } from '@/enums/establishment-type.enum'
+import type { EstablishmentType } from '@/core/enums/establishment-type.enum'
 
 export class Establishment {
   readonly id: string

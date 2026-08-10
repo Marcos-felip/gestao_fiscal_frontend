@@ -15,9 +15,9 @@ import type {
 } from '@/modules/fiscal/domain/responses/fiscal-rejection-item'
 import { FiscalDocument } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import type { FiscalSnapshot } from '@/modules/fiscal/domain/value-objects/fiscal-snapshot'
-import type { FiscalDocumentModel } from '@/enums/fiscal-document-model.enum'
-import type { FiscalEnvironment } from '@/enums/fiscal-environment.enum'
-import type { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
+import type { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
+import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
+import type { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 function toDate(value: string): Date {

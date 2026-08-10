@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Icon, Input, Select } from '@/shared/ui'
-import { taxRegimeOptions } from '@/enums/tax-regime.enum'
+import { taxRegimeOptions } from '@/core/enums/tax-regime.enum'
 import { formatCnpj, formatPhone } from '@/shared/ui/utils/masks'
 import { useOnboardingContext } from '@/shared/composables/useOnboardingContext'
 

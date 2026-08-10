@@ -1,5 +1,5 @@
-import type { PartnerType } from '@/enums/partner-type.enum'
-import type { PersonType } from '@/enums/person-type.enum'
+import type { PartnerType } from '@/core/enums/partner-type.enum'
+import type { PersonType } from '@/core/enums/person-type.enum'
 
 export class UpdatePartnerDto {
   type?: PartnerType

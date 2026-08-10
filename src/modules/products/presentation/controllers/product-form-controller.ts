@@ -13,7 +13,7 @@ import type {
   AttributeRow,
   ProductFormValues,
 } from '@/modules/products/presentation/schemas/product-schema'
-import { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 import { useToast } from '@/shared/composables'
 import {
   formatMoney,

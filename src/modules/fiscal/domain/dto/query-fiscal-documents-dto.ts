@@ -1,5 +1,5 @@
-import type { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
-import type { FiscalDocumentModel } from '@/enums/fiscal-document-model.enum'
+import type { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
+import type { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 
 /** Filtros da listagem paginada de documentos fiscais (`GET /fiscal/documents`). */
 export class QueryFiscalDocumentsDto {

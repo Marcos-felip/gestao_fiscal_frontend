@@ -1,4 +1,4 @@
-import type { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
+import type { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
 
 /** Transição de status de um documento fiscal (de → para, com motivo). */
 export class FiscalStatusHistory {

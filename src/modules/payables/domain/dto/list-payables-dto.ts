@@ -1,4 +1,4 @@
-import type { FinancialStatus } from '@/enums/financial-status.enum'
+import type { FinancialStatus } from '@/core/enums/financial-status.enum'
 
 export class ListPayablesDto {
   page: number

@@ -4,7 +4,7 @@ import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { Product } from '@/modules/products/domain/entities/product.entity'
 import type { ProductList } from '@/modules/products/domain/responses/product-list-response'
-import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const decimal = z.union([z.number(), z.string()]).nullable().default(null)

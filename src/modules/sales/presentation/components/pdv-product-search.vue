@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { AnimatePresence, motion } from 'motion-v'
 import { Icon } from '@/shared/ui'
 import type { SaleProductOption } from '@/modules/sales/presentation/schemas/sale-schema'
-import { unitOfMeasureShortLabels } from '@/enums/unit-of-measure.enum'
+import { unitOfMeasureShortLabels } from '@/core/enums/unit-of-measure.enum'
 import { formatMoney, formatQuantity } from '@/shared/ui/utils/masks'
 
 const props = defineProps<{ products: SaleProductOption[] }>()

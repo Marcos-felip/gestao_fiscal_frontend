@@ -5,12 +5,12 @@ import { Icon, Input, Select } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
 import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
-import { unitOfMeasureOptions } from '@/enums/unit-of-measure.enum'
-import { productOriginOptions } from '@/enums/product-origin.enum'
+import { unitOfMeasureOptions } from '@/core/enums/unit-of-measure.enum'
+import { productOriginOptions } from '@/core/enums/product-origin.enum'
 import {
   csosnOptions,
   cstIcmsOptions,
-} from '@/enums/fiscal-tax-situation.enum'
+} from '@/core/enums/fiscal-tax-situation.enum'
 import { formatDecimalInput, onlyDigits } from '@/shared/ui/utils/masks'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {

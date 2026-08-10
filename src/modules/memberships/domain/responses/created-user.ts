@@ -1,4 +1,4 @@
-import type { MembershipRole } from '@/enums/membership-role.enum'
+import type { MembershipRole } from '@/core/enums/membership-role.enum'
 
 /**
  * Resultado de `POST /users`: o usuário criado + a senha provisória

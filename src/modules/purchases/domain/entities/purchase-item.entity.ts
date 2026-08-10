@@ -1,4 +1,4 @@
-import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 
 export class PurchaseItem {
   readonly id: string

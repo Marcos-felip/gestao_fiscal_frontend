@@ -11,8 +11,8 @@ import { usePermissions } from '@/shared/composables/usePermissions'
 import {
   StockMovementType,
   stockMovementTypeOptions,
-} from '@/enums/stock-movement-type.enum'
-import { unitOfMeasureShortLabels } from '@/enums/unit-of-measure.enum'
+} from '@/core/enums/stock-movement-type.enum'
+import { unitOfMeasureShortLabels } from '@/core/enums/unit-of-measure.enum'
 import { formatQuantity, parseDecimal } from '@/shared/ui/utils/masks'
 import { formatDateTime } from '@/core/utils/date'
 import { useProgress } from '@/shared/composables'

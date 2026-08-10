@@ -1,5 +1,5 @@
-import type { PaymentMethod } from '@/enums/payment-method.enum'
-import type { SaleStatus } from '@/enums/sale-status.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
+import type { SaleStatus } from '@/core/enums/sale-status.enum'
 import type { CreateSaleItemInput } from '@/modules/sales/domain/dto/create-sale-dto'
 
 /** Status permitidos ao atualizar (backend só aceita orçamento/em aberto). */

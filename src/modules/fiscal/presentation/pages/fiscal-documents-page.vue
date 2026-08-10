@@ -6,13 +6,13 @@ import type { SelectOption } from '@/shared/ui'
 import FiscalDocumentStatusBadge from '@/modules/fiscal/presentation/components/fiscal-document-status-badge.vue'
 import { makeFiscalDocumentsListController } from '@/modules/fiscal/factories/fiscal.factory'
 import type { FiscalDocument } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
-import type { FiscalDocumentStatus } from '@/enums/fiscal-document-status.enum'
-import { fiscalDocumentStatusOptions } from '@/enums/fiscal-document-status.enum'
-import type { FiscalDocumentModel } from '@/enums/fiscal-document-model.enum'
+import type { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
+import { fiscalDocumentStatusOptions } from '@/core/enums/fiscal-document-status.enum'
+import type { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 import {
   fiscalDocumentModelLabels,
   fiscalDocumentModelOptions,
-} from '@/enums/fiscal-document-model.enum'
+} from '@/core/enums/fiscal-document-model.enum'
 import { formatDateTime } from '@/core/utils/date'
 import { formatMoney } from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'
