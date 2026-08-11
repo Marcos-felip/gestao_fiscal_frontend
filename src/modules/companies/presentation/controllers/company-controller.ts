@@ -36,9 +36,13 @@ function emptySede(): SedeFormValues {
 
 /**
  * Controla a página de Empresa, que unifica a pessoa jurídica com a sua sede
- * (estabelecimento MATRIZ). Carrega e salva as duas entidades num só fluxo:
- * CNPJ e Inscrição Estadual vivem na empresa (fonte única) e são propagados
- * para a matriz ao salvar, evitando divergência entre os dois cadastros.
+ * (estabelecimento MATRIZ). Carrega e salva as duas entidades num só fluxo.
+ *
+ * CNPJ e Inscrição Estadual são editados no formulário da empresa e gravados
+ * também na matriz, para os dois cadastros não divergirem. A **fonte da
+ * verdade da IE é a matriz**: é dela que a NFC-e tira o emitente, e é dela que
+ * o formulário relê o valor — a leitura da empresa não devolve
+ * `stateRegistration`.
  */
 export class CompanyController extends BaseController {
   private readonly getCompanyUseCase: GetCompanyUseCase
@@ -147,8 +151,9 @@ export class CompanyController extends BaseController {
     }
     this.applyCompany(companyResult.right)
 
-    // Propaga os dados da sede para a matriz. CNPJ e IE vêm da empresa para
-    // manter os dois cadastros consistentes (fonte única).
+    // Propaga os dados da sede para a matriz. CNPJ e IE vêm do formulário da
+    // empresa para manter os dois cadastros consistentes — a matriz é quem
+    // vale na emissão.
     if (this.matrizId) {
       const sedeDto = new UpdateEstablishmentDto({
         name: input.sede.name || undefined,
@@ -220,6 +225,14 @@ export class CompanyController extends BaseController {
   }
 
   private applySede(matriz: Establishment): void {
+    // A Inscrição Estadual é editada no formulário da empresa, mas mora no
+    // estabelecimento — é a IE da matriz que a NFC-e usa como emitente. O
+    // backend aceita gravá-la por `stateRegistration` no PATCH da empresa e
+    // não a devolve com esse nome na leitura, então quem a repõe no formulário
+    // é a matriz. Sem esta linha o campo aparece vazio a cada recarga, embora
+    // o valor esteja gravado.
+    this.values.value.stateRegistration = matriz.inscricaoEstadual ?? ''
+
     this.sede.value = {
       name: matriz.name ?? '',
       inscricaoMunicipal: matriz.inscricaoMunicipal ?? '',

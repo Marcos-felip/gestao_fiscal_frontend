@@ -58,7 +58,11 @@ describe('toCompany', () => {
   })
 
   it('aplica defaults quando os campos opcionais vêm ausentes', () => {
-    const parcial = { id: 'company-2', name: 'Empresa Nova' }
+    const parcial = {
+      id: 'company-2',
+      name: 'Empresa Nova',
+      stateRegistration: null,
+    }
 
     const result = toCompany(parcial)
 
@@ -73,6 +77,47 @@ describe('toCompany', () => {
     expect(company.codigoIbgeMunicipio).toBeNull()
     expect(company.contribuinteIcms).toBe(false)
     expect(company.fiscalConfigComplete).toBe(false)
+  })
+
+  // `stateRegistration` é a IE do emitente, derivada da matriz pelo backend.
+  // Antes ela tinha `.default(null)` no schema: campo ausente virava `null`
+  // válido e o contrato quebrado passava sem ninguém notar.
+  it('acusa ContractError quando stateRegistration vem ausente', () => {
+    const semCampo = { ...respostaValida } as Record<string, unknown>
+    delete semCampo.stateRegistration
+
+    const result = toCompany(semCampo)
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('aceita stateRegistration explicitamente nulo', () => {
+    const result = toCompany({ ...respostaValida, stateRegistration: null })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.stateRegistration).toBeNull()
+  })
+
+  it('lê a IE da matriz devolvida pelo backend', () => {
+    const result = toCompany({
+      ...respostaValida,
+      stateRegistration: '004684530',
+    })
+
+    expect(result.right.stateRegistration).toBe('004684530')
+  })
+
+  // A listagem não faz o join da matriz — o campo simplesmente não existe lá,
+  // e exigi-lo quebraria o seletor de empresas.
+  it('a listagem não exige stateRegistration', () => {
+    const semCampo = { ...respostaValida } as Record<string, unknown>
+    delete semCampo.stateRegistration
+
+    const result = toCompanyList([semCampo])
+
+    expect(result.isRight).toBe(true)
+    expect(result.right[0].stateRegistration).toBeNull()
   })
 
   it('rejeita contribuinteIcms com tipo errado', () => {

@@ -272,7 +272,7 @@ const item = {
                   <span class="inline-flex items-center gap-1.5">
                     Inscrição Estadual
                     <Tooltip
-                      text="Registro estadual da empresa. Mínimo de 11 dígitos. Aplicado também à matriz."
+                      text="Inscrição Estadual do estabelecimento matriz — é esta que a NFC-e usa como emitente. Mínimo de 11 dígitos."
                     >
                       <Icon
                         name="HelpCircle"

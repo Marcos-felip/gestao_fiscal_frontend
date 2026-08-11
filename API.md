@@ -398,6 +398,30 @@ Permite atualizar dados da empresa: nome, tipo, CNPJ, inscrição estadual, tele
 - `phone`: formato (XX) XXXXX-XXXX ou variações
 - `taxRegime`: enum válido (SIMPLES_NACIONAL, LUCRO_PRESUMIDO, LUCRO_REAL, MEI)
 
+##### As duas Inscrições Estaduais — atenção no mapper
+
+| Campo | Onde grava | Papel na emissão |
+|---|---|---|
+| `stateRegistration` | estabelecimento **MATRIZ** | **É a IE do emitente da NFC-e** |
+| `inscricaoEstadual` | própria empresa | Fallback, se a matriz não tiver IE |
+
+`stateRegistration` é **read-write**, mas só nas rotas que fazem o join da matriz:
+
+| Rota | Traz `stateRegistration`? |
+|---|---|
+| `GET /companies/:id` | **sim** (derivado da matriz; `null` se não houver matriz) |
+| `PATCH /companies/:id` (resposta) | **sim** |
+| `GET /companies` (listagem) | **não** — a listagem não carrega estabelecimento |
+| `POST /companies` (resposta) | **não** — empresa nova ainda não tem matriz |
+
+Por isso o mapper tem **dois schemas**: `companySchema` (detalhe/PATCH) exige o campo, e
+`companyBaseSchema` (listagem/criação) não o declara. O campo **não** deve ganhar
+`.default(null)` no schema de detalhe — foi exatamente esse default que fez a IE sumir da tela
+de Empresa sem gerar `ContractError`.
+
+Enviar `inscricaoEstadual` e `stateRegistration` com **valores diferentes na mesma requisição**
+é recusado com `400`.
+
 **Resposta 200:**
 ```json
 {
@@ -405,6 +429,7 @@ Permite atualizar dados da empresa: nome, tipo, CNPJ, inscrição estadual, tele
   "name": "string",
   "type": "string",
   "cnpj": "string",
+  "stateRegistration": "string | null — IE da matriz (derivado)",
   "taxRegime": "string",
   "phone": "string",
   "isOnboarded": "boolean",
