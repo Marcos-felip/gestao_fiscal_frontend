@@ -3,9 +3,9 @@ import { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { Company } from '@/modules/companies/domain/entities/company.entity'
-import type { CompanyType } from '@/core/enums/company-type.enum'
-import type { TaxRegime } from '@/core/enums/tax-regime.enum'
-import type { TaxRegimeCode } from '@/core/enums/tax-regime-code.enum'
+import { CompanyType } from '@/core/enums/company-type.enum'
+import { TaxRegime } from '@/core/enums/tax-regime.enum'
+import { TaxRegimeCode } from '@/core/enums/tax-regime-code.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 /**
@@ -18,17 +18,17 @@ import { toIssueList } from '@/core/utils/zod-errors'
 const companyBaseSchema = z.object({
   id: z.string(),
   name: z.string(),
-  type: z.string().nullable().default(null),
+  type: z.nativeEnum(CompanyType).nullable().default(null),
   cnpj: z.string().nullable().default(null),
   phone: z.string().nullable().default(null),
-  taxRegime: z.string().nullable().default(null),
+  taxRegime: z.nativeEnum(TaxRegime).nullable().default(null),
   businessSegment: z.string().nullable().default(null),
   isOnboarded: z.boolean().default(false),
   razaoSocial: z.string().nullable().default(null),
   nomeFantasia: z.string().nullable().default(null),
   inscricaoEstadual: z.string().nullable().default(null),
   inscricaoMunicipal: z.string().nullable().default(null),
-  crt: z.string().nullable().default(null),
+  crt: z.nativeEnum(TaxRegimeCode).nullable().default(null),
   contribuinteIcms: z.boolean().default(false),
   codigoIbgeMunicipio: z.string().nullable().default(null),
   telefoneFiscal: z.string().nullable().default(null),
@@ -57,18 +57,18 @@ function build(value: CompanyPayload): Company {
   return new Company(
     value.id,
     value.name,
-    value.type as CompanyType | null,
+    value.type,
     value.cnpj,
     value.stateRegistration ?? null,
     value.phone,
-    value.taxRegime as TaxRegime | null,
+    value.taxRegime,
     value.businessSegment,
     value.isOnboarded,
     value.razaoSocial,
     value.nomeFantasia,
     value.inscricaoEstadual,
     value.inscricaoMunicipal,
-    value.crt as TaxRegimeCode | null,
+    value.crt,
     value.contribuinteIcms,
     value.codigoIbgeMunicipio,
     value.telefoneFiscal,

@@ -172,7 +172,7 @@ src/
 | Arquivo | O QUE FAZ | O QUE NÃO FAZ |
 |---------|-----------|---------------|
 | **Repository** (`repositories/<name>-repository.ts`) | Implementa `I<Name>Repository`. Faz chamadas HTTP via `httpClient` (`post<unknown>`). Traduz a resposta com `result.flatMap(mapper)`. Retorna `Either<DomainError, T>`. | Não conhece o formato do JSON (é do mapper). Não orquestra múltiplos repositories. Não sabe sobre Vue. |
-| **Mapper** (`mappers/<name>.mapper.ts`) | Único ponto que conhece o formato do JSON da API. Valida com schema Zod (`safeParse`) e constrói Entities/Responses do domínio. Retorna `Either<DomainError, T>` (`left` em resposta inválida). | Não faz chamadas HTTP. Não tem lógica de negócio. |
+| **Mapper** (`mappers/<name>.mapper.ts`) | Único ponto que conhece o formato do JSON da API. Valida com schema Zod (`safeParse`) e constrói Entities/Responses do domínio. Retorna `Either<DomainError, T>` (`left` em resposta inválida). | Não faz chamadas HTTP. Não tem lógica de negócio. **Não usa `as` para enum** nem `.default()` para campo que a API não envia — os dois transformam contrato quebrado em silêncio. Ver [Enums no mapper](#enums-no-mapper--znativeenum-nunca-as). |
 
 ### Application — `application/`
 
@@ -346,6 +346,41 @@ Todo erro que trafega no `Either` herda de `DomainError`, que expõe `isUserFaci
 **Por que `isUserFacing` importa:** `handleResult()` exibe a mensagem crua quando é `true`. Quando é `false`, o usuário vê um texto genérico e o erro real vai para o console (ponto de integração com telemetria). Um `ContractError` significa que o contrato com o backend quebrou — é bug nosso, não erro do usuário, e jamais deve virar "e-mail ou senha inválidos" na tela.
 
 Quem traduz HTTP → `DomainError` é `core/client/http-error-mapper.ts`. É o **único** arquivo do projeto que conhece o Axios como fonte de erro. As camadas de cima decidem comportamento por `instanceof`, **nunca** inspecionando a string da mensagem.
+
+---
+
+## Enums no mapper — `z.nativeEnum`, nunca `as`
+
+**Regra:** campo de enum no schema do mapper usa `z.nativeEnum(MeuEnum)`. `z.string()` seguido de `as MeuEnum` é proibido.
+
+```typescript
+// ERRADO — o schema aceita qualquer texto e o cast só mente para o compilador
+const schema = z.object({ crt: z.string().nullable().default(null) })
+new Company(..., value.crt as TaxRegimeCode | null, ...)
+
+// CERTO — valor desconhecido vira ContractError
+const schema = z.object({ crt: z.nativeEnum(TaxRegimeCode).nullable().default(null) })
+new Company(..., value.crt, ...)
+```
+
+**Por quê.** `as` é apagado na compilação: não valida nada em tempo de execução. Um valor que o frontend não conhece atravessa o mapper, chega na entidade e some na tela — `Select` em branco, badge sem cor, filtro que não casa — **sem erro nenhum**. É a mesma família do `.default(null)` sobre campo que a API não envia: transforma contrato quebrado em silêncio. O mapper é o único lugar que conhece o JSON da API; se ele não conferir, ninguém confere.
+
+Isso mordeu de verdade: o CRT entrava como `z.string()` + `as TaxRegimeCode`, e um regime desconhecido renderizava o campo vazio na tela de Empresa sem sinal de erro.
+
+**Duas exceções legítimas:**
+
+1. **Não existe enum equivalente em `src/core/enums`** — mantenha `z.string()` e deixe a entidade expor texto livre. É o caso de `businessSegment` no `company.mapper.ts`.
+2. **O campo não é enum** — `snapshot as FiscalSnapshot | null` é objeto estruturado, não conjunto fechado de valores. Não se aplica.
+
+**Importe o enum como valor, não como tipo:** `z.nativeEnum` precisa do objeto em runtime, então `import { X }` e não `import type { X }`.
+
+### Estado atual — a regra ainda não vale em todo o código
+
+Auditoria de 11/08/2026 comparando `src/core/enums` com os enums do Prisma: **os 23 enums são idênticos dos dois lados, sem divergência**. Ou seja, apertar os mappers restantes é seguro — nenhum passaria a recusar valor que o backend realmente manda.
+
+Já seguem a regra: `company.mapper.ts` (`type`, `taxRegime`, `crt`).
+
+Ainda usam `as` e devem migrar quando o arquivo for tocado — `cash-session`, `establishment`, `fiscal-consulta`, `fiscal-document`, `fiscal-production`, `fiscal-settings`, `membership`, `partner`, `payable`, `product`, `purchase`, `receivable`, `sale`, `sale-context`.
 
 ---
 
@@ -551,8 +586,8 @@ Ao criar qualquer novo módulo (companies, products, partners, etc.) COM backend
 2. **`domain/entities/`** — Criar Entity com métodos de comportamento (sem `fromJson`)
 3. **`domain/responses/`** — Criar Responses de **saída**, uma interface por arquivo (ex: `auth-response.ts`)
 4. **`domain/interfaces/`** — Criar Interface com assinaturas usando DTOs e Either
-5. **`data/mappers/`** — Criar mapper com schema Zod que valida e traduz JSON → domínio (use `toPage()` se for lista paginada)
-6. **`data/mappers/<name>.mapper.spec.ts`** — Testar o mapper: válido, default, tipo errado, campo ausente
+5. **`data/mappers/`** — Criar mapper com schema Zod que valida e traduz JSON → domínio (use `toPage()` se for lista paginada). Campo de enum com [`z.nativeEnum`](#enums-no-mapper--znativeenum-nunca-as), nunca `z.string()` + `as`
+6. **`data/mappers/<name>.mapper.spec.ts`** — Testar o mapper: válido, default, tipo errado, campo ausente, **valor de enum desconhecido → `ContractError`**
 7. **`data/repositories/`** — Criar Repository implementando a Interface, delegando ao mapper via `flatMap`
 8. **`application/use-cases/`** — Criar Use Cases que recebem DTO e chamam Repository
 9. **`presentation/schemas/`** — Criar Zod schemas para validação de formulário

@@ -211,3 +211,57 @@ describe('toCreatedCompany', () => {
     expect(result.left).toBeInstanceOf(ContractError)
   })
 })
+
+describe('toCompany — CRT', () => {
+  it('aceita o CRT 4 (MEI) devolvido pelo backend', () => {
+    const result = toCompany({ ...respostaValida, crt: 'SIMPLES_MEI' })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.crt).toBe('SIMPLES_MEI')
+  })
+
+  it('acusa ContractError para CRT desconhecido', () => {
+    const result = toCompany({ ...respostaValida, crt: 'LUCRO_REAL' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('aceita CRT nulo: empresa ainda sem regime fiscal definido', () => {
+    const result = toCompany({ ...respostaValida, crt: null })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.crt).toBeNull()
+  })
+})
+
+describe('toCompany — enums validados, não convertidos com `as`', () => {
+  it('recusa type fora do enum', () => {
+    const result = toCompany({ ...respostaValida, type: 'SOCIEDADE_ANONIMA' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('recusa taxRegime fora do enum', () => {
+    const result = toCompany({ ...respostaValida, taxRegime: 'LUCRO_ARBITRADO' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('aceita os enums válidos e nulos', () => {
+    expect(toCompany({ ...respostaValida, type: 'MEI' }).isRight).toBe(true)
+    expect(
+      toCompany({ ...respostaValida, type: null, taxRegime: null }).isRight,
+    ).toBe(true)
+  })
+
+  // businessSegment não tem enum em src/core/enums — segue texto livre.
+  it('não valida businessSegment contra enum', () => {
+    const result = toCompany({ ...respostaValida, businessSegment: 'QUALQUER' })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.businessSegment).toBe('QUALQUER')
+  })
+})
