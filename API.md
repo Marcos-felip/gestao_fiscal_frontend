@@ -1339,7 +1339,8 @@ O CSC é segredo: não deve aparecer em log, toast nem telemetria.
 |------|----------------|
 | `CompanyType` | `MEI`, `ME`, `EPP`, `LTDA`, `SA`, `EIRELI`, `SLU` |
 | `BusinessSegment` | `ALUMINIO_PORTAS`, `SUPERMERCADO`, `PAPELARIA`, `MERCEARIA`, `LANCHONETE`, `GENERICO` |
-| `TaxRegime` | `SIMPLES_NACIONAL`, `LUCRO_PRESUMIDO`, `LUCRO_REAL`, `MEI` |
+| `TaxRegime` | `SIMPLES_NACIONAL`, `LUCRO_PRESUMIDO`, `LUCRO_REAL`, `MEI` — regime **cadastral** |
+| `TaxRegimeCode` (CRT) | `SIMPLES_NACIONAL` (1), `SIMPLES_EXCESSO` (2), `REGIME_NORMAL` (3), `SIMPLES_MEI` (4) — código **fiscal**, usado na emissão |
 | `EstablishmentType` | `MATRIZ`, `FILIAL` |
 | `MembershipRole` | `OWNER`, `ADMIN`, `MEMBER` |
 | `PartnerType` | `CLIENT`, `SUPPLIER`, `BOTH` |
