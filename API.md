@@ -1283,6 +1283,28 @@ Vale em `PATCH /users/:id`, `DELETE /memberships/:id` e `PUT /memberships/:id/pr
 | 1 | `PATCH /companies/:id` ignora o `:id` e atualiza sempre a empresa ativa. | Baixo — enviar o ID da empresa ativa para evitar confusão |
 | 2 | Permissões `sales.*` remanescentes do módulo de vendas removido continuam no catálogo e são copiadas para cada empresa nova. | Baixo — ruído em `GET /permissions`; nenhum endpoint as utiliza |
 | 3 | Código de permissão inexistente devolve `404` em `PATCH /permissions/:role` e `422` nos perfis. | Baixo — tratar os dois status ao validar o formulário de permissões |
+| 4 | **`POST/PATCH /fiscal/settings` validam o formato do CSC**: `codigoCsc` de 16 a 64 caracteres alfanuméricos, `idCsc` de 1 a 6 dígitos. Fora disso, `400`. | Médio — o formulário fiscal aplica a mesma regra antes de enviar; ver abaixo |
+
+### Formato do CSC (NFC-e)
+
+O par `idCsc` + `codigoCsc` vem do portal da SEFAZ da UF (credenciamento de NFC-e) e é
+**específico do ambiente**: o par de homologação não vale em produção.
+
+| Campo | Formato |
+|---|---|
+| `codigoCsc` | 16 a 64 caracteres alfanuméricos |
+| `idCsc` | 1 a 6 dígitos (é o `cIdToken` do QR Code, preenchido com zeros à esquerda) |
+
+O mínimo do código é **16 e não 32** porque o tamanho varia por UF — MG emite 32
+hexadecimais, outras emitem 36.
+
+Por que validar na tela em vez de deixar a API recusar: um CSC errado **não falha de forma
+legível**. Ele entra no hash do QR Code, o XML é montado e assinado normalmente, a numeração
+da nota é consumida, e a SEFAZ devolve **rejeição 464 — "QR-Code com hash inválido"**, sem
+mencionar o CSC. Foi o que aconteceu em 10/08/2026 com um CSC de 6 dígitos salvo por esta
+tela.
+
+O CSC é segredo: não deve aparecer em log, toast nem telemetria.
 
 ---
 

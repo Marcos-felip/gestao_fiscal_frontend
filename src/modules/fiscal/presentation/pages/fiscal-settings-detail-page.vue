@@ -568,11 +568,21 @@ const item = {
                 /></template>
               </Input>
 
+              <p class="text-sm text-muted-foreground">
+                O par ID do CSC + Código CSC é emitido pela SEFAZ e é
+                <strong class="font-medium text-foreground"
+                  >específico do ambiente</strong
+                >: o par de homologação não vale em produção. Um código errado
+                não acusa erro na emissão — a nota é rejeitada pela SEFAZ com
+                QR Code inválido, já com a numeração consumida.
+              </p>
+
               <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Input
                   v-model="form.idCsc"
-                  maxlength="20"
+                  maxlength="6"
                   placeholder="Ex.: 000001"
+                  hint="Token numérico de até 6 dígitos, emitido junto com o código."
                   :error="errors.idCsc"
                 >
                   <template #label>ID do CSC</template>
@@ -583,6 +593,7 @@ const item = {
                   v-model="form.codigoCsc"
                   maxlength="64"
                   placeholder="Código de segurança do contribuinte"
+                  hint="16 a 64 caracteres, obtidos no portal da SEFAZ da sua UF (credenciamento de NFC-e)."
                   :error="errors.codigoCsc"
                 >
                   <template #label>Código CSC</template>
