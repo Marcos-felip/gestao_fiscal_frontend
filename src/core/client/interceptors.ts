@@ -10,6 +10,25 @@ let failedQueue: Array<{
   reject: (error: unknown) => void
 }> = []
 
+/**
+ * Requisição binária (`responseType: 'blob'`) que falhou traz o corpo do erro
+ * como `Blob`, não como objeto. O mapeador de erros procura
+ * `{ statusCode, message }` e não enxerga nada lá dentro — o resultado é toda
+ * falha de download virar a mensagem genérica "Dados inválidos.".
+ *
+ * Desembrulhar aqui vale para qualquer download: XML, DANFE e a exportação em
+ * lote, onde a orientação de como fatiar o pedido só existe nessa mensagem.
+ */
+async function unwrapBlobError(data: unknown): Promise<unknown> {
+  if (!(data instanceof Blob) || !data.type.includes('json')) return data
+
+  try {
+    return JSON.parse(await data.text())
+  } catch {
+    return data
+  }
+}
+
 function processQueue(error: unknown, token: string | null = null): void {
   failedQueue.forEach((promise) => {
     if (token) {
@@ -85,6 +104,10 @@ export function setupInterceptors(axiosInstance: AxiosInstance): void {
         } finally {
           isRefreshing = false
         }
+      }
+
+      if (error.response) {
+        error.response.data = await unwrapBlobError(error.response.data)
       }
 
       return Promise.reject(error)
