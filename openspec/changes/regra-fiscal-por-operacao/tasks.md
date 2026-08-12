@@ -1,7 +1,18 @@
+> ⚠️ **Revisada em 12/08/2026** — ver o aviso no `proposal.md`. O cadastro de
+> regras é tela de configuração, não fluxo do lojista. Isso muda onde ela aparece
+> e como a empresa começa.
+
 ## 1. Pré-requisito
 
 - [ ] 1.1 Confirmar que a change irmã do backend está aplicada e que as permissões `fiscal.rules.*` foram semeadas (inclusive o backfill)
 - [ ] 1.2 Espelhar as rotas e o contrato em `gestao_fiscal_frontend/API.md`
+- [ ] 1.3 Confirmar o escopo resultante das decisões da seção 0 da change do backend — assinar ou construir a matriz, e se o DIFAL é devido. As duas mudam quais campos a regra tem.
+
+## 1b. Onde a tela vive
+
+- [ ] 1b.1 Manter o cadastro de regras **fora** da navegação do usuário comum — acessível pela configuração fiscal, não pelo menu principal
+- [ ] 1b.2 Empresa nova parte do conjunto base aplicado no onboarding, não de uma lista vazia
+- [ ] 1b.3 Texto de apoio na tela deixando claro que os valores vêm do contador — a interface não deve sugerir que o lojista escolha MVA ou redução de base
 
 ## 2. Módulo `fiscal-rules`
 
