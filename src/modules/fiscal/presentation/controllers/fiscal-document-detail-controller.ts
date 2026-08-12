@@ -12,6 +12,7 @@ import type {
 } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import { CancelFiscalDocumentDto } from '@/modules/fiscal/domain/dto/cancel-fiscal-document-dto'
 import { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
+import { triggerFileDownload } from '@/core/utils/download'
 import { useToast } from '@/shared/composables'
 
 /** Intervalo entre consultas de status durante o polling (ms). */
@@ -86,7 +87,7 @@ export class FiscalDocumentDetailController extends BaseController {
     this.handleResult(
       result,
       (xml) => {
-        this.triggerDownload(
+        triggerFileDownload(
           new Blob([xml], { type: 'application/xml' }),
           `${this.baseFileName(doc)}-${tipo}.xml`,
         )
@@ -208,7 +209,7 @@ export class FiscalDocumentDetailController extends BaseController {
           blob.type === 'application/pdf'
             ? blob
             : new Blob([blob], { type: 'application/pdf' })
-        this.triggerDownload(pdf, `${this.danfeFileName(doc)}.pdf`)
+        triggerFileDownload(pdf, `${this.danfeFileName(doc)}.pdf`)
       },
       (error) => {
         this.toast.error(
@@ -231,17 +232,6 @@ export class FiscalDocumentDetailController extends BaseController {
   /** Nome do PDF da DANFE: chave de acesso quando existe, senão nfce-<numero>. */
   private danfeFileName(doc: FiscalDocument): string {
     return doc.chaveAcesso ? doc.chaveAcesso : `nfce-${doc.numero}`
-  }
-
-  private triggerDownload(blob: Blob, fileName: string): void {
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = fileName
-    document.body.appendChild(anchor)
-    anchor.click()
-    document.body.removeChild(anchor)
-    URL.revokeObjectURL(url)
   }
 
   private startPolling(id: string): void {
