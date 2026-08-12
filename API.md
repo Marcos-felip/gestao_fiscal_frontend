@@ -1138,6 +1138,61 @@ Os mesmos códigos estão marcados com 🔹 na coluna **Perfil sugerido** do [ca
 
 ---
 
+## Fiscal
+
+> O módulo fiscal completo está em `gestao_fiscal_backend/API.md` e em
+> `gestao_fiscal_backend/FISCAL.md`. Aqui ficam os contratos que o frontend
+> consome com alguma particularidade.
+
+### GET /fiscal/documents/xml/export — Exportar os XMLs de um período
+
+> **Permissão:** `fiscal.read` · responde `application/zip` em stream
+
+O pacote que o contador usa para escriturar o mês. Substitui abrir 300 telas de
+detalhe para baixar 300 XMLs.
+
+**Query**
+
+| Campo | Obrigatório | Observação |
+|---|---|---|
+| `dataInicio` | ✅ | `aaaa-MM-dd` |
+| `dataFim` | ✅ | `aaaa-MM-dd` |
+| `establishmentId` | | UUID |
+| `modelo` | | `NFE` ou `NFCE` |
+| `ambiente` | | `PRODUCAO` (padrão) ou `HOMOLOGACAO` |
+
+> ⚠️ **Mande as datas sem hora.** O backend lê `2026-08-31` como o **dia
+> inteiro**; se o valor vier como ISO com hora (`dateInputToIso`), ele vale o
+> instante exato e as notas do dia 31 ficam fora do fechamento. Por isso o
+> `ExportFiscalXmlsDto` carrega a string crua do `<input type="date">` — é a
+> única data do app que **não** passa por `dateInputToIso`.
+
+**Resposta**
+
+ZIP com um `<chave>-nfe.xml` por documento, mais `<chave>-cancelamento.xml`
+quando a nota foi cancelada, e o manifesto `_relacao.csv` (separado por `;`, com
+BOM — abre direto no Excel em português).
+
+Entram apenas documentos `AUTORIZADO` e `CANCELADO`. Documento cujo XML não foi
+recuperado do armazenamento aparece no manifesto marcado como ausente, e a
+exportação continua com `200`.
+
+**Particularidades no consumo**
+
+- **Resposta binária:** `responseType: 'blob'`, sem mapper Zod — não é JSON.
+- **O nome do arquivo é montado no cliente.** O backend manda um no
+  `Content-Disposition`, mas o navegador não enxerga o header: ele não está em
+  `Access-Control-Expose-Headers`.
+- **Período vazio devolve `200`** com um ZIP só de manifesto — não é `404`.
+
+**Erros**
+
+`400` com `{ statusCode, message, error }` em dois casos: período acima de 92
+dias e lote acima de 5.000 documentos. Os dois viram `ValidationError` e a
+`message` traz a orientação de como fatiar o pedido — exiba-a como veio.
+
+---
+
 ## Paginação
 
 Todos os endpoints de listagem suportam paginação:
