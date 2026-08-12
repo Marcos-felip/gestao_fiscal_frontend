@@ -1144,6 +1144,44 @@ Os mesmos códigos estão marcados com 🔹 na coluna **Perfil sugerido** do [ca
 > `gestao_fiscal_backend/FISCAL.md`. Aqui ficam os contratos que o frontend
 > consome com alguma particularidade.
 
+### Campos fiscais do produto — o que passou a ser exigido
+
+O motor fiscal deixou de decidir imposto. Cada item da nota passou a carregar o
+quadro tributário completo, montado a partir do **cadastro do produto** — e isso
+mudou o que `fiscalComplete` exige.
+
+| Campo | Antes | Agora |
+|---|---|---|
+| `cstPis` | opcional, texto livre | **obrigatório**, código da tabela |
+| `cstCofins` | opcional, texto livre | **obrigatório**, código da tabela |
+| `aliquotaPis` | opcional | obrigatória quando o CST é tributado |
+| `aliquotaCofins` | opcional | obrigatória quando o CST é tributado |
+| `csosn` | 5 códigos | **10 códigos** |
+| `cstIcms` | 3 códigos | **11 códigos** |
+
+**Sem CST de PIS e COFINS o produto não emite.** Não existe valor padrão: o
+código é decisão do contador, e preencher automaticamente esconderia
+classificação errada num cadastro que ninguém revisita. Bebida fria costuma ser
+monofásica (`04`); alimento preparado costuma ser isento (`07`) — mas confirme.
+
+**A alíquota depende da situação.** CST `01` e `02` apuram por percentual e
+exigem alíquota; `03` apura por quantidade e também exige; `04` a `09` não são
+tributados e **não comportam alíquota**. A regra está em
+`core/enums/cst-contribuicao.enum.ts` (`exigeAliquota`), espelhando
+`formaDaContribuicao` do backend. O formulário esconde o campo e limpa o valor
+quando ele deixa de caber.
+
+**Situações de ICMS aceitas no cadastro mas ainda não emitíveis:** `101`, `201`,
+`202`, `203`, `500` (CSOSN) e `10`, `20`, `30`, `60`, `70` (CST). Elas exigem
+substituição tributária, redução de base ou crédito do Simples, que dependem da
+matriz tributária por operação — etapa 2 do roteiro fiscal. O cadastro as aceita
+para nascer correto antes de a emissão alcançar; a emissão recusa nomeando o
+campo que falta.
+
+> **Mapper:** `cstPis`, `cstCofins` e `unit` são validados contra a tabela com
+> `z.enum`/`z.nativeEnum`, não coagidos com `as`. Código fora da tabela vira
+> `ContractError` na listagem — que é o sintoma certo para dado que não emite.
+
 ### GET /fiscal/documents/xml/export — Exportar os XMLs de um período
 
 > **Permissão:** `fiscal.read` · responde `application/zip` em stream
