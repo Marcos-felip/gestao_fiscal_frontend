@@ -159,3 +159,56 @@ describe('toProductList', () => {
     expect(result.left).toBeInstanceOf(ContractError)
   })
 })
+
+/**
+ * Enum desconhecido é quebra de contrato, não valor a tolerar: o mapper valida
+ * contra a tabela em vez de coagir com `as`. Se o backend mandar um código que
+ * a emissão não conhece, o sintoma aparece aqui — e não como rejeição da SEFAZ
+ * depois de a nota ter consumido numeração.
+ */
+describe('toProduct — enums validados contra a tabela', () => {
+  it('rejeita unidade de medida desconhecida', () => {
+    const result = toProduct({ ...respostaValida, unit: 'CAIXOTE' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('rejeita CST de PIS fora da tabela', () => {
+    const result = toProduct({ ...respostaValida, cstPis: '77' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('rejeita CST de COFINS fora da tabela', () => {
+    const result = toProduct({ ...respostaValida, cstCofins: '00' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('aceita CST válido e o mantém na entidade', () => {
+    const result = toProduct({
+      ...respostaValida,
+      cstPis: '04',
+      cstCofins: '04',
+    })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.cstPis).toBe('04')
+    expect(result.right.cstCofins).toBe('04')
+  })
+
+  it('aceita produto sem CST cadastrado', () => {
+    // Nulo é legítimo: o produto existe no cadastro e ainda não emite.
+    const result = toProduct({
+      ...respostaValida,
+      cstPis: null,
+      cstCofins: null,
+    })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.cstPis).toBeNull()
+  })
+})
