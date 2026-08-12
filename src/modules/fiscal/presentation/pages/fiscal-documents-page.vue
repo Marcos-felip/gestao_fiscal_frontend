@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { motion } from 'motion-v'
 import { DatePicker, Icon, Select, Skeleton } from '@/shared/ui'
 import type { SelectOption } from '@/shared/ui'
 import FiscalDocumentStatusBadge from '@/modules/fiscal/presentation/components/fiscal-document-status-badge.vue'
+import ExportFiscalXmlsDialog from '@/modules/fiscal/presentation/components/export-fiscal-xmls-dialog.vue'
+import type { ExportFiscalXmlsDto } from '@/modules/fiscal/domain/dto/export-fiscal-xmls-dto'
 import { makeFiscalDocumentsListController } from '@/modules/fiscal/factories/fiscal.factory'
 import type { FiscalDocument } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import type { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
@@ -22,6 +24,16 @@ const controller = makeFiscalDocumentsListController()
 const { can } = usePermissions()
 
 const canEmit = computed(() => can('fiscal.emit'))
+/** Mesma permissão da lista: quem lê os documentos pode exportá-los. */
+const canExport = computed(() => can('fiscal.read'))
+
+const exportOpen = ref(false)
+
+async function onExport(dto: ExportFiscalXmlsDto): Promise<void> {
+  const ok = await controller.exportXmls(dto)
+  // Só fecha quando o download saiu — em erro o modal fica com o preenchimento.
+  if (ok) exportOpen.value = false
+}
 
 /** Documentos em falha podem ser reprocessados direto da lista. */
 function canRetry(document: FiscalDocument): boolean {
@@ -66,14 +78,35 @@ function modeloLabel(modelo: FiscalDocumentModel): string {
 </script>
 
 <template>
-  <header class="mb-6">
-    <h1 class="font-display text-2xl font-bold tracking-tight text-foreground">
-      Documentos fiscais
-    </h1>
-    <p class="mt-1 text-sm text-muted-foreground">
-      NF-e e NFC-e emitidas, com status de autorização e download dos XMLs.
-    </p>
+  <header class="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h1 class="font-display text-2xl font-bold tracking-tight text-foreground">
+        Documentos fiscais
+      </h1>
+      <p class="mt-1 text-sm text-muted-foreground">
+        NF-e e NFC-e emitidas, com status de autorização e download dos XMLs.
+      </p>
+    </div>
+
+    <button
+      v-if="canExport"
+      type="button"
+      class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line-2 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+      :disabled="controller.exporting.value"
+      @click="exportOpen = true"
+    >
+      <Icon name="Download" size="sm" class="text-primary" />
+      Exportar XMLs
+    </button>
   </header>
+
+  <ExportFiscalXmlsDialog
+    v-model="exportOpen"
+    :loading="controller.exporting.value"
+    :api-error="controller.exportError.value"
+    :establishment-options="controller.establishmentOptions.value"
+    @confirm="onExport"
+  />
 
   <!-- Filtros -->
   <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">

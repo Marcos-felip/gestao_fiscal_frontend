@@ -4,12 +4,16 @@ import type { Either } from '@/core/either/either'
 import type { DomainError } from '@/core/errors/domain-error'
 import type { ListFiscalDocumentsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-documents.use-case'
 import type { RetryFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/retry-fiscal-document.use-case'
+import type { ExportFiscalXmlsUseCase } from '@/modules/fiscal/application/use-cases/export-fiscal-xmls.use-case'
 import { QueryFiscalDocumentsDto } from '@/modules/fiscal/domain/dto/query-fiscal-documents-dto'
+import type { ExportFiscalXmlsDto } from '@/modules/fiscal/domain/dto/export-fiscal-xmls-dto'
 import type { FiscalDocument } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import type { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
 import type { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
+import { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 import type { SelectOption } from '@/shared/ui'
 import { dateInputToIso } from '@/core/utils/date'
+import { triggerFileDownload } from '@/core/utils/download'
 import { useToast } from '@/shared/composables'
 
 const PAGE_LIMIT = 20
@@ -28,6 +32,7 @@ export type FiscalDocumentsEstablishmentsLoader = () => Promise<
 export class FiscalDocumentsListController extends BaseController {
   private readonly listUseCase: ListFiscalDocumentsUseCase
   private readonly retryUseCase: RetryFiscalDocumentUseCase
+  private readonly exportUseCase: ExportFiscalXmlsUseCase
   private readonly loadEstablishments: FiscalDocumentsEstablishmentsLoader
   private readonly toast = useToast()
 
@@ -40,6 +45,10 @@ export class FiscalDocumentsListController extends BaseController {
   readonly hasNext = ref(false)
   /** Id do documento sendo reprocessado (desabilita só a linha certa). */
   readonly retryingId = ref<string | null>(null)
+  /** Exportação em andamento — não trava a lista, só o botão do modal. */
+  readonly exporting = ref(false)
+  /** Erro da exportação, exibido dentro do modal e não no banner da página. */
+  readonly exportError = ref<string | null>(null)
 
   readonly statusFilter = ref<FiscalDocumentStatus | ''>('')
   readonly modeloFilter = ref<FiscalDocumentModel | ''>('')
@@ -61,12 +70,75 @@ export class FiscalDocumentsListController extends BaseController {
   constructor(
     listUseCase: ListFiscalDocumentsUseCase,
     retryUseCase: RetryFiscalDocumentUseCase,
+    exportUseCase: ExportFiscalXmlsUseCase,
     loadEstablishments: FiscalDocumentsEstablishmentsLoader,
   ) {
     super()
     this.listUseCase = listUseCase
     this.retryUseCase = retryUseCase
+    this.exportUseCase = exportUseCase
     this.loadEstablishments = loadEstablishments
+  }
+
+  /**
+   * Exporta os XMLs do período num ZIP e dispara o download.
+   *
+   * O erro fica num estado próprio (`exportError`) em vez do banner da página:
+   * o modal continua aberto com o que o usuário preencheu, que é o que permite
+   * corrigir o período sem redigitar tudo.
+   *
+   * Devolve `true` quando o download aconteceu, para a tela fechar o modal.
+   */
+  async exportXmls(dto: ExportFiscalXmlsDto): Promise<boolean> {
+    // Exportação é operação longa: clique repetido geraria um segundo ZIP.
+    if (this.exporting.value) return false
+
+    this.exporting.value = true
+    this.exportError.value = null
+
+    const result = await this.exportUseCase.execute(dto)
+    let ok = false
+
+    result.fold(
+      (error) => {
+        // A subclasse do erro decide se a mensagem serve ao usuário — os
+        // limites de período e de volume chegam como ValidationError e trazem
+        // a orientação de como fatiar o pedido.
+        this.exportError.value = error.isUserFacing
+          ? error.message
+          : 'Não foi possível exportar os XMLs. Tente novamente.'
+      },
+      (blob) => {
+        const zip =
+          blob.type === 'application/zip'
+            ? blob
+            : new Blob([blob], { type: 'application/zip' })
+
+        triggerFileDownload(zip, this.exportFileName(dto))
+        this.toast.success('Exportação concluída.')
+        ok = true
+      },
+    )
+
+    this.exporting.value = false
+    return ok
+  }
+
+  /**
+   * Nome do ZIP montado no cliente.
+   *
+   * O backend já manda um nome no `Content-Disposition`, mas o navegador não o
+   * enxerga: o header não está em `Access-Control-Expose-Headers`. Espelhar o
+   * padrão aqui é mais simples do que abrir o header no CORS.
+   */
+  private exportFileName(dto: ExportFiscalXmlsDto): string {
+    const partes = ['xmls', dto.dataInicio, 'a', dto.dataFim]
+
+    if (dto.ambiente === FiscalEnvironment.HOMOLOGACAO) {
+      partes.push('HOMOLOGACAO-SEM-VALOR-FISCAL')
+    }
+
+    return `${partes.join('-')}.zip`
   }
 
   /**

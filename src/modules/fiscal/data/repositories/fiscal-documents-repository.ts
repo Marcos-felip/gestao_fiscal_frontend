@@ -12,6 +12,7 @@ import type { FiscalRejectionListResponse } from '@/modules/fiscal/domain/respon
 import type { FiscalConsultaResult } from '@/modules/fiscal/domain/responses/fiscal-consulta-result'
 import type { QueryFiscalDocumentsDto } from '@/modules/fiscal/domain/dto/query-fiscal-documents-dto'
 import type { EmitNfceDto } from '@/modules/fiscal/domain/dto/emit-nfce-dto'
+import type { ExportFiscalXmlsDto } from '@/modules/fiscal/domain/dto/export-fiscal-xmls-dto'
 import { httpClient } from '@/core/client/http-client'
 import {
   toFiscalDocument,
@@ -131,6 +132,24 @@ export class FiscalDocumentsRepository implements IFiscalDocumentsRepository {
 
   async downloadDanfe(id: string): Promise<Either<DomainError, Blob>> {
     return httpClient.get<Blob>(`/fiscal/documents/${id}/danfe`, {
+      responseType: 'blob',
+    })
+  }
+
+  async exportXmls(
+    dto: ExportFiscalXmlsDto,
+  ): Promise<Either<DomainError, Blob>> {
+    const params: Record<string, string> = {
+      dataInicio: dto.dataInicio,
+      dataFim: dto.dataFim,
+    }
+    if (dto.establishmentId) params.establishmentId = dto.establishmentId
+    if (dto.modelo) params.modelo = dto.modelo
+    if (dto.ambiente) params.ambiente = dto.ambiente
+
+    // ZIP em stream: resposta binária, sem mapper — não é JSON.
+    return httpClient.get<Blob>('/fiscal/documents/xml/export', {
+      params,
       responseType: 'blob',
     })
   }

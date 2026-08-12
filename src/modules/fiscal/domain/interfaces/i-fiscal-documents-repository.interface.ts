@@ -11,6 +11,7 @@ import type { FiscalRejectionListResponse } from '@/modules/fiscal/domain/respon
 import type { FiscalConsultaResult } from '@/modules/fiscal/domain/responses/fiscal-consulta-result'
 import type { QueryFiscalDocumentsDto } from '@/modules/fiscal/domain/dto/query-fiscal-documents-dto'
 import type { EmitNfceDto } from '@/modules/fiscal/domain/dto/emit-nfce-dto'
+import type { ExportFiscalXmlsDto } from '@/modules/fiscal/domain/dto/export-fiscal-xmls-dto'
 
 export interface IFiscalDocumentsRepository {
   list(
@@ -29,6 +30,7 @@ export interface IFiscalDocumentsRepository {
   consulta(id: string): Promise<Either<DomainError, FiscalConsultaResult>>
   retry(id: string): Promise<Either<DomainError, FiscalDocument>>
   downloadDanfe(id: string): Promise<Either<DomainError, Blob>>
+  exportXmls(dto: ExportFiscalXmlsDto): Promise<Either<DomainError, Blob>>
   getRejections(
     query: QueryFiscalDocumentsDto,
   ): Promise<Either<DomainError, FiscalRejectionListResponse>>

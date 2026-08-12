@@ -27,6 +27,7 @@ import { CancelFiscalDocumentUseCase } from '@/modules/fiscal/application/use-ca
 import { ConsultFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/consult-fiscal-document.use-case'
 import { RetryFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/retry-fiscal-document.use-case'
 import { DownloadFiscalDanfeUseCase } from '@/modules/fiscal/application/use-cases/download-fiscal-danfe.use-case'
+import { ExportFiscalXmlsUseCase } from '@/modules/fiscal/application/use-cases/export-fiscal-xmls.use-case'
 import { ListFiscalRejectionsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-rejections.use-case'
 import { FiscalSettingsController } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
 import type { FiscalEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
@@ -113,6 +114,10 @@ export function makeDownloadFiscalDanfeUseCase(): DownloadFiscalDanfeUseCase {
   return new DownloadFiscalDanfeUseCase(makeFiscalDocumentsRepository())
 }
 
+export function makeExportFiscalXmlsUseCase(): ExportFiscalXmlsUseCase {
+  return new ExportFiscalXmlsUseCase(makeFiscalDocumentsRepository())
+}
+
 /**
  * Adapta a listagem de estabelecimentos (outro módulo) para o formato mínimo
  * `{ id, name, type }` que a tela de configuração fiscal precisa. A costura
@@ -148,6 +153,7 @@ export function makeFiscalDocumentsListController(): FiscalDocumentsListControll
   return new FiscalDocumentsListController(
     makeListFiscalDocumentsUseCase(),
     makeRetryFiscalDocumentUseCase(),
+    makeExportFiscalXmlsUseCase(),
     makeFiscalDocumentsEstablishmentsLoader(),
   )
 }
