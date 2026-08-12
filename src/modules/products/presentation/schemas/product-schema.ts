@@ -4,6 +4,10 @@ import {
   CSOSN_SUPORTADOS,
   CST_ICMS_SUPORTADOS,
 } from '@/core/enums/fiscal-tax-situation.enum'
+import {
+  CST_CONTRIBUICAO_SUPORTADOS,
+  exigeAliquota,
+} from '@/core/enums/cst-contribuicao.enum'
 import { onlyDigits, parseDecimal } from '@/shared/ui/utils/masks'
 
 /** Refine: string vazia OU um dos códigos suportados pelo motor fiscal. */
@@ -80,12 +84,41 @@ export const productSchema = z.object({
     CST_ICMS_SUPORTADOS,
     'CST ICMS não suportado pela emissão',
   ),
-  cstPis: z.string().max(2, 'Máximo 2 dígitos').optional(),
-  cstCofins: z.string().max(2, 'Máximo 2 dígitos').optional(),
+  // Obrigatórios desde que o motor deixou de completar PIS/COFINS com CST 07
+  // fixo: sem eles o produto não compõe quadro tributário e a nota não sai.
+  cstPis: z
+    .string()
+    .min(1, 'Selecione a situação tributária de PIS')
+    .refine(
+      (valor) => (CST_CONTRIBUICAO_SUPORTADOS as readonly string[]).includes(valor),
+      'CST de PIS não suportado pela emissão',
+    ),
+  cstCofins: z
+    .string()
+    .min(1, 'Selecione a situação tributária de COFINS')
+    .refine(
+      (valor) => (CST_CONTRIBUICAO_SUPORTADOS as readonly string[]).includes(valor),
+      'CST de COFINS não suportado pela emissão',
+    ),
   aliquotaIcms: optionalPercent('Alíquota deve estar entre 0 e 100'),
   aliquotaPis: optionalPercent('Alíquota deve estar entre 0 e 100'),
   aliquotaCofins: optionalPercent('Alíquota deve estar entre 0 e 100'),
 })
+  .refine(
+    (valores) => !exigeAliquota(valores.cstPis) || valores.aliquotaPis !== undefined,
+    {
+      message: 'Informe a alíquota de PIS para a situação escolhida',
+      path: ['aliquotaPis'],
+    },
+  )
+  .refine(
+    (valores) =>
+      !exigeAliquota(valores.cstCofins) || valores.aliquotaCofins !== undefined,
+    {
+      message: 'Informe a alíquota de COFINS para a situação escolhida',
+      path: ['aliquotaCofins'],
+    },
+  )
 
 export type ProductFormData = z.infer<typeof productSchema>
 

@@ -4,7 +4,10 @@ import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { Product } from '@/modules/products/domain/entities/product.entity'
 import type { ProductList } from '@/modules/products/domain/responses/product-list-response'
-import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
+// Import de valor, não `import type`: `z.nativeEnum` precisa do objeto em
+// runtime, e `import type` some na compilação.
+import { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
+import { CST_CONTRIBUICAO_SUPORTADOS } from '@/core/enums/cst-contribuicao.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const decimal = z.union([z.number(), z.string()]).nullable().default(null)
@@ -16,7 +19,7 @@ const productSchema = z.object({
   description: z.string().nullable().default(null),
   sku: z.string().nullable().default(null),
   barcode: z.string().nullable().default(null),
-  unit: z.string().default('UN'),
+  unit: z.nativeEnum(UnitOfMeasure).default(UnitOfMeasure.UN),
   costPrice: decimal,
   salePrice: decimal,
   currentStock: decimal,
@@ -28,8 +31,8 @@ const productSchema = z.object({
   origin: z.number().nullable().default(null),
   csosn: z.string().nullable().default(null),
   cstIcms: z.string().nullable().default(null),
-  cstPis: z.string().nullable().default(null),
-  cstCofins: z.string().nullable().default(null),
+  cstPis: z.enum(CST_CONTRIBUICAO_SUPORTADOS).nullable().default(null),
+  cstCofins: z.enum(CST_CONTRIBUICAO_SUPORTADOS).nullable().default(null),
   aliquotaIcms: decimal,
   aliquotaPis: decimal,
   aliquotaCofins: decimal,
@@ -63,7 +66,7 @@ function build(value: ProductPayload): Product {
     value.description,
     value.sku,
     value.barcode,
-    value.unit as UnitOfMeasure,
+    value.unit,
     toNumber(value.costPrice),
     toNumber(value.salePrice),
     toNumber(value.currentStock) ?? 0,

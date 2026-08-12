@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { motion } from 'motion-v'
 import { Icon, Input, Select } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
@@ -11,6 +11,10 @@ import {
   csosnOptions,
   cstIcmsOptions,
 } from '@/core/enums/fiscal-tax-situation.enum'
+import {
+  cstContribuicaoOptions,
+  exigeAliquota,
+} from '@/core/enums/cst-contribuicao.enum'
 import { formatDecimalInput, onlyDigits } from '@/shared/ui/utils/masks'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {
@@ -65,6 +69,31 @@ const cstIcmsSelectOptions = [
   { value: '', label: 'Não informar' },
   ...cstIcmsOptions,
 ]
+
+// PIS/COFINS não têm "não informar": são obrigatórios para o produto emitir.
+const cstContribuicaoSelectOptions = cstContribuicaoOptions.map((opcao) => ({
+  value: opcao.value,
+  label: opcao.label,
+}))
+
+/** A alíquota só faz sentido quando a situação tributária é tributada. */
+const exigeAliquotaPis = computed(() => exigeAliquota(form.cstPis))
+const exigeAliquotaCofins = computed(() => exigeAliquota(form.cstCofins))
+
+// Trocar para uma situação não tributada limpa a alíquota: deixá-la para trás
+// gravaria valor num campo que o motor recusa preenchido.
+watch(
+  () => form.cstPis,
+  () => {
+    if (!exigeAliquotaPis.value) form.aliquotaPis = ''
+  },
+)
+watch(
+  () => form.cstCofins,
+  () => {
+    if (!exigeAliquotaCofins.value) form.aliquotaCofins = ''
+  },
+)
 
 function addAttribute(): void {
   form.attributes.push({ key: '', value: '' })
@@ -377,27 +406,36 @@ const item = {
                   <template #label>CST ICMS</template>
                 </Select>
 
-                <Input
+                <Select
                   v-model="form.cstPis"
-                  maxlength="2"
-                  inputmode="numeric"
-                  :sanitize="onlyDigits"
-                  placeholder="01"
+                  :options="cstContribuicaoSelectOptions"
+                  placeholder="Selecione"
                   :error="errors.cstPis"
                 >
-                  <template #label>CST PIS</template>
-                </Input>
+                  <template #label>CST PIS *</template>
+                </Select>
 
-                <Input
+                <Select
                   v-model="form.cstCofins"
-                  maxlength="2"
-                  inputmode="numeric"
-                  :sanitize="onlyDigits"
-                  placeholder="01"
+                  :options="cstContribuicaoSelectOptions"
+                  placeholder="Selecione"
                   :error="errors.cstCofins"
                 >
-                  <template #label>CST COFINS</template>
-                </Input>
+                  <template #label>CST COFINS *</template>
+                </Select>
+              </div>
+
+              <div
+                v-if="!form.cstPis || !form.cstCofins"
+                class="flex items-start gap-2 rounded-lg border border-warning-500/30 bg-warning-500/10 px-3 py-2 text-xs text-warning-700"
+              >
+                <Icon name="TriangleAlert" size="sm" class="mt-0.5 shrink-0" />
+                <span>
+                  Sem CST de PIS e COFINS o produto <strong>não emite nota</strong>.
+                  O código vem do contador — bebida fria costuma ser monofásica
+                  (04) e alimento preparado costuma ser isento (07), mas confirme
+                  antes de cadastrar.
+                </span>
               </div>
 
               <!-- Alíquotas (%) -->
@@ -420,6 +458,7 @@ const item = {
                 </Input>
 
                 <Input
+                  v-if="exigeAliquotaPis"
                   :model-value="form.aliquotaPis"
                   inputmode="decimal"
                   placeholder="0,00"
@@ -437,6 +476,7 @@ const item = {
                 </Input>
 
                 <Input
+                  v-if="exigeAliquotaCofins"
                   :model-value="form.aliquotaCofins"
                   inputmode="decimal"
                   placeholder="0,00"
