@@ -12,6 +12,7 @@ import type { FiscalRejectionListResponse } from '@/modules/fiscal/domain/respon
 import type { FiscalConsultaResult } from '@/modules/fiscal/domain/responses/fiscal-consulta-result'
 import type { QueryFiscalDocumentsDto } from '@/modules/fiscal/domain/dto/query-fiscal-documents-dto'
 import type { EmitNfceDto } from '@/modules/fiscal/domain/dto/emit-nfce-dto'
+import type { EmitNfeDto } from '@/modules/fiscal/domain/dto/emit-nfe-dto'
 import type { ExportFiscalXmlsDto } from '@/modules/fiscal/domain/dto/export-fiscal-xmls-dto'
 import { httpClient } from '@/core/client/http-client'
 import {
@@ -70,6 +71,28 @@ export class FiscalDocumentsRepository implements IFiscalDocumentsRepository {
 
     const result = await httpClient.post<unknown>(
       '/fiscal/documents/nfce',
+      payload,
+    )
+    return result.flatMap(toFiscalDocument)
+  }
+
+  async emitNfe(dto: EmitNfeDto): Promise<Either<DomainError, FiscalDocument>> {
+    const payload: Record<string, unknown> = {
+      saleId: dto.saleId,
+      consumidorFinal: dto.consumidorFinal,
+    }
+    if (dto.establishmentId !== undefined)
+      payload.establishmentId = dto.establishmentId
+    if (dto.naturezaOperacao !== undefined)
+      payload.naturezaOperacao = dto.naturezaOperacao
+    if (dto.presenca !== undefined) payload.presenca = dto.presenca
+    if (dto.transporte !== undefined) payload.transporte = dto.transporte
+    if (dto.cobranca !== undefined) payload.cobranca = dto.cobranca
+    if (dto.idempotencyKey !== undefined)
+      payload.idempotencyKey = dto.idempotencyKey
+
+    const result = await httpClient.post<unknown>(
+      '/fiscal/documents/nfe',
       payload,
     )
     return result.flatMap(toFiscalDocument)

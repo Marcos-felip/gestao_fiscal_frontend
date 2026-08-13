@@ -3,8 +3,10 @@ import { BaseController } from '@/core/controllers/base-controller'
 import type { GetFiscalDocumentBySaleUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-by-sale.use-case'
 import type { GetFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document.use-case'
 import type { EmitNfceUseCase } from '@/modules/fiscal/application/use-cases/emit-nfce.use-case'
+import type { EmitNfeUseCase } from '@/modules/fiscal/application/use-cases/emit-nfe.use-case'
 import type { FiscalDocument } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import { EmitNfceDto } from '@/modules/fiscal/domain/dto/emit-nfce-dto'
+import { EmitNfeDto } from '@/modules/fiscal/domain/dto/emit-nfe-dto'
 import { FiscalDocumentStatus } from '@/core/enums/fiscal-document-status.enum'
 import { useToast } from '@/shared/composables'
 
@@ -30,6 +32,7 @@ export class SaleFiscalController extends BaseController {
   private readonly getBySaleUseCase: GetFiscalDocumentBySaleUseCase
   private readonly getByIdUseCase: GetFiscalDocumentUseCase
   private readonly emitUseCase: EmitNfceUseCase
+  private readonly emitNfeUseCase: EmitNfeUseCase
   private readonly toast = useToast()
 
   private timer: number | null = null
@@ -54,11 +57,13 @@ export class SaleFiscalController extends BaseController {
     getBySaleUseCase: GetFiscalDocumentBySaleUseCase,
     getByIdUseCase: GetFiscalDocumentUseCase,
     emitUseCase: EmitNfceUseCase,
+    emitNfeUseCase: EmitNfeUseCase,
   ) {
     super()
     this.getBySaleUseCase = getBySaleUseCase
     this.getByIdUseCase = getByIdUseCase
     this.emitUseCase = emitUseCase
+    this.emitNfeUseCase = emitNfeUseCase
   }
 
   /** Busca o documento fiscal da venda; se estiver pendente, inicia o polling. */
@@ -94,6 +99,44 @@ export class SaleFiscalController extends BaseController {
           error.isUserFacing
             ? error.message
             : 'Não foi possível emitir a NFC-e.',
+        )
+      },
+    )
+    this.emitting.value = false
+  }
+
+  /**
+   * Emissão de NF-e modelo 55.
+   *
+   * O destinatário não é informado aqui: ele vem do cliente da venda, e o
+   * backend recusa nomeando o campo que falta no cadastro. Repetir a
+   * conferência aqui criaria uma segunda regra para divergir da primeira.
+   */
+  async emitNfe(
+    saleId: string,
+    opcoes: { consumidorFinal: boolean; naturezaOperacao?: string },
+    establishmentId?: string,
+  ): Promise<void> {
+    this.emitting.value = true
+    const dto = new EmitNfeDto({
+      saleId,
+      consumidorFinal: opcoes.consumidorFinal,
+      naturezaOperacao: opcoes.naturezaOperacao,
+      establishmentId,
+    })
+    const result = await this.emitNfeUseCase.execute(dto)
+    this.handleResult(
+      result,
+      (doc) => {
+        this.document.value = doc
+        this.toast.info('Emissão da NF-e iniciada — acompanhando…')
+        if (isPending(doc.status)) this.startPolling(saleId)
+      },
+      (error) => {
+        // A mensagem do backend nomeia o campo que falta no cadastro do
+        // cliente — é ela que diz ao operador o que abrir para resolver.
+        this.toast.error(
+          error.isUserFacing ? error.message : 'Não foi possível emitir a NF-e.',
         )
       },
     )

@@ -120,3 +120,53 @@ describe('toPartnerList', () => {
     expect(result.left).toBeInstanceOf(ContractError)
   })
 })
+
+/**
+ * `ibgeCode` e `indIeDest` existem para a NF-e. São nulos no cadastro de quem
+ * nunca vai receber uma — e é a emissão que recusa nomeando o campo, não o
+ * mapper, que não tem como saber se aquele cliente precisa deles.
+ */
+describe('toPartner — campos da NF-e', () => {
+  it('lê o código IBGE e o indicador de IE quando presentes', () => {
+    const result = toPartner({
+      ...respostaValida,
+      ibgeCode: '3143302',
+      indIeDest: 1,
+    })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.ibgeCode).toBe('3143302')
+    expect(result.right.indIeDest).toBe(1)
+  })
+
+  it('assume nulo quando o backend não manda os campos', () => {
+    const result = toPartner(respostaValida)
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.ibgeCode).toBeNull()
+    expect(result.right.indIeDest).toBeNull()
+  })
+
+  it('degrada indicador fora da tabela para nulo, sem quebrar a listagem', () => {
+    // Indicador inválido é dado velho no cadastro, não contrato quebrado: quem
+    // recusa é a emissão, que consegue dizer ao lojista o que corrigir.
+    const result = toPartner({ ...respostaValida, indIeDest: 7 })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.indIeDest).toBeNull()
+  })
+
+  it('recusa tipo de parceiro desconhecido, que é contrato quebrado', () => {
+    const result = toPartner({ ...respostaValida, type: 'PARCEIRO_NOVO' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('recusa tipo de pessoa desconhecido', () => {
+    const result = toPartner({ ...respostaValida, personType: 'PX' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+})

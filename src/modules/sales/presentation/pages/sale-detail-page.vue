@@ -8,6 +8,7 @@ import FormSection from '@/shared/components/form/form-section.vue'
 import SaleStatusBadge from '@/modules/sales/presentation/components/sale-status-badge.vue'
 import SaleFiscalStatusBadge from '@/modules/fiscal/presentation/components/sale-fiscal-status-badge.vue'
 import FiscalDocumentStatusBadge from '@/modules/fiscal/presentation/components/fiscal-document-status-badge.vue'
+import EmitNfeDialog from '@/modules/fiscal/presentation/components/emit-nfe-dialog.vue'
 import SalePaymentDialog from '@/modules/sales/presentation/components/sale-payment-dialog.vue'
 import { makeSaleDetailController } from '@/modules/sales/factories/sales.factory'
 import { makeSaleFiscalController } from '@/modules/fiscal/factories/fiscal.factory'
@@ -34,6 +35,7 @@ const canCancel = computed(() => can('sales.cancel'))
 const canDelete = computed(() => can('sales.delete'))
 const canReadFiscal = computed(() => can('fiscal.read'))
 const canEmitFiscal = computed(() => can('fiscal.emit'))
+const canEmitNfe = computed(() => can('fiscal.nfe.emit'))
 
 /** Documento fiscal vinculado (após carregar). */
 const fiscalDocument = computed(() => fiscalController.document.value)
@@ -54,6 +56,19 @@ const showEmitButton = computed(
   () =>
     canEmitFiscal.value &&
     Boolean(controller.sale.value?.canEmitFiscal) &&
+    !fiscalController.hasDocument.value,
+)
+
+/**
+ * NF-e só faz sentido com cliente identificado — ela exige destinatário. Se o
+ * cadastro estiver incompleto, quem diz é o backend, nomeando o campo: repetir
+ * a regra aqui criaria uma segunda fonte para divergir da primeira.
+ */
+const showEmitNfeButton = computed(
+  () =>
+    canEmitNfe.value &&
+    Boolean(controller.sale.value?.canEmitFiscal) &&
+    Boolean(controller.sale.value?.customerId) &&
     !fiscalController.hasDocument.value,
 )
 
@@ -87,6 +102,7 @@ const pendingAction = ref<PendingAction | null>(null)
 const dialogOpen = ref(false)
 const paymentDialogOpen = ref(false)
 const emitDialogOpen = ref(false)
+const emitNfeDialogOpen = ref(false)
 
 const dialogConfig = computed(() => {
   switch (pendingAction.value) {
@@ -145,6 +161,16 @@ async function onEmitConfirm(): Promise<void> {
   if (!sale) return
   await fiscalController.emit(sale.id, sale.establishmentId)
   emitDialogOpen.value = false
+}
+
+async function onEmitNfeConfirm(dados: {
+  consumidorFinal: boolean
+  naturezaOperacao?: string
+}): Promise<void> {
+  const sale = controller.sale.value
+  if (!sale) return
+  await fiscalController.emitNfe(sale.id, dados, sale.establishmentId)
+  emitNfeDialogOpen.value = false
 }
 
 function ask(action: PendingAction): void {
@@ -514,6 +540,23 @@ function goBack(): void {
               Emitir NFC-e
             </Button>
           </div>
+
+          <div v-if="showEmitNfeButton" class="border-t border-line-2 pt-3">
+            <p class="mb-2 text-xs text-muted-foreground">
+              Esta venda tem cliente identificado e pode sair como NF-e modelo
+              55, com destinatário completo.
+            </p>
+            <Button
+              variant="secondary"
+              full-width
+              :loading="fiscalController.emitting.value"
+              loading-text="Emitindo…"
+              @click="emitNfeDialogOpen = true"
+            >
+              <template #icon><Icon name="FileText" size="sm" /></template>
+              Emitir NF-e
+            </Button>
+          </div>
         </div>
       </FormSection>
 
@@ -595,5 +638,13 @@ function goBack(): void {
     icon="FileUp"
     :loading="fiscalController.emitting.value"
     @confirm="onEmitConfirm"
+  />
+
+  <!-- Emissão de NF-e modelo 55 -->
+  <EmitNfeDialog
+    v-model="emitNfeDialogOpen"
+    :loading="fiscalController.emitting.value"
+    :customer-name="controller.sale.value?.customerName"
+    @confirm="onEmitNfeConfirm"
   />
 </template>

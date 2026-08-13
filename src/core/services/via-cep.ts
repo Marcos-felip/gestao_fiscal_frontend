@@ -11,6 +11,14 @@ export interface ViaCepAddress {
   neighborhood: string
   city: string
   state: string
+  /**
+   * Código IBGE do município (7 dígitos).
+   *
+   * É o `cMun` do destinatário da NF-e. Vem de graça na mesma consulta, e
+   * preenchê-lo aqui poupa o lojista de procurar um número que ele não tem
+   * motivo para conhecer.
+   */
+  ibgeCode: string
 }
 
 interface ViaCepResponse {
@@ -18,6 +26,7 @@ interface ViaCepResponse {
   bairro?: string
   localidade?: string
   uf?: string
+  ibge?: string
   erro?: boolean
 }
 
@@ -39,6 +48,7 @@ export async function fetchAddressByCep(
       neighborhood: data.bairro ?? '',
       city: data.localidade ?? '',
       state: data.uf ?? '',
+      ibgeCode: data.ibge ?? '',
     }
   } catch {
     return null

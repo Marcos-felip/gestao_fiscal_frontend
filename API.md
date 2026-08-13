@@ -1182,6 +1182,62 @@ campo que falta.
 > `z.enum`/`z.nativeEnum`, não coagidos com `as`. Código fora da tabela vira
 > `ContractError` na listagem — que é o sintoma certo para dado que não emite.
 
+### POST /fiscal/documents/nfe — Emitir NF-e modelo 55
+
+> **Permissão:** `fiscal.nfe.emit` — **separada** de `fiscal.emit`. Quem opera o
+> caixa emite NFC-e e não necessariamente NF-e.
+
+**Recorte vigente (13/08/2026):** venda **interna** (mesma UF), saída, finalidade
+normal, destinatário **pessoa jurídica**. Pessoa física continua na NFC-e.
+
+```jsonc
+{
+  "saleId": "uuid",
+  "consumidorFinal": false,     // obrigatório
+  "establishmentId": "uuid",    // opcional
+  "naturezaOperacao": "…",      // opcional; padrão "VENDA DE MERCADORIA"
+  "presenca": 1,                // opcional; padrão 1
+  "transporte": { … },          // opcional; ausente = sem frete
+  "cobranca": { … }             // opcional; venda a prazo
+}
+```
+
+**O destinatário não vai no payload.** Ele vem do cliente da venda, e o backend
+o monta a partir do cadastro do parceiro. A conferência de completude fica lá:
+duplicá-la aqui criaria uma segunda regra para divergir da primeira.
+
+**`consumidorFinal` não tem padrão.** Distingue venda para revenda (`false`) de
+venda para consumo (`true`) — o mesmo produto muda conforme o destino da
+mercadoria, e quem sabe é quem lançou a venda. O diálogo pergunta em português
+("Revender" / "Consumir ou usar") em vez de expor `indFinal`.
+
+**Erros `400`** chegam com `isUserFacing` e nomeiam o campo que falta no cadastro
+do cliente — endereço, código IBGE, indicador de IE, inscrição estadual. É a
+mensagem do backend que deve ser exibida, não uma genérica.
+
+**O DANFE da NF-e é HTML, não PDF.** O download responde `text/html`; não assuma
+`application/pdf` no fluxo de exibição.
+
+### Parceiro: campos que a NF-e exige
+
+| Campo | Observação |
+|---|---|
+| `ibgeCode` | 7 dígitos. **Preenchido pelo ViaCEP** ao digitar o CEP |
+| `indIeDest` | `1` contribuinte · `2` isento · `9` não contribuinte |
+
+Os dois são **opcionais no cadastro** e obrigatórios na emissão: quem cadastra
+cliente de balcão não deve ser obrigado a saber o código IBGE do município dele.
+
+**`indIeDest` não se deduz do tipo de pessoa** — prestadora de serviço é PJ e não
+é contribuinte de ICMS. Quando é `1`, o campo `rgIe` passa a valer como inscrição
+estadual e o formulário passa a exigi-lo; nos outros dois casos o backend não o
+envia ao motor.
+
+> **Mapper:** `type` e `personType` passaram a usar `z.nativeEnum` — os casts com
+> `as` saíram. `indIeDest` fora da tabela degrada para `null` com `.catch()`, em
+> vez de virar `ContractError`: é dado velho no cadastro, e quem precisa recusar
+> é a emissão, que consegue dizer ao lojista o que corrigir.
+
 ### GET /fiscal/documents/xml/export — Exportar os XMLs de um período
 
 > **Permissão:** `fiscal.read` · responde `application/zip` em stream

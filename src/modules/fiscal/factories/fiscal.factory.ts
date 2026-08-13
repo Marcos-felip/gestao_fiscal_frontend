@@ -20,6 +20,7 @@ import { ListFiscalDocumentsUseCase } from '@/modules/fiscal/application/use-cas
 import { GetFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document.use-case'
 import { GetFiscalDocumentBySaleUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-by-sale.use-case'
 import { EmitNfceUseCase } from '@/modules/fiscal/application/use-cases/emit-nfce.use-case'
+import { EmitNfeUseCase } from '@/modules/fiscal/application/use-cases/emit-nfe.use-case'
 import { GetFiscalDocumentHistoryUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-history.use-case'
 import { GetFiscalDocumentEventsUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-events.use-case'
 import { DownloadFiscalXmlUseCase } from '@/modules/fiscal/application/use-cases/download-fiscal-xml.use-case'
@@ -84,6 +85,10 @@ export function makeGetFiscalDocumentBySaleUseCase(): GetFiscalDocumentBySaleUse
 
 export function makeEmitNfceUseCase(): EmitNfceUseCase {
   return new EmitNfceUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeEmitNfeUseCase(): EmitNfeUseCase {
+  return new EmitNfeUseCase(makeFiscalDocumentsRepository())
 }
 
 export function makeGetFiscalDocumentHistoryUseCase(): GetFiscalDocumentHistoryUseCase {
@@ -178,6 +183,7 @@ export function makeSaleFiscalController(): SaleFiscalController {
     makeGetFiscalDocumentBySaleUseCase(),
     makeGetFiscalDocumentUseCase(),
     makeEmitNfceUseCase(),
+    makeEmitNfeUseCase(),
   )
 }
 

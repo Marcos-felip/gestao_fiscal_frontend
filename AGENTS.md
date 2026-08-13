@@ -380,7 +380,7 @@ Auditoria de 11/08/2026 comparando `src/core/enums` com os enums do Prisma: **os
 
 Já seguem a regra: `company.mapper.ts` (`type`, `taxRegime`, `crt`).
 
-Ainda usam `as` e devem migrar quando o arquivo for tocado — `cash-session`, `establishment`, `fiscal-consulta`, `fiscal-document`, `fiscal-production`, `fiscal-settings`, `membership`, `partner`, `payable`, `purchase`, `receivable`, `sale`, `sale-context`. **`product` saiu da lista** na etapa 1 do roteiro fiscal: `unit`, `cstPis` e `cstCofins` passaram a ser validados contra a tabela.
+Ainda usam `as` e devem migrar quando o arquivo for tocado — `cash-session`, `establishment`, `fiscal-consulta`, `fiscal-document`, `fiscal-production`, `fiscal-settings`, `membership`, `payable`, `purchase`, `receivable`, `sale`, `sale-context`. **`product` saiu da lista** na etapa 1 do roteiro fiscal (`unit`, `cstPis` e `cstCofins` validados contra a tabela) e **`partner` saiu na etapa 3** (`type` e `personType` com `z.nativeEnum`).
 
 ---
 

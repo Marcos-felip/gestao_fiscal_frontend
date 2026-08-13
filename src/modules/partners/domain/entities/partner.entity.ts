@@ -1,5 +1,6 @@
 import type { PartnerType } from '@/core/enums/partner-type.enum'
 import type { PersonType } from '@/core/enums/person-type.enum'
+import type { IndIeDest } from '@/core/enums/ind-ie-dest.enum'
 
 export class Partner {
   readonly id: string
@@ -19,6 +20,13 @@ export class Partner {
   readonly neighborhood: string | null
   readonly city: string | null
   readonly state: string | null
+  /** Código IBGE do município (7 dígitos). Exigido para receber NF-e. */
+  readonly ibgeCode: string | null
+  /**
+   * Indicador de IE na NF-e. Nulo enquanto ninguém declarou — e não se deduz do
+   * tipo de pessoa: prestadora de serviço é PJ e não é contribuinte de ICMS.
+   */
+  readonly indIeDest: IndIeDest | null
   readonly isActive: boolean
   readonly createdAt: string | null
   readonly updatedAt: string | null
@@ -41,6 +49,8 @@ export class Partner {
     neighborhood: string | null,
     city: string | null,
     state: string | null,
+    ibgeCode: string | null,
+    indIeDest: IndIeDest | null,
     isActive: boolean,
     createdAt: string | null,
     updatedAt: string | null,
@@ -62,6 +72,8 @@ export class Partner {
     this.neighborhood = neighborhood
     this.city = city
     this.state = state
+    this.ibgeCode = ibgeCode
+    this.indIeDest = indIeDest
     this.isActive = isActive
     this.createdAt = createdAt
     this.updatedAt = updatedAt

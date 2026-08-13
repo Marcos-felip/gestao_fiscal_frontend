@@ -1,5 +1,6 @@
 import type { PartnerType } from '@/core/enums/partner-type.enum'
 import type { PersonType } from '@/core/enums/person-type.enum'
+import type { IndIeDest } from '@/core/enums/ind-ie-dest.enum'
 
 export class UpdatePartnerDto {
   type?: PartnerType
@@ -17,6 +18,10 @@ export class UpdatePartnerDto {
   neighborhood?: string
   city?: string
   state?: string
+
+  ibgeCode?: string
+
+  indIeDest?: IndIeDest
   isActive?: boolean
 
   constructor(fields: {
@@ -35,6 +40,10 @@ export class UpdatePartnerDto {
     neighborhood?: string
     city?: string
     state?: string
+
+    ibgeCode?: string
+
+    indIeDest?: IndIeDest
     isActive?: boolean
   }) {
     this.type = fields.type
@@ -52,6 +61,8 @@ export class UpdatePartnerDto {
     this.neighborhood = fields.neighborhood
     this.city = fields.city
     this.state = fields.state
+    this.ibgeCode = fields.ibgeCode
+    this.indIeDest = fields.indIeDest
     this.isActive = fields.isActive
   }
 }

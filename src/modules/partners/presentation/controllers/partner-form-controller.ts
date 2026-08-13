@@ -9,12 +9,14 @@ import type { Partner } from '@/modules/partners/domain/entities/partner.entity'
 import type { PartnerFormValues } from '@/modules/partners/presentation/schemas/partner-schema'
 import type { PartnerType } from '@/core/enums/partner-type.enum'
 import { PersonType } from '@/core/enums/person-type.enum'
+import type { IndIeDest } from '@/core/enums/ind-ie-dest.enum'
 import { useToast } from '@/shared/composables'
 import {
   formatCpf,
   formatCnpj,
   formatCep,
   formatPhone,
+  onlyDigits,
 } from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'
 
@@ -35,6 +37,8 @@ function emptyValues(): PartnerFormValues {
     neighborhood: '',
     city: '',
     state: '',
+    ibgeCode: '',
+    indIeDest: '',
   }
 }
 
@@ -115,6 +119,11 @@ export class PartnerFormController extends BaseController {
       neighborhood: input.neighborhood || undefined,
       city: input.city || undefined,
       state: input.state || undefined,
+      ibgeCode: onlyDigits(input.ibgeCode) || undefined,
+      // String vazia significa "ninguém declarou": vira `undefined`, não zero.
+      indIeDest: input.indIeDest
+        ? (Number(input.indIeDest) as IndIeDest)
+        : undefined,
     }
   }
 
@@ -158,6 +167,8 @@ export class PartnerFormController extends BaseController {
       neighborhood: p.neighborhood ?? '',
       city: p.city ?? '',
       state: p.state ?? '',
+      ibgeCode: p.ibgeCode ?? '',
+      indIeDest: p.indIeDest === null ? '' : String(p.indIeDest),
     }
   }
 }
