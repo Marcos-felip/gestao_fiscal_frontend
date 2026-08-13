@@ -183,3 +183,77 @@ describe('useTabs — abas gravadas antes da identidade por assunto', () => {
     expect(tabs.value[0].id).toBe('home')
   })
 })
+
+describe('useTabs — fixar', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('fixadas vão para a frente das demais, com o início antes de tudo', async () => {
+    const { tabs, openFromRoute, togglePin, ordenar } = await carregar()
+
+    openFromRoute(comAba('/produtos', 'products', 'Produtos'))
+    openFromRoute(comAba('/parceiros', 'partners', 'Parceiros'))
+    togglePin('partners')
+
+    expect(ordenar(tabs.value).map((t) => t.id)).toEqual([
+      'home',
+      'partners',
+      'products',
+    ])
+  })
+
+  it('não fixa a aba de início', async () => {
+    const { tabs, togglePin } = await carregar()
+
+    togglePin('home')
+
+    expect(tabs.value[0].pinned).toBeUndefined()
+  })
+})
+
+describe('useTabs — fechar em massa', () => {
+  beforeEach(() => localStorage.clear())
+
+  async function comTresAbas() {
+    const api = await carregar()
+    api.openFromRoute(comAba('/produtos', 'products', 'Produtos'))
+    api.openFromRoute(comAba('/parceiros', 'partners', 'Parceiros'))
+    api.openFromRoute(comAba('/estoque', 'stock', 'Estoque'))
+    return api
+  }
+
+  it('fechar outras mantém a indicada e devolve o caminho dela', async () => {
+    const { tabs, closeOthers } = await comTresAbas()
+
+    const destino = closeOthers('partners')
+
+    expect(tabs.value.map((t) => t.id)).toEqual(['home', 'partners'])
+    expect(destino).toBe('/parceiros')
+  })
+
+  it('fechar outras poupa as fixadas', async () => {
+    const { tabs, closeOthers, togglePin } = await comTresAbas()
+
+    togglePin('products')
+    closeOthers('stock')
+
+    expect(tabs.value.map((t) => t.id)).toEqual(['home', 'products', 'stock'])
+  })
+
+  it('fechar todas deixa só o início quando nada está fixado', async () => {
+    const { tabs, closeAll } = await comTresAbas()
+
+    const destino = closeAll()
+
+    expect(tabs.value.map((t) => t.id)).toEqual(['home'])
+    expect(destino).toBe('/')
+  })
+
+  it('fechar todas poupa as fixadas', async () => {
+    const { tabs, closeAll, togglePin } = await comTresAbas()
+
+    togglePin('partners')
+    closeAll()
+
+    expect(tabs.value.map((t) => t.id)).toEqual(['home', 'partners'])
+  })
+})

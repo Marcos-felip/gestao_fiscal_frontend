@@ -15,7 +15,7 @@
         ]"
       >
         <div class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
-          <RouterView />
+          <RouterView :key="`${route.path}#${refreshKey}`" />
         </div>
         <AppFooter />
       </main>
@@ -24,10 +24,14 @@
 </template>
 
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+import { useViewRefresh } from '@/shared/composables/useViewRefresh'
 import Navbar from '@/shared/components/navbar/navbar.vue'
 import Sidebar from '@/shared/components/sidebar/sidebar.vue'
 import AppFooter from '@/shared/components/layouts/app-footer.vue'
+
+const route = useRoute()
+const { refreshKey } = useViewRefresh()
 </script>
 
 <style scoped lang="css">

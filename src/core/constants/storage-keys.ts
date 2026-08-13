@@ -9,4 +9,5 @@ export const StorageKeys = {
   USER: 'user',
   OPEN_TABS: 'open_tabs',
   SIDEBAR_GROUPS: 'sidebar_groups',
+  FAVORITES: 'favorites',
 } as const

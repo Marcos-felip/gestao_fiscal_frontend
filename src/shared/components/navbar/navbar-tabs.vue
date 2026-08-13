@@ -19,7 +19,7 @@
       @scroll="updateEdges"
     >
       <button
-        v-for="tab in tabs"
+        v-for="tab in tabsOrdenadas"
         :key="tab.id"
         type="button"
         :data-active="isActive(tab) || undefined"
@@ -30,8 +30,11 @@
             : 'text-white/70 hover:bg-white/10 hover:text-white',
         ]"
         @click="go(tab)"
+        @contextmenu.prevent="abrirMenu($event, tab)"
       >
-        <Icon :name="tab.icon" size="xs" />
+        <Icon v-if="tab.pinned" name="Pin" size="xs" class="shrink-0" />
+        <Icon v-else :name="tab.icon" size="xs" />
+
         <span class="max-w-[150px] truncate">{{ tab.label }}</span>
 
         <span
@@ -60,18 +63,45 @@
     >
       <Icon name="ChevronRight" size="sm" />
     </button>
+
+    <TabContextMenu
+      v-if="menu"
+      :x="menu.x"
+      :y="menu.y"
+      :actions="menuActions"
+      @select="executarAcao"
+      @close="menu = null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@/shared/ui'
 import { useTabs, type AppTab } from '@/shared/composables'
+import { useFavorites } from '@/shared/composables/useFavorites'
+import { useViewRefresh } from '@/shared/composables/useViewRefresh'
+import TabContextMenu, {
+  type TabMenuAction,
+} from '@/shared/components/navbar/tab-context-menu.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { tabs, openFromRoute, closeTab, tabIdOf } = useTabs()
+const {
+  tabs,
+  openFromRoute,
+  closeTab,
+  closeOthers,
+  closeAll,
+  togglePin,
+  ordenar,
+  tabIdOf,
+} = useTabs()
+const { isFavorite, toggleFavorite } = useFavorites()
+const { refreshView } = useViewRefresh()
+
+const tabsOrdenadas = computed(() => ordenar(tabs.value))
 
 const strip = ref<HTMLElement | null>(null)
 const overflowing = ref(false)
@@ -158,6 +188,97 @@ function go(tab: AppTab): void {
 function close(tab: AppTab): void {
   const target = closeTab(tab.id)
   if (isActive(tab) && target) router.push(target)
+}
+
+// ──────────────────────────────────────────────
+// Menu de contexto
+// ──────────────────────────────────────────────
+
+const menu = ref<{ x: number; y: number; tab: AppTab } | null>(null)
+
+function abrirMenu(event: MouseEvent, tab: AppTab): void {
+  menu.value = { x: event.clientX, y: event.clientY, tab }
+}
+
+const menuActions = computed<TabMenuAction[]>(() => {
+  const tab = menu.value?.tab
+  if (!tab) return []
+
+  const restantes = tabs.value.filter(
+    (t) => t.closable && !t.pinned && t.id !== tab.id,
+  ).length
+
+  return [
+    { id: 'atualizar', label: 'Atualizar', icon: 'RefreshCw' },
+    {
+      id: 'fixar',
+      label: tab.pinned ? 'Desafixar' : 'Fixar',
+      icon: 'Pin',
+      disabled: !tab.closable,
+    },
+    {
+      id: 'favoritar',
+      label: isFavorite(tab.path) ? 'Remover dos favoritos' : 'Favoritar',
+      icon: 'Star',
+      disabled: !tab.closable,
+    },
+    {
+      id: 'fechar',
+      label: 'Fechar',
+      icon: 'X',
+      separado: true,
+      disabled: !tab.closable,
+    },
+    {
+      id: 'fechar-outras',
+      label: 'Fechar outras',
+      icon: 'CircleX',
+      disabled: restantes === 0,
+    },
+    {
+      id: 'fechar-todas',
+      label: 'Fechar todas',
+      icon: 'Ban',
+      disabled: restantes === 0 && !tab.closable,
+    },
+  ]
+})
+
+function executarAcao(id: string): void {
+  const tab = menu.value?.tab
+  menu.value = null
+  if (!tab) return
+
+  switch (id) {
+    case 'atualizar':
+      if (!isActive(tab)) router.push(tab.path)
+      refreshView()
+      return
+
+    case 'fixar':
+      togglePin(tab.id)
+      return
+
+    case 'favoritar':
+      toggleFavorite({ path: tab.path, label: tab.label, icon: tab.icon })
+      return
+
+    case 'fechar':
+      close(tab)
+      return
+
+    case 'fechar-outras': {
+      const destino = closeOthers(tab.id)
+      if (destino && route.path !== destino) router.push(destino)
+      return
+    }
+
+    case 'fechar-todas': {
+      const destino = closeAll()
+      if (destino && route.path !== destino) router.push(destino)
+      return
+    }
+  }
 }
 </script>
 

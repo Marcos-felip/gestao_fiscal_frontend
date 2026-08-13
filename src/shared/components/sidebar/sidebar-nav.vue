@@ -1,11 +1,45 @@
 <template>
   <nav class="sidebar-nav flex-1 overflow-y-auto px-3 py-2">
-    <!-- Item fixo: início -->
     <SidebarLink :to="home.to" :label="home.label" class="mb-1">
       <template #icon>
         <Icon :name="home.icon" size="md" />
       </template>
     </SidebarLink>
+
+    <div v-if="favorites.length > 0" class="mt-3">
+      <p
+        class="mb-1 px-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase"
+      >
+        Favoritos
+      </p>
+
+      <div class="space-y-0.5">
+        <div
+          v-for="favorite in favorites"
+          :key="favorite.path"
+          class="group/fav relative"
+        >
+          <SidebarLink
+            :to="favorite.path"
+            :label="favorite.label"
+            size="sm"
+          >
+            <template #icon>
+              <Icon :name="favorite.icon" size="sm" />
+            </template>
+          </SidebarLink>
+
+          <button
+            type="button"
+            class="absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer rounded p-1 text-muted-foreground opacity-0 transition-opacity group-hover/fav:opacity-100 hover:bg-muted hover:text-foreground"
+            :aria-label="`Remover ${favorite.label} dos favoritos`"
+            @click.prevent.stop="removeFavorite(favorite.path)"
+          >
+            <Icon name="X" size="xs" />
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Grupos: seção → sub-itens -->
     <div v-for="group in visibleGroups" :key="group.id" class="mt-2 first:mt-1">
@@ -58,6 +92,7 @@ import { computed, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { SidebarLink, Icon } from '@/shared/ui'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useFavorites } from '@/shared/composables/useFavorites'
 import { StorageKeys } from '@/core/constants/storage-keys'
 import type { MembershipRole } from '@/core/enums/membership-role.enum'
 
@@ -218,6 +253,7 @@ const groups: NavGroup[] = [
 
 const route = useRoute()
 const { can, isAtLeast } = usePermissions()
+const { favorites, removeFavorite } = useFavorites()
 
 function isVisible(link: NavLink): boolean {
   if (link.permission && !can(link.permission)) return false

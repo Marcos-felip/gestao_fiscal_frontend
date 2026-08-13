@@ -21,6 +21,12 @@ export interface AppTab {
   label: string
   icon: string
   closable: boolean
+  /**
+   * Aba fixada: vai para a frente do trilho e sobrevive a "fechar outras" e
+   * "fechar todas". Fechar continua possível pelo menu — fixar protege do
+   * fechamento em massa, não do deliberado.
+   */
+  pinned?: boolean
 }
 
 const HOME_TAB: AppTab = {
@@ -114,6 +120,56 @@ function closeTab(id: string): string | null {
   return neighbor?.path ?? HOME_TAB.path
 }
 
+/** Alterna a fixação. Fixar move a aba para a frente das não fixadas. */
+function togglePin(id: string): void {
+  const tab = tabs.value.find((t) => t.id === id)
+  if (!tab || !tab.closable) return
+
+  tab.pinned = !tab.pinned
+}
+
+/**
+ * Fecha tudo menos a aba indicada, a fixa de início e as fixadas.
+ *
+ * Devolve o caminho para onde navegar: a aba mantida, porque fechar as outras
+ * não deveria tirar a pessoa de onde ela está.
+ */
+function closeOthers(id: string): string | null {
+  const mantida = tabs.value.find((t) => t.id === id)
+  tabs.value = tabs.value.filter((t) => !t.closable || t.pinned || t.id === id)
+
+  return mantida?.path ?? HOME_TAB.path
+}
+
+/** Fecha tudo que não é fixo nem fixado, e devolve para onde navegar. */
+function closeAll(): string | null {
+  tabs.value = tabs.value.filter((t) => !t.closable || t.pinned)
+
+  const ultima = tabs.value[tabs.value.length - 1]
+  return ultima?.path ?? HOME_TAB.path
+}
+
+/**
+ * Ordem do trilho: início, fixadas, resto — cada grupo na ordem de abertura.
+ *
+ * A ordem não é persistida separadamente: ela sai da lista mais o sinalizador
+ * de fixação, então não há um segundo estado para divergir do primeiro.
+ */
+function ordenar(lista: AppTab[]): AppTab[] {
+  const peso = (t: AppTab) => (t.id === HOME_TAB.id ? 0 : t.pinned ? 1 : 2)
+
+  return [...lista].sort((a, b) => peso(a) - peso(b))
+}
+
 export function useTabs() {
-  return { tabs, openFromRoute, closeTab, tabIdOf }
+  return {
+    tabs,
+    openFromRoute,
+    closeTab,
+    closeOthers,
+    closeAll,
+    togglePin,
+    ordenar,
+    tabIdOf,
+  }
 }
