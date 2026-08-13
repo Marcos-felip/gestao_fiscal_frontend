@@ -144,50 +144,10 @@ const groups: NavGroup[] = [
         icon: 'FileText',
         permission: 'fiscal.read',
       },
-    ],
-  },
-  {
-    // Grupo próprio, e não um item dentro de "Fiscal": configurar é uma tarefa
-    // de instalação, não de operação do dia. Quem vende abre "Documentos
-    // fiscais"; quem instala vem aqui uma vez e não volta.
-    id: 'configuracao-fiscal',
-    label: 'Configuração fiscal',
-    icon: 'Settings2',
-    links: [
       {
         to: '/configuracao-fiscal',
-        label: 'Estabelecimentos',
-        icon: 'Store',
-        permission: 'fiscal.settings.read',
-      },
-      {
-        to: '/configuracao-fiscal?secao=ambiente',
-        label: 'Ambiente e emissão',
-        icon: 'ToggleRight',
-        permission: 'fiscal.settings.read',
-      },
-      {
-        to: '/configuracao-fiscal?secao=nfce',
-        label: 'Venda ao consumidor',
+        label: 'Configuração fiscal',
         icon: 'ScrollText',
-        permission: 'fiscal.settings.read',
-      },
-      {
-        to: '/configuracao-fiscal?secao=nfe',
-        label: 'Venda a empresa',
-        icon: 'FileText',
-        permission: 'fiscal.settings.read',
-      },
-      {
-        to: '/configuracao-fiscal?secao=certificado',
-        label: 'Certificado digital',
-        icon: 'ShieldCheck',
-        permission: 'fiscal.settings.read',
-      },
-      {
-        to: '/configuracao-fiscal?secao=producao',
-        label: 'Liberação para produção',
-        icon: 'Rocket',
         permission: 'fiscal.settings.read',
       },
     ],

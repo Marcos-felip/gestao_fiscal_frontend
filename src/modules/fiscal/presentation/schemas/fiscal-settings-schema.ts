@@ -7,6 +7,7 @@ export interface FiscalSettingsFormValues {
   ambiente: FiscalEnvironment
   serieNfce: string
   proximoNumeroNfce: string
+  /** Série e numeração da NF-e modelo 55, independentes das da NFC-e. */
   serieNfe: string
   proximoNumeroNfe: string
   codigoCsc: string
@@ -23,28 +24,24 @@ export interface FiscalSettingsValidation {
   ok: boolean
 }
 
-/**
- * Série e próximo número existem por modelo — as sequências são distintas.
- * O que muda entre elas é só o nome no erro, então os campos são gerados.
- */
-const serieField = (modelo: string) =>
-  z
-    .string()
-    .trim()
-    .min(1, `Informe a série da ${modelo}`)
-    .regex(/^\d+$/, 'Use apenas números')
-    .refine((value) => {
-      const parsed = Number(value)
-      return parsed >= 1 && parsed <= 999
-    }, 'Série deve estar entre 1 e 999')
+// Sem citar o modelo na mensagem: o mesmo campo valida NFC-e e NF-e, e o
+// rótulo ao lado do input já diz de qual das duas séries se trata.
+const serieField = z
+  .string()
+  .trim()
+  .min(1, 'Informe a série')
+  .regex(/^\d+$/, 'Use apenas números')
+  .refine((value) => {
+    const parsed = Number(value)
+    return parsed >= 1 && parsed <= 999
+  }, 'Série deve estar entre 1 e 999')
 
-const proximoNumeroField = (modelo: string) =>
-  z
-    .string()
-    .trim()
-    .min(1, `Informe o próximo número da ${modelo}`)
-    .regex(/^\d+$/, 'Use apenas números')
-    .refine((value) => Number(value) >= 1, 'Número deve ser maior ou igual a 1')
+const proximoNumeroField = z
+  .string()
+  .trim()
+  .min(1, 'Informe o próximo número')
+  .regex(/^\d+$/, 'Use apenas números')
+  .refine((value) => Number(value) >= 1, 'Número deve ser maior ou igual a 1')
 
 /**
  * Código CSC: 16 a 64 caracteres alfanuméricos, vindo do portal da SEFAZ da UF.
@@ -79,8 +76,8 @@ const idCscField = z
 
 const baseSchema = z.object({
   ambiente: z.nativeEnum(FiscalEnvironment),
-  serieNfce: serieField('NFC-e'),
-  serieNfe: serieField('NF-e'),
+  serieNfce: serieField,
+  serieNfe: serieField,
   codigoCsc: codigoCscField,
   idCsc: idCscField,
   ativo: z.boolean(),
@@ -94,8 +91,8 @@ const createSchema = baseSchema.extend({
 
 // Na edição a numeração já existe e pode ser ajustada — validada.
 const editSchema = baseSchema.extend({
-  proximoNumeroNfce: proximoNumeroField('NFC-e'),
-  proximoNumeroNfe: proximoNumeroField('NF-e'),
+  proximoNumeroNfce: proximoNumeroField,
+  proximoNumeroNfe: proximoNumeroField,
 })
 
 /**
