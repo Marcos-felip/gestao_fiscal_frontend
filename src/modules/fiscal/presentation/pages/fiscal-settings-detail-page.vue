@@ -745,54 +745,110 @@ const item = {
             description="Onde a nota é emitida e de que número cada modelo continua."
           >
             <fieldset :disabled="!canEdit" class="space-y-5">
-              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <!-- Ambiente e liga/desliga: as duas decisões que valem para o
+                   estabelecimento inteiro, antes das que são por modelo. -->
+              <div class="grid grid-cols-1 items-start gap-5 sm:grid-cols-2">
                 <Select
                   v-model="form.ambiente"
                   :options="fiscalEnvironmentOptions"
                   :error="errors.ambiente"
-                  hint="Homologação para testes; Produção emite NFC-e válida."
+                  hint="Homologação para testes; Produção emite nota válida."
                 >
                   <template #label>Ambiente</template>
                 </Select>
 
-                <Input
-                  v-model="form.serieNfce"
-                  inputmode="numeric"
-                  maxlength="3"
-                  placeholder="1"
-                  :error="errors.serieNfce"
-                  hint="Número inteiro de 1 a 999."
-                >
-                  <template #label>Série da NFC-e</template>
-                  <template #prefix><Icon name="Hash" size="sm" /></template>
-                </Input>
+                <div>
+                  <span
+                    class="mb-1.5 block text-sm font-medium text-foreground"
+                  >
+                    Emissão fiscal
+                  </span>
+
+                  <label
+                    class="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-line-2 bg-muted/40 px-4 py-2.5"
+                  >
+                    <span
+                      class="text-sm"
+                      :class="
+                        form.ativo
+                          ? 'text-foreground'
+                          : 'text-muted-foreground'
+                      "
+                    >
+                      {{ form.ativo ? 'Ativa' : 'Bloqueada' }}
+                    </span>
+                    <Switch
+                      v-model="form.ativo"
+                      aria-label="Emissão fiscal ativa"
+                    />
+                  </label>
+
+                  <span class="mt-1.5 block text-xs text-muted-foreground">
+                    Desative para impedir a emissão neste estabelecimento.
+                  </span>
+                </div>
               </div>
 
-              <!-- Próximo número (só na edição) -->
-              <Input
-                v-if="isEdit"
-                v-model="form.proximoNumeroNfce"
-                inputmode="numeric"
-                maxlength="9"
-                placeholder="1"
-                :error="errors.proximoNumeroNfce"
-                hint="Próximo número que será usado ao emitir. Ajuste com cuidado."
+              <!--
+                Um bloco por modelo. Cada um tem a sua sequência fiscal, e
+                deixá-las lado a lado numa lista solta convidava a confundir de
+                qual série era cada número.
+              -->
+              <fieldset
+                class="rounded-xl border border-line-2 bg-muted/30 px-4 pt-3 pb-4"
               >
-                <template #label>Próximo número da NFC-e</template>
-                <template #prefix
-                  ><Icon name="ListOrdered" size="sm"
-                /></template>
-              </Input>
+                <legend
+                  class="px-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                >
+                  NFC-e · modelo 65
+                </legend>
 
-              <div class="rounded-xl border border-line-2 bg-muted/30 p-4">
-                <p class="mb-4 text-sm text-muted-foreground">
-                  A NF-e modelo 55 tem
-                  <strong class="font-medium text-foreground"
-                    >sequência própria</strong
-                  >: série e numeração independentes das da NFC-e. Misturar as
-                  duas produz salto de numeração nos dois modelos. Começando do
-                  zero, o padrão série 1 / número 1 já emite — estes campos
-                  servem para continuar a numeração de outro sistema.
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <Input
+                    v-model="form.serieNfce"
+                    inputmode="numeric"
+                    maxlength="3"
+                    placeholder="1"
+                    :error="errors.serieNfce"
+                    hint="Número inteiro de 1 a 999."
+                  >
+                    <template #label>Série</template>
+                    <template #prefix><Icon name="Hash" size="sm" /></template>
+                  </Input>
+
+                  <!-- Só na edição: na criação o backend começa em 1. -->
+                  <Input
+                    v-if="isEdit"
+                    v-model="form.proximoNumeroNfce"
+                    inputmode="numeric"
+                    maxlength="9"
+                    placeholder="1"
+                    :error="errors.proximoNumeroNfce"
+                    hint="Próximo número que será usado ao emitir. Ajuste com cuidado."
+                  >
+                    <template #label>Próximo número</template>
+                    <template #prefix
+                      ><Icon name="ListOrdered" size="sm"
+                    /></template>
+                  </Input>
+                </div>
+              </fieldset>
+
+              <fieldset
+                class="rounded-xl border border-line-2 bg-muted/30 px-4 pt-3 pb-4"
+              >
+                <legend
+                  class="px-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                >
+                  NF-e · modelo 55
+                </legend>
+
+                <p class="mb-4 text-xs text-muted-foreground">
+                  Sequência <strong class="font-medium">independente</strong> da
+                  NFC-e: misturar as duas produz salto de numeração nos dois
+                  modelos. Começando do zero, série 1 / número 1 já emite —
+                  estes campos servem para continuar a numeração de outro
+                  sistema.
                 </p>
 
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -804,7 +860,7 @@ const item = {
                     :error="errors.serieNfe"
                     hint="Número inteiro de 1 a 999."
                   >
-                    <template #label>Série da NF-e</template>
+                    <template #label>Série</template>
                     <template #prefix><Icon name="Hash" size="sm" /></template>
                   </Input>
 
@@ -817,31 +873,13 @@ const item = {
                     :error="errors.proximoNumeroNfe"
                     hint="Próximo número que será usado ao emitir NF-e."
                   >
-                    <template #label>Próximo número da NF-e</template>
+                    <template #label>Próximo número</template>
                     <template #prefix
                       ><Icon name="ListOrdered" size="sm"
                     /></template>
                   </Input>
                 </div>
-              </div>
-
-              <label
-                class="flex items-center justify-between gap-4 rounded-xl border border-line-2 bg-muted/40 px-4 py-3"
-              >
-                <span class="min-w-0">
-                  <span class="block text-sm font-medium text-foreground">
-                    Emissão fiscal ativa
-                  </span>
-                  <span class="block text-xs text-muted-foreground">
-                    Desative para impedir a emissão de NFC-e neste
-                    estabelecimento.
-                  </span>
-                </span>
-                <Switch
-                  v-model="form.ativo"
-                  aria-label="Emissão fiscal ativa"
-                />
-              </label>
+              </fieldset>
             </fieldset>
           </FormSection>
         </motion.div>
