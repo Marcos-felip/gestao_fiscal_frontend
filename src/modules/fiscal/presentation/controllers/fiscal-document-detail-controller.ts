@@ -195,7 +195,14 @@ export class FiscalDocumentDetailController extends BaseController {
     this.retrying.value = false
   }
 
-  /** Baixa a DANFE (PDF) e dispara o download. */
+  /**
+   * Baixa o DANFE e dispara o download.
+   *
+   * O formato varia por modelo: NFC-e é PDF, NF-e é HTML. Este método já forçou
+   * `application/pdf` em tudo, e o resultado era um HTML renomeado para `.pdf`
+   * que o navegador recusava abrir — "Falha ao carregar documento PDF". Tipo
+   * desconhecido continua virando PDF, porque só a NFC-e cai nesse caso.
+   */
   async downloadDanfe(): Promise<void> {
     const doc = this.document.value
     if (!doc || this.downloadingDanfe.value) return
@@ -205,11 +212,15 @@ export class FiscalDocumentDetailController extends BaseController {
     this.handleResult(
       result,
       (blob) => {
-        const pdf =
-          blob.type === 'application/pdf'
-            ? blob
-            : new Blob([blob], { type: 'application/pdf' })
-        triggerFileDownload(pdf, `${this.danfeFileName(doc)}.pdf`)
+        const ehHtml = blob.type.includes('html')
+        const arquivo = ehHtml
+          ? blob
+          : new Blob([blob], { type: 'application/pdf' })
+
+        triggerFileDownload(
+          arquivo,
+          `${this.danfeFileName(doc)}.${ehHtml ? 'html' : 'pdf'}`,
+        )
       },
       (error) => {
         this.toast.error(
@@ -229,9 +240,10 @@ export class FiscalDocumentDetailController extends BaseController {
       : `${doc.modelo.toLowerCase()}-${doc.numero}`
   }
 
-  /** Nome do PDF da DANFE: chave de acesso quando existe, senão nfce-<numero>. */
   private danfeFileName(doc: FiscalDocument): string {
-    return doc.chaveAcesso ? doc.chaveAcesso : `nfce-${doc.numero}`
+    return doc.chaveAcesso
+      ? doc.chaveAcesso
+      : `${doc.modelo.toLowerCase()}-${doc.numero}`
   }
 
   private startPolling(id: string): void {

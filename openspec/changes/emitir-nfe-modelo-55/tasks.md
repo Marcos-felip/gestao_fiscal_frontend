@@ -41,7 +41,7 @@
 - [x] 6.1 Modelo visível na lista, com filtro — já existia desde o MVP
 - [ ] 6.2 Detalhe exibindo os grupos do modelo 55 quando presentes — **não feito.** O snapshot da NF-e traz destinatário completo, transporte e cobrança; a tela de detalhe ainda mostra só o que a NFC-e tem
 - [x] 6.3 Detalhe de NFC-e inalterado, sem campos vazios do modelo 55
-- [ ] 6.4 DANFE de NF-e no caminho de download — **atenção:** o DANFE do modelo 55 é **HTML**, não PDF. O fluxo atual assume `application/pdf`
+- [x] 6.4 **Corrigido em 13/08/2026, depois de aparecer na tela.** O controller forçava `application/pdf` em todo DANFE, então o HTML da NF-e chegava renomeado para `.pdf` e o navegador respondia "Falha ao carregar documento PDF". A extensão passou a sair do tipo que o servidor declarou; tipo ausente continua virando PDF, porque só a NFC-e cai nesse caso
 
 ## 7. Testes
 
