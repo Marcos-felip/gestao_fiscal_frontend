@@ -4,6 +4,8 @@ export class UpdateFiscalSettingsDto {
   ambiente?: FiscalEnvironment
   serieNfce?: number
   proximoNumeroNfce?: number
+  serieNfe?: number
+  proximoNumeroNfe?: number
   codigoCsc?: string
   idCsc?: string
   certificadoRef?: string
@@ -16,6 +18,8 @@ export class UpdateFiscalSettingsDto {
     ambiente?: FiscalEnvironment
     serieNfce?: number
     proximoNumeroNfce?: number
+    serieNfe?: number
+    proximoNumeroNfe?: number
     codigoCsc?: string
     idCsc?: string
     certificadoRef?: string
@@ -27,6 +31,8 @@ export class UpdateFiscalSettingsDto {
     this.ambiente = fields.ambiente
     this.serieNfce = fields.serieNfce
     this.proximoNumeroNfce = fields.proximoNumeroNfce
+    this.serieNfe = fields.serieNfe
+    this.proximoNumeroNfe = fields.proximoNumeroNfe
     this.codigoCsc = fields.codigoCsc
     this.idCsc = fields.idCsc
     this.certificadoRef = fields.certificadoRef

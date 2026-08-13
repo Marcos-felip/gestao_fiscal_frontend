@@ -76,6 +76,9 @@ export class FiscalSettingsRepository implements IFiscalSettingsRepository {
     if (dto.serieNfce !== undefined) payload.serieNfce = dto.serieNfce
     if (dto.proximoNumeroNfce !== undefined)
       payload.proximoNumeroNfce = dto.proximoNumeroNfce
+    if (dto.serieNfe !== undefined) payload.serieNfe = dto.serieNfe
+    if (dto.proximoNumeroNfe !== undefined)
+      payload.proximoNumeroNfe = dto.proximoNumeroNfe
     if (dto.codigoCsc !== undefined) payload.codigoCsc = dto.codigoCsc
     if (dto.idCsc !== undefined) payload.idCsc = dto.idCsc
     if (dto.certificadoRef !== undefined)

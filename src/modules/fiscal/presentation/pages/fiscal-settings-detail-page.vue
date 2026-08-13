@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { motion } from 'motion-v'
 import {
   Button,
@@ -43,6 +43,48 @@ const canEdit = computed(() => can('fiscal.settings.edit'))
 
 const establishmentId = String(route.params.establishmentId)
 
+/**
+ * Seções da configuração fiscal.
+ *
+ * A tela mostra **uma** por vez. Empilhadas, viravam uma página de 1200 linhas
+ * onde a série da NF-e acabava dentro de uma caixa chamada "NFC-e" — o nome
+ * mentia sobre o conteúdo, e é assim que alguém mexe no número errado.
+ *
+ * Os rótulos nomeiam a situação de uso, não a sigla: quem opera a loja sabe se
+ * está vendendo no balcão ou para outra empresa antes de saber o que é modelo
+ * 55. A sigla vem entre parênteses para quem já a conhece.
+ */
+const SECOES = [
+  { id: 'ambiente', label: 'Ambiente e emissão', icon: 'ToggleRight' },
+  { id: 'nfce', label: 'Venda ao consumidor (NFC-e)', icon: 'ScrollText' },
+  { id: 'nfe', label: 'Venda a empresa (NF-e)', icon: 'FileText' },
+  { id: 'certificado', label: 'Certificado digital', icon: 'ShieldCheck' },
+  { id: 'sefaz', label: 'Comunicação com a SEFAZ', icon: 'Radio' },
+  { id: 'producao', label: 'Liberação para produção', icon: 'Rocket' },
+  { id: 'historico', label: 'Histórico de alterações', icon: 'History' },
+] as const
+
+type SecaoId = (typeof SECOES)[number]['id']
+
+const SECAO_PADRAO: SecaoId = 'ambiente'
+
+function ehSecao(valor: unknown): valor is SecaoId {
+  return SECOES.some((secao) => secao.id === valor)
+}
+
+/**
+ * Seção em foco. Vem da rota para que o item do menu lateral abra direto na
+ * seção certa — e para que o endereço da página possa ser guardado.
+ */
+const secaoAtiva = computed<SecaoId>(() => {
+  const daRota = route.params.secao ?? route.query.secao
+  return ehSecao(daRota) ? daRota : SECAO_PADRAO
+})
+
+function mostra(secao: SecaoId): boolean {
+  return secaoAtiva.value === secao
+}
+
 /** Estado da própria página (independente do carregamento do controller). */
 const ready = ref(false)
 const notFound = ref(false)
@@ -58,6 +100,8 @@ const form = reactive<FiscalSettingsFormValues>({
   ambiente: FiscalEnvironment.HOMOLOGACAO,
   serieNfce: '1',
   proximoNumeroNfce: '1',
+  serieNfe: '1',
+  proximoNumeroNfe: '1',
   codigoCsc: '',
   idCsc: '',
   ativo: true,
@@ -70,6 +114,8 @@ function seedForm(value: FiscalSettings | null): void {
     form.ambiente = value.ambiente
     form.serieNfce = String(value.serieNfce)
     form.proximoNumeroNfce = String(value.proximoNumeroNfce)
+    form.serieNfe = String(value.serieNfe)
+    form.proximoNumeroNfe = String(value.proximoNumeroNfe)
     form.codigoCsc = value.codigoCsc ?? ''
     form.idCsc = value.idCsc ?? ''
     form.ativo = value.ativo
@@ -77,6 +123,8 @@ function seedForm(value: FiscalSettings | null): void {
     form.ambiente = FiscalEnvironment.HOMOLOGACAO
     form.serieNfce = '1'
     form.proximoNumeroNfce = '1'
+    form.serieNfe = '1'
+    form.proximoNumeroNfe = '1'
     form.codigoCsc = ''
     form.idCsc = ''
     form.ativo = true
@@ -117,6 +165,8 @@ async function onSubmit(): Promise<void> {
           ambiente: form.ambiente,
           serieNfce: Number(form.serieNfce),
           proximoNumeroNfce: Number(form.proximoNumeroNfce),
+          serieNfe: Number(form.serieNfe),
+          proximoNumeroNfe: Number(form.proximoNumeroNfe),
           codigoCsc: optional(form.codigoCsc),
           idCsc: optional(form.idCsc),
           ativo: form.ativo,
@@ -514,6 +564,37 @@ const item = {
       {{ controller.errorMessage }}
     </div>
 
+    <!--
+      Navegação entre seções dentro da própria página.
+
+      Existe além do menu lateral porque quem está configurando percorre as
+      seções em sequência — voltar ao menu a cada passo é atrito puro. Rola
+      na horizontal no celular em vez de quebrar em duas linhas.
+    -->
+    <nav
+      class="mb-6 -mx-1 flex gap-1 overflow-x-auto px-1 pb-1"
+      aria-label="Seções da configuração fiscal"
+    >
+      <RouterLink
+        v-for="secao in SECOES"
+        :key="secao.id"
+        :to="{
+          name: routeNames.FISCAL_SETTINGS_DETAIL,
+          params: { establishmentId, secao: secao.id },
+        }"
+        class="inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+        :class="
+          mostra(secao.id)
+            ? 'border-primary bg-primary/5 text-foreground'
+            : 'border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
+        "
+        :aria-current="mostra(secao.id) ? 'page' : undefined"
+      >
+        <Icon :name="secao.icon" size="sm" />
+        {{ secao.label }}
+      </RouterLink>
+    </nav>
+
     <form @submit.prevent="onSubmit">
       <motion.div
         class="space-y-6"
@@ -521,24 +602,53 @@ const item = {
         initial="hidden"
         animate="visible"
       >
-        <!-- Seção 1: Configuração da NFC-e -->
-        <motion.div :variants="item">
+        <!-- Ambiente e emissão — vale para os dois modelos -->
+        <motion.div v-if="mostra('ambiente')" :variants="item">
+          <FormSection
+            icon="ToggleRight"
+            title="Ambiente e emissão"
+            description="Vale para os dois documentos: NFC-e e NF-e saem no mesmo ambiente."
+          >
+            <fieldset :disabled="!canEdit" class="space-y-5">
+              <Select
+                v-model="form.ambiente"
+                :options="fiscalEnvironmentOptions"
+                :error="errors.ambiente"
+                hint="Homologação para testes; Produção emite nota válida."
+              >
+                <template #label>Ambiente</template>
+              </Select>
+
+              <label
+                class="flex items-center justify-between gap-4 rounded-xl border border-line-2 bg-muted/40 px-4 py-3"
+              >
+                <span class="min-w-0">
+                  <span class="block text-sm font-medium text-foreground">
+                    Emissão fiscal ativa
+                  </span>
+                  <span class="block text-xs text-muted-foreground">
+                    Desative para impedir a emissão de notas neste
+                    estabelecimento.
+                  </span>
+                </span>
+                <Switch
+                  v-model="form.ativo"
+                  aria-label="Emissão fiscal ativa"
+                />
+              </label>
+            </fieldset>
+          </FormSection>
+        </motion.div>
+
+        <!-- Venda ao consumidor (NFC-e) -->
+        <motion.div v-if="mostra('nfce')" :variants="item">
           <FormSection
             icon="ScrollText"
-            title="Configuração da NFC-e"
-            description="Ambiente, numeração e código de segurança do contribuinte."
+            title="Venda ao consumidor (NFC-e)"
+            description="O cupom do balcão. Numeração própria e código de segurança do contribuinte."
           >
             <fieldset :disabled="!canEdit" class="space-y-5">
               <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <Select
-                  v-model="form.ambiente"
-                  :options="fiscalEnvironmentOptions"
-                  :error="errors.ambiente"
-                  hint="Homologação para testes; Produção emite NFC-e válida."
-                >
-                  <template #label>Ambiente</template>
-                </Select>
-
                 <Input
                   v-model="form.serieNfce"
                   inputmode="numeric"
@@ -547,34 +657,37 @@ const item = {
                   :error="errors.serieNfce"
                   hint="Número inteiro de 1 a 999."
                 >
-                  <template #label>Série da NFC-e</template>
+                  <template #label>Série</template>
                   <template #prefix><Icon name="Hash" size="sm" /></template>
+                </Input>
+
+                <!-- Próximo número (só na edição) -->
+                <Input
+                  v-if="isEdit"
+                  v-model="form.proximoNumeroNfce"
+                  inputmode="numeric"
+                  maxlength="9"
+                  placeholder="1"
+                  :error="errors.proximoNumeroNfce"
+                  hint="Próximo número que será usado ao emitir. Ajuste com cuidado."
+                >
+                  <template #label>Próximo número</template>
+                  <template #prefix
+                    ><Icon name="ListOrdered" size="sm"
+                  /></template>
                 </Input>
               </div>
 
-              <!-- Próximo número (só na edição) -->
-              <Input
-                v-if="isEdit"
-                v-model="form.proximoNumeroNfce"
-                inputmode="numeric"
-                maxlength="9"
-                placeholder="1"
-                :error="errors.proximoNumeroNfce"
-                hint="Próximo número que será usado ao emitir. Ajuste com cuidado."
-              >
-                <template #label>Próximo número da NFC-e</template>
-                <template #prefix
-                  ><Icon name="ListOrdered" size="sm"
-                /></template>
-              </Input>
-
               <p class="text-sm text-muted-foreground">
-                O par ID do CSC + Código CSC é emitido pela SEFAZ e é
+                O par ID do CSC + Código CSC é emitido pela SEFAZ, é
                 <strong class="font-medium text-foreground"
                   >específico do ambiente</strong
-                >: o par de homologação não vale em produção. Um código errado
-                não acusa erro na emissão — a nota é rejeitada pela SEFAZ com
-                QR Code inválido, já com a numeração consumida.
+                >
+                e vale
+                <strong class="font-medium text-foreground">só para NFC-e</strong
+                >: a NF-e não usa CSC. Um código errado não acusa erro na emissão
+                — a nota é rejeitada pela SEFAZ com QR Code inválido, já com a
+                numeração consumida.
               </p>
 
               <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -602,35 +715,68 @@ const item = {
                   /></template>
                 </Input>
               </div>
+            </fieldset>
+          </FormSection>
+        </motion.div>
 
-              <label
-                class="flex items-center justify-between gap-4 rounded-xl border border-line-2 bg-muted/40 px-4 py-3"
-              >
-                <span class="min-w-0">
-                  <span class="block text-sm font-medium text-foreground">
-                    Emissão fiscal ativa
-                  </span>
-                  <span class="block text-xs text-muted-foreground">
-                    Desative para impedir a emissão de NFC-e neste
-                    estabelecimento.
-                  </span>
-                </span>
-                <Switch
-                  v-model="form.ativo"
-                  aria-label="Emissão fiscal ativa"
-                />
-              </label>
+        <!-- Venda a empresa (NF-e) -->
+        <motion.div v-if="mostra('nfe')" :variants="item">
+          <FormSection
+            icon="FileText"
+            title="Venda a empresa (NF-e)"
+            description="A nota do cliente pessoa jurídica. Sequência fiscal separada da NFC-e."
+          >
+            <fieldset :disabled="!canEdit" class="space-y-5">
+              <p class="text-sm text-muted-foreground">
+                A NF-e tem
+                <strong class="font-medium text-foreground"
+                  >numeração própria</strong
+                >: são duas sequências fiscais distintas, e misturá-las produz
+                salto de numeração nos dois documentos. Só mexa aqui se estiver
+                continuando uma numeração vinda de outro sistema.
+              </p>
+
+              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <Input
+                  v-model="form.serieNfe"
+                  inputmode="numeric"
+                  maxlength="3"
+                  placeholder="1"
+                  :error="errors.serieNfe"
+                  hint="Número inteiro de 1 a 999."
+                >
+                  <template #label>Série</template>
+                  <template #prefix><Icon name="Hash" size="sm" /></template>
+                </Input>
+
+                <Input
+                  v-if="isEdit"
+                  v-model="form.proximoNumeroNfe"
+                  inputmode="numeric"
+                  maxlength="9"
+                  placeholder="1"
+                  :error="errors.proximoNumeroNfe"
+                  hint="Próximo número que será usado ao emitir NF-e."
+                >
+                  <template #label>Próximo número</template>
+                  <template #prefix
+                    ><Icon name="ListOrdered" size="sm"
+                  /></template>
+                </Input>
+              </div>
             </fieldset>
           </FormSection>
         </motion.div>
 
         <!-- Seções 2 e 3: Certificado (2/3) + Comunicação SEFAZ (1/3) -->
         <motion.div
+          v-if="mostra('certificado') || mostra('sefaz')"
           :variants="item"
           class="grid items-start gap-6 lg:grid-cols-3"
         >
           <!-- Certificado digital A1 -->
           <FormSection
+            v-if="mostra('certificado')"
             class="lg:col-span-2"
             icon="ShieldCheck"
             title="Certificado digital A1"
@@ -874,6 +1020,7 @@ const item = {
 
           <!-- Comunicação com a SEFAZ -->
           <FormSection
+            v-if="mostra('sefaz')"
             icon="RadioTower"
             title="Comunicação com a SEFAZ"
             description="Disponibilidade do serviço via certificado e UF do estabelecimento."
@@ -954,7 +1101,7 @@ const item = {
         </motion.div>
 
         <!-- Seção: Produção -->
-        <motion.div :variants="item">
+        <motion.div v-if="mostra('producao')" :variants="item">
           <FormSection
             icon="Rocket"
             title="Produção"
@@ -1137,7 +1284,7 @@ const item = {
         </motion.div>
 
         <!-- Seção: Histórico de configurações -->
-        <motion.div :variants="item">
+        <motion.div v-if="mostra('historico')" :variants="item">
           <FormSection
             icon="History"
             title="Histórico de configurações"

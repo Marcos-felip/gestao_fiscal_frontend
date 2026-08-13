@@ -29,13 +29,11 @@ import { ConsultFiscalDocumentUseCase } from '@/modules/fiscal/application/use-c
 import { RetryFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/retry-fiscal-document.use-case'
 import { DownloadFiscalDanfeUseCase } from '@/modules/fiscal/application/use-cases/download-fiscal-danfe.use-case'
 import { ExportFiscalXmlsUseCase } from '@/modules/fiscal/application/use-cases/export-fiscal-xmls.use-case'
-import { ListFiscalRejectionsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-rejections.use-case'
 import { FiscalSettingsController } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
 import type { FiscalEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
 import { FiscalDocumentsListController } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
 import type { FiscalDocumentsEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
 import { FiscalDocumentDetailController } from '@/modules/fiscal/presentation/controllers/fiscal-document-detail-controller'
-import { FiscalRejectionsController } from '@/modules/fiscal/presentation/controllers/fiscal-rejections-controller'
 import { SaleFiscalController } from '@/modules/fiscal/presentation/controllers/sale-fiscal-controller'
 import { EstablishmentRepository } from '@/modules/establishments/data/repositories/establishment-repository'
 import { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
@@ -211,9 +209,3 @@ export function makeFiscalSettingsController(): FiscalSettingsController {
   )
 }
 
-export function makeFiscalRejectionsController(): FiscalRejectionsController {
-  return new FiscalRejectionsController(
-    new ListFiscalRejectionsUseCase(makeFiscalDocumentsRepository()),
-    new RetryFiscalDocumentUseCase(makeFiscalDocumentsRepository()),
-  )
-}

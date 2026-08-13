@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { motion } from 'motion-v'
 import { Icon, Skeleton } from '@/shared/ui'
 import { makeFiscalSettingsController } from '@/modules/fiscal/factories/fiscal.factory'
@@ -10,21 +11,52 @@ import { useProgress } from '@/shared/composables'
 import { routeNames } from '@/router/route-names'
 
 const controller = makeFiscalSettingsController()
+const route = useRoute()
 const progress = useProgress()
 const { can } = usePermissions()
 
 const canEdit = computed(() => can('fiscal.settings.edit'))
 
-onMounted(() => {
-  progress.track(controller.load())
+/**
+ * Seção pedida pelo menu lateral, quando veio de lá.
+ *
+ * Os itens do menu apontam para cá com `?secao=`, e não direto para o
+ * estabelecimento, porque o menu não sabe de qual loja está falando. Esta
+ * página sabe: com **uma** loja — o caso da esmagadora maioria — ela desvia
+ * sozinha e o desvio é invisível. Com mais de uma, a lista aparece, que é a
+ * pergunta honesta a fazer.
+ */
+const secaoPedida = computed(() => {
+  const valor = route.query.secao
+  return typeof valor === 'string' && valor !== '' ? valor : null
+})
+
+onMounted(async () => {
+  await progress.track(controller.load())
   controller.loadEngineHealth()
+
+  const rows = controller.rows.value
+  if (secaoPedida.value && rows.length === 1) {
+    await controller.router.replace({
+      name: routeNames.FISCAL_SETTINGS_DETAIL,
+      params: {
+        establishmentId: rows[0].establishment.id,
+        secao: secaoPedida.value,
+      },
+    })
+  }
 })
 
 /** Abre a página dedicada de configuração do estabelecimento. */
 function openRow(row: FiscalSettingsRow): void {
   controller.router.push({
     name: routeNames.FISCAL_SETTINGS_DETAIL,
-    params: { establishmentId: row.establishment.id },
+    params: {
+      establishmentId: row.establishment.id,
+      // Preserva a seção pedida pelo menu quando há mais de uma loja: o
+      // operador escolheu "Certificado digital", não "a configuração inteira".
+      ...(secaoPedida.value ? { secao: secaoPedida.value } : {}),
+    },
   })
 }
 

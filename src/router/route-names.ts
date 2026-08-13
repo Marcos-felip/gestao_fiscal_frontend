@@ -35,7 +35,6 @@ export const routeNames = {
   FISCAL_SETTINGS_DETAIL: 'fiscal-settings-detail',
   FISCAL_DOCUMENTS: 'fiscal-documents',
   FISCAL_DOCUMENT_DETAIL: 'fiscal-document-detail',
-  FISCAL_REJECTIONS: 'fiscal-rejections',
   FORBIDDEN: 'forbidden',
   NOT_FOUND: 'not-found',
   SERVER_ERROR: 'server-error',

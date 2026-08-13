@@ -7,7 +7,6 @@ import type {
 import type { FiscalStatusHistory } from '@/modules/fiscal/domain/entities/fiscal-status-history.entity'
 import type { FiscalDocumentEvent } from '@/modules/fiscal/domain/entities/fiscal-document-event.entity'
 import type { FiscalDocumentListResponse } from '@/modules/fiscal/domain/responses/fiscal-document-list-response'
-import type { FiscalRejectionListResponse } from '@/modules/fiscal/domain/responses/fiscal-rejection-item'
 import type { FiscalConsultaResult } from '@/modules/fiscal/domain/responses/fiscal-consulta-result'
 import type { QueryFiscalDocumentsDto } from '@/modules/fiscal/domain/dto/query-fiscal-documents-dto'
 import type { EmitNfceDto } from '@/modules/fiscal/domain/dto/emit-nfce-dto'
@@ -38,7 +37,4 @@ export interface IFiscalDocumentsRepository {
   retry(id: string): Promise<Either<DomainError, FiscalDocument>>
   downloadDanfe(id: string): Promise<Either<DomainError, Blob>>
   exportXmls(dto: ExportFiscalXmlsDto): Promise<Either<DomainError, Blob>>
-  getRejections(
-    query: QueryFiscalDocumentsDto,
-  ): Promise<Either<DomainError, FiscalRejectionListResponse>>
 }

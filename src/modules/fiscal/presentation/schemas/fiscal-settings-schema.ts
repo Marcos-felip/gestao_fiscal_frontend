@@ -7,6 +7,8 @@ export interface FiscalSettingsFormValues {
   ambiente: FiscalEnvironment
   serieNfce: string
   proximoNumeroNfce: string
+  serieNfe: string
+  proximoNumeroNfe: string
   codigoCsc: string
   idCsc: string
   ativo: boolean
@@ -21,22 +23,28 @@ export interface FiscalSettingsValidation {
   ok: boolean
 }
 
-const serieField = z
-  .string()
-  .trim()
-  .min(1, 'Informe a série da NFC-e')
-  .regex(/^\d+$/, 'Use apenas números')
-  .refine((value) => {
-    const parsed = Number(value)
-    return parsed >= 1 && parsed <= 999
-  }, 'Série deve estar entre 1 e 999')
+/**
+ * Série e próximo número existem por modelo — as sequências são distintas.
+ * O que muda entre elas é só o nome no erro, então os campos são gerados.
+ */
+const serieField = (modelo: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `Informe a série da ${modelo}`)
+    .regex(/^\d+$/, 'Use apenas números')
+    .refine((value) => {
+      const parsed = Number(value)
+      return parsed >= 1 && parsed <= 999
+    }, 'Série deve estar entre 1 e 999')
 
-const proximoNumeroField = z
-  .string()
-  .trim()
-  .min(1, 'Informe o próximo número da NFC-e')
-  .regex(/^\d+$/, 'Use apenas números')
-  .refine((value) => Number(value) >= 1, 'Número deve ser maior ou igual a 1')
+const proximoNumeroField = (modelo: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `Informe o próximo número da ${modelo}`)
+    .regex(/^\d+$/, 'Use apenas números')
+    .refine((value) => Number(value) >= 1, 'Número deve ser maior ou igual a 1')
 
 /**
  * Código CSC: 16 a 64 caracteres alfanuméricos, vindo do portal da SEFAZ da UF.
@@ -71,17 +79,24 @@ const idCscField = z
 
 const baseSchema = z.object({
   ambiente: z.nativeEnum(FiscalEnvironment),
-  serieNfce: serieField,
+  serieNfce: serieField('NFC-e'),
+  serieNfe: serieField('NF-e'),
   codigoCsc: codigoCscField,
   idCsc: idCscField,
   ativo: z.boolean(),
 })
 
 // Na criação o próximo número é definido pelo backend (começa em 1).
-const createSchema = baseSchema.extend({ proximoNumeroNfce: z.string() })
+const createSchema = baseSchema.extend({
+  proximoNumeroNfce: z.string(),
+  proximoNumeroNfe: z.string(),
+})
 
 // Na edição a numeração já existe e pode ser ajustada — validada.
-const editSchema = baseSchema.extend({ proximoNumeroNfce: proximoNumeroField })
+const editSchema = baseSchema.extend({
+  proximoNumeroNfce: proximoNumeroField('NFC-e'),
+  proximoNumeroNfe: proximoNumeroField('NF-e'),
+})
 
 /**
  * Valida o formulário de configuração fiscal. O `isEdit` liga a validação do

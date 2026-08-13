@@ -3,7 +3,6 @@ import FiscalSettingsPage from '@/modules/fiscal/presentation/pages/fiscal-setti
 import FiscalSettingsDetailPage from '@/modules/fiscal/presentation/pages/fiscal-settings-detail-page.vue'
 import FiscalDocumentsPage from '@/modules/fiscal/presentation/pages/fiscal-documents-page.vue'
 import FiscalDocumentDetailPage from '@/modules/fiscal/presentation/pages/fiscal-document-detail-page.vue'
-import FiscalRejectionsPage from '@/modules/fiscal/presentation/pages/fiscal-rejections-page.vue'
 import { routeNames } from '@/router/route-names'
 
 export const fiscalRoutes: RouteRecordRaw[] = [
@@ -18,7 +17,8 @@ export const fiscalRoutes: RouteRecordRaw[] = [
     },
   },
   {
-    path: 'configuracao-fiscal/:establishmentId',
+    // A seção é opcional: sem ela a página abre em 'Ambiente e emissão'.
+    path: 'configuracao-fiscal/:establishmentId/:secao?',
     name: routeNames.FISCAL_SETTINGS_DETAIL,
     component: FiscalSettingsDetailPage,
     meta: {
@@ -44,16 +44,6 @@ export const fiscalRoutes: RouteRecordRaw[] = [
     meta: {
       title: 'Documento fiscal',
       icon: 'FileText',
-      requiresPermission: 'fiscal.read',
-    },
-  },
-  {
-    path: 'rejeicoes-fiscais',
-    name: routeNames.FISCAL_REJECTIONS,
-    component: FiscalRejectionsPage,
-    meta: {
-      title: 'Central de rejeições',
-      icon: 'TriangleAlert',
       requiresPermission: 'fiscal.read',
     },
   },

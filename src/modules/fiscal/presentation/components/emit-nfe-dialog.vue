@@ -61,7 +61,7 @@ function submit(): void {
     :model-value="props.modelValue"
     title="Emitir NF-e"
     description="A NF-e será enviada para autorização na SEFAZ."
-    size="md"
+    size="lg"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <div class="space-y-4">

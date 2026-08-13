@@ -18,6 +18,9 @@ export class FiscalSettings {
   readonly ambiente: FiscalEnvironment
   readonly serieNfce: number
   readonly proximoNumeroNfce: number
+  /** Série da NF-e modelo 55, independente da NFC-e. */
+  readonly serieNfe: number
+  readonly proximoNumeroNfe: number
   readonly codigoCsc: string | null
   readonly idCsc: string | null
   readonly certificadoRef: string | null
@@ -36,6 +39,8 @@ export class FiscalSettings {
     ambiente: FiscalEnvironment
     serieNfce: number
     proximoNumeroNfce: number
+    serieNfe: number
+    proximoNumeroNfe: number
     codigoCsc: string | null
     idCsc: string | null
     certificadoRef: string | null
@@ -53,6 +58,8 @@ export class FiscalSettings {
     this.ambiente = fields.ambiente
     this.serieNfce = fields.serieNfce
     this.proximoNumeroNfce = fields.proximoNumeroNfce
+    this.serieNfe = fields.serieNfe
+    this.proximoNumeroNfe = fields.proximoNumeroNfe
     this.codigoCsc = fields.codigoCsc
     this.idCsc = fields.idCsc
     this.certificadoRef = fields.certificadoRef

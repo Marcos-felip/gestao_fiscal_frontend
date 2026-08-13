@@ -8,7 +8,6 @@ import type {
 import type { FiscalStatusHistory } from '@/modules/fiscal/domain/entities/fiscal-status-history.entity'
 import type { FiscalDocumentEvent } from '@/modules/fiscal/domain/entities/fiscal-document-event.entity'
 import type { FiscalDocumentListResponse } from '@/modules/fiscal/domain/responses/fiscal-document-list-response'
-import type { FiscalRejectionListResponse } from '@/modules/fiscal/domain/responses/fiscal-rejection-item'
 import type { FiscalConsultaResult } from '@/modules/fiscal/domain/responses/fiscal-consulta-result'
 import type { QueryFiscalDocumentsDto } from '@/modules/fiscal/domain/dto/query-fiscal-documents-dto'
 import type { EmitNfceDto } from '@/modules/fiscal/domain/dto/emit-nfce-dto'
@@ -23,7 +22,6 @@ import {
   toFiscalDocumentEvent,
 } from '@/modules/fiscal/data/mappers/fiscal-document.mapper'
 import { toFiscalConsultaResult } from '@/modules/fiscal/data/mappers/fiscal-consulta.mapper'
-import { toFiscalRejectionList } from '@/modules/fiscal/data/mappers/fiscal-production.mapper'
 
 export class FiscalDocumentsRepository implements IFiscalDocumentsRepository {
   async list(
@@ -177,22 +175,4 @@ export class FiscalDocumentsRepository implements IFiscalDocumentsRepository {
     })
   }
 
-  async getRejections(
-    query: QueryFiscalDocumentsDto,
-  ): Promise<Either<DomainError, FiscalRejectionListResponse>> {
-    const params: Record<string, string | number> = {}
-    if (query.page !== undefined) params.page = query.page
-    if (query.limit !== undefined) params.limit = query.limit
-    if (query.status) params.status = query.status
-    if (query.modelo) params.modelo = query.modelo
-    if (query.saleId) params.saleId = query.saleId
-    if (query.establishmentId) params.establishmentId = query.establishmentId
-    if (query.startDate) params.startDate = query.startDate
-    if (query.endDate) params.endDate = query.endDate
-
-    const result = await httpClient.get<unknown>('/fiscal/rejections', {
-      params,
-    })
-    return result.flatMap(toFiscalRejectionList)
-  }
 }
