@@ -795,7 +795,7 @@ const item = {
                 qual série era cada número.
               -->
               <fieldset
-                class="rounded-xl border border-line-2 bg-muted/30 px-4 pt-3 pb-4"
+                class="rounded-xl border border-line-2 px-4 pt-3 pb-4"
               >
                 <legend
                   class="px-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
@@ -835,21 +835,13 @@ const item = {
               </fieldset>
 
               <fieldset
-                class="rounded-xl border border-line-2 bg-muted/30 px-4 pt-3 pb-4"
+                class="rounded-xl border border-line-2 px-4 pt-3 pb-4"
               >
                 <legend
                   class="px-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
                 >
                   NF-e · modelo 55
                 </legend>
-
-                <p class="mb-4 text-xs text-muted-foreground">
-                  Sequência <strong class="font-medium">independente</strong> da
-                  NFC-e: misturar as duas produz salto de numeração nos dois
-                  modelos. Começando do zero, série 1 / número 1 já emite —
-                  estes campos servem para continuar a numeração de outro
-                  sistema.
-                </p>
 
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Input
