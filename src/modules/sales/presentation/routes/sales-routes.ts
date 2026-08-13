@@ -11,6 +11,7 @@ export const salesRoutes: RouteRecordRaw[] = [
     name: routeNames.SALES,
     component: SalesPage,
     meta: {
+      tab: { id: 'sales', title: 'Vendas' },
       title: 'Vendas',
       icon: 'ShoppingBag',
       requiresPermission: 'sales.list',
@@ -20,7 +21,7 @@ export const salesRoutes: RouteRecordRaw[] = [
     path: 'vendas/:id',
     name: routeNames.SALE_DETAIL,
     component: SaleDetailPage,
-    meta: { requiresPermission: 'sales.read' },
+    meta: { tab: { id: 'sales', title: 'Vendas' }, requiresPermission: 'sales.read'  },
   },
 ]
 

@@ -8,6 +8,7 @@ export const companiesRoutes: RouteRecordRaw[] = [
     name: routeNames.COMPANY,
     component: CompanyEditPage,
     meta: {
+      tab: { id: 'company', title: 'Empresa' },
       title: 'Empresa',
       icon: 'Building2',
       requiresPermission: 'company.read',

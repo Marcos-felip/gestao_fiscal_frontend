@@ -8,6 +8,7 @@ export const permissionsRoutes: RouteRecordRaw[] = [
     name: routeNames.PERMISSION_PROFILES,
     component: ProfilesPage,
     meta: {
+      tab: { id: 'permissions', title: 'Perfis de permissão' },
       title: 'Perfis de permissão',
       icon: 'ShieldPlus',
       requiresPermission: 'permissions.manage',

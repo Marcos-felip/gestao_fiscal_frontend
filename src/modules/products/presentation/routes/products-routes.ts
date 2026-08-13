@@ -9,6 +9,7 @@ export const productsRoutes: RouteRecordRaw[] = [
     name: routeNames.PRODUCTS,
     component: ProductsPage,
     meta: {
+      tab: { id: 'products', title: 'Produtos' },
       title: 'Produtos',
       icon: 'Package',
       requiresPermission: 'products.list',
@@ -18,13 +19,13 @@ export const productsRoutes: RouteRecordRaw[] = [
     path: 'produtos/novo',
     name: routeNames.PRODUCT_NEW,
     component: ProductFormPage,
-    meta: { requiresPermission: 'products.create' },
+    meta: { tab: { id: 'products', title: 'Produtos' }, requiresPermission: 'products.create'  },
   },
   {
     // Abre em somente leitura para quem tem read mas não edit.
     path: 'produtos/:id/editar',
     name: routeNames.PRODUCT_EDIT,
     component: ProductFormPage,
-    meta: { requiresPermission: 'products.read' },
+    meta: { tab: { id: 'products', title: 'Produtos' }, requiresPermission: 'products.read'  },
   },
 ]

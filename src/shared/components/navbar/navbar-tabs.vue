@@ -20,7 +20,7 @@
     >
       <button
         v-for="tab in tabs"
-        :key="tab.path"
+        :key="tab.id"
         type="button"
         :data-active="isActive(tab) || undefined"
         :class="[
@@ -71,7 +71,7 @@ import { useTabs, type AppTab } from '@/shared/composables'
 
 const route = useRoute()
 const router = useRouter()
-const { tabs, openFromRoute, closeTab } = useTabs()
+const { tabs, openFromRoute, closeTab, tabIdOf } = useTabs()
 
 const strip = ref<HTMLElement | null>(null)
 const overflowing = ref(false)
@@ -139,18 +139,24 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', updateEdges)
 })
 
+/**
+ * A aba ativa é a do assunto da rota atual.
+ *
+ * Antes isso era comparação de caminho, com um `startsWith` para as rotas
+ * aninhadas — o que deixava duas abas acesas quando existiam a do pai e a do
+ * filho. Com a identidade por assunto, só há uma aba para ficar acesa.
+ */
 function isActive(tab: AppTab): boolean {
-  if (route.path === tab.path) return true
-  // Rotas aninhadas (ex.: /establishments/new) mantêm a aba do pai ativa.
-  return tab.path !== '/' && route.path.startsWith(`${tab.path}/`)
+  return tab.id === tabIdOf(route)
 }
 
+/** Volta para a aba na tela em que ela estava, não no começo do assunto. */
 function go(tab: AppTab): void {
   if (route.path !== tab.path) router.push(tab.path)
 }
 
 function close(tab: AppTab): void {
-  const target = closeTab(tab.path)
+  const target = closeTab(tab.id)
   if (isActive(tab) && target) router.push(target)
 }
 </script>

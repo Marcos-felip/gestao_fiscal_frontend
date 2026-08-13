@@ -11,6 +11,7 @@ export const fiscalRoutes: RouteRecordRaw[] = [
     name: routeNames.FISCAL_SETTINGS,
     component: FiscalSettingsPage,
     meta: {
+      tab: { id: 'fiscal-settings', title: 'Configuração fiscal' },
       title: 'Configuração fiscal',
       icon: 'ScrollText',
       requiresPermission: 'fiscal.settings.read',
@@ -22,6 +23,7 @@ export const fiscalRoutes: RouteRecordRaw[] = [
     name: routeNames.FISCAL_SETTINGS_DETAIL,
     component: FiscalSettingsDetailPage,
     meta: {
+      tab: { id: 'fiscal-settings', title: 'Configuração fiscal' },
       title: 'Configuração do estabelecimento',
       icon: 'ScrollText',
       requiresPermission: 'fiscal.settings.read',
@@ -32,6 +34,7 @@ export const fiscalRoutes: RouteRecordRaw[] = [
     name: routeNames.FISCAL_DOCUMENTS,
     component: FiscalDocumentsPage,
     meta: {
+      tab: { id: 'fiscal-documents', title: 'Documentos fiscais' },
       title: 'Documentos fiscais',
       icon: 'FileText',
       requiresPermission: 'fiscal.read',
@@ -42,6 +45,7 @@ export const fiscalRoutes: RouteRecordRaw[] = [
     name: routeNames.FISCAL_DOCUMENT_DETAIL,
     component: FiscalDocumentDetailPage,
     meta: {
+      tab: { id: 'fiscal-documents', title: 'Documentos fiscais' },
       title: 'Documento fiscal',
       icon: 'FileText',
       requiresPermission: 'fiscal.read',

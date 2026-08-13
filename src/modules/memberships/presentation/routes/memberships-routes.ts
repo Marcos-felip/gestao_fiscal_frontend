@@ -8,6 +8,7 @@ export const membershipsRoutes: RouteRecordRaw[] = [
     name: routeNames.USERS,
     component: UsersPage,
     meta: {
+      tab: { id: 'memberships', title: 'Usuários' },
       title: 'Usuários',
       icon: 'Users',
       requiresPermission: 'users.list',

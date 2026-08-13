@@ -10,6 +10,7 @@ export const purchasesRoutes: RouteRecordRaw[] = [
     name: routeNames.PURCHASES,
     component: PurchasesPage,
     meta: {
+      tab: { id: 'purchases', title: 'Compras' },
       title: 'Compras',
       icon: 'ShoppingCart',
       requiresPermission: 'purchases.list',
@@ -19,12 +20,12 @@ export const purchasesRoutes: RouteRecordRaw[] = [
     path: 'compras/nova',
     name: routeNames.PURCHASE_NEW,
     component: PurchaseFormPage,
-    meta: { requiresPermission: 'purchases.create' },
+    meta: { tab: { id: 'purchases', title: 'Compras' }, requiresPermission: 'purchases.create'  },
   },
   {
     path: 'compras/:id',
     name: routeNames.PURCHASE_DETAIL,
     component: PurchaseDetailPage,
-    meta: { requiresPermission: 'purchases.read' },
+    meta: { tab: { id: 'purchases', title: 'Compras' }, requiresPermission: 'purchases.read'  },
   },
 ]

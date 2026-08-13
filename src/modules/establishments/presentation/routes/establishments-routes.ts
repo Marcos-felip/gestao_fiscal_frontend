@@ -9,6 +9,7 @@ export const establishmentsRoutes: RouteRecordRaw[] = [
     name: routeNames.ESTABLISHMENTS,
     component: EstablishmentsPage,
     meta: {
+      tab: { id: 'establishments', title: 'Estabelecimentos' },
       title: 'Estabelecimentos',
       icon: 'Store',
       requiresPermission: 'establishments.list',
@@ -18,13 +19,13 @@ export const establishmentsRoutes: RouteRecordRaw[] = [
     path: 'estabelecimentos/novo',
     name: routeNames.ESTABLISHMENT_NEW,
     component: EstablishmentFormPage,
-    meta: { requiresPermission: 'establishments.create' },
+    meta: { tab: { id: 'establishments', title: 'Estabelecimentos' }, requiresPermission: 'establishments.create'  },
   },
   {
     // Abre em somente leitura para quem tem read mas não edit.
     path: 'estabelecimentos/:id/editar',
     name: routeNames.ESTABLISHMENT_EDIT,
     component: EstablishmentFormPage,
-    meta: { requiresPermission: 'establishments.read' },
+    meta: { tab: { id: 'establishments', title: 'Estabelecimentos' }, requiresPermission: 'establishments.read'  },
   },
 ]

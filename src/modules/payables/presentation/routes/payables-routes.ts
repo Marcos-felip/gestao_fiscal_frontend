@@ -9,6 +9,7 @@ export const payablesRoutes: RouteRecordRaw[] = [
     name: routeNames.PAYABLES,
     component: PayablesPage,
     meta: {
+      tab: { id: 'payables', title: 'Contas a pagar' },
       title: 'Contas a pagar',
       icon: 'Wallet',
       requiresPermission: 'payables.list',
@@ -18,6 +19,6 @@ export const payablesRoutes: RouteRecordRaw[] = [
     path: 'contas-a-pagar/:id',
     name: routeNames.PAYABLE_DETAIL,
     component: PayableDetailPage,
-    meta: { requiresPermission: 'payables.read' },
+    meta: { tab: { id: 'payables', title: 'Contas a pagar' }, requiresPermission: 'payables.read'  },
   },
 ]
