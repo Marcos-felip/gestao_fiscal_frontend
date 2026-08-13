@@ -64,11 +64,16 @@
       <Icon name="ChevronRight" size="sm" />
     </button>
 
+    <!--
+      Sempre montado, aberto por prop: com `v-if` aqui o componente desmontaria
+      junto com o `AnimatePresence` dele, e a animação de saída nunca rodaria.
+    -->
     <TabContextMenu
-      v-if="menu"
-      :x="menu.x"
-      :y="menu.y"
+      :aberto="menu !== null"
+      :x="menu?.x ?? 0"
+      :y="menu?.y ?? 0"
       :actions="menuActions"
+      :contexto="menu?.tab.label"
       @select="executarAcao"
       @close="menu = null"
     />
@@ -227,18 +232,21 @@ const menuActions = computed<TabMenuAction[]>(() => {
       label: 'Fechar',
       icon: 'X',
       separado: true,
+      destrutivo: true,
       disabled: !tab.closable,
     },
     {
       id: 'fechar-outras',
       label: 'Fechar outras',
       icon: 'CircleX',
+      destrutivo: true,
       disabled: restantes === 0,
     },
     {
       id: 'fechar-todas',
       label: 'Fechar todas',
       icon: 'Ban',
+      destrutivo: true,
       disabled: restantes === 0 && !tab.closable,
     },
   ]

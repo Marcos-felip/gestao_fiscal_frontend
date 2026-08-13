@@ -854,15 +854,6 @@ const item = {
             description="Par emitido pela SEFAZ da UF, usado no QR Code da NFC-e."
           >
             <fieldset :disabled="!canEdit" class="space-y-5">
-              <p class="text-sm text-muted-foreground">
-                O par ID do CSC + Código CSC é emitido pela SEFAZ e é
-                <strong class="font-medium text-foreground"
-                  >específico do ambiente</strong
-                >: o par de homologação não vale em produção. Um código errado
-                não acusa erro na emissão — a nota é rejeitada pela SEFAZ com
-                QR Code inválido, já com a numeração consumida.
-              </p>
-
               <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <Input
                   v-model="form.idCsc"
@@ -888,16 +879,6 @@ const item = {
                   /></template>
                 </Input>
               </div>
-
-              <p
-                class="flex items-start gap-2 rounded-lg border border-line-2 bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
-              >
-                <Icon name="Info" size="sm" class="mt-0.5 shrink-0" />
-                <span>
-                  A NF-e modelo 55 <strong>não usa CSC</strong> — o motor
-                  recusa a requisição que o envie. Este par serve só à NFC-e.
-                </span>
-              </p>
             </fieldset>
           </FormSection>
         </motion.div>
