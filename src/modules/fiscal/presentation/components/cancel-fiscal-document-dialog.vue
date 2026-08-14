@@ -59,7 +59,7 @@ function submit(): void {
     :model-value="props.modelValue"
     title="Cancelar documento fiscal"
     description="O cancelamento é enviado à SEFAZ e não pode ser desfeito."
-    size="md"
+    size="lg"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <form class="space-y-3" @submit.prevent="submit">
