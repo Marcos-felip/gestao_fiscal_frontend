@@ -1,5 +1,6 @@
 import { FiscalSettingsRepository } from '@/modules/fiscal/data/repositories/fiscal-settings-repository'
 import { FiscalDocumentsRepository } from '@/modules/fiscal/data/repositories/fiscal-documents-repository'
+import { FiscalEventsRepository } from '@/modules/fiscal/data/repositories/fiscal-events-repository'
 import { ListFiscalSettingsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-settings.use-case'
 import { GetFiscalSettingsByEstablishmentUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-settings-by-establishment.use-case'
 import { CreateFiscalSettingsUseCase } from '@/modules/fiscal/application/use-cases/create-fiscal-settings.use-case'
@@ -33,7 +34,11 @@ import { FiscalSettingsController } from '@/modules/fiscal/presentation/controll
 import type { FiscalEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
 import { FiscalDocumentsListController } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
 import type { FiscalDocumentsEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
+import { CreateCorrectionLetterUseCase } from '@/modules/fiscal/application/use-cases/create-correction-letter.use-case'
+import { ListCorrectionLettersUseCase } from '@/modules/fiscal/application/use-cases/list-correction-letters.use-case'
+import { DownloadCorrectionLetterXmlUseCase } from '@/modules/fiscal/application/use-cases/download-correction-letter-xml.use-case'
 import { FiscalDocumentDetailController } from '@/modules/fiscal/presentation/controllers/fiscal-document-detail-controller'
+import { CorrectionLettersController } from '@/modules/fiscal/presentation/controllers/correction-letters-controller'
 import { SaleFiscalController } from '@/modules/fiscal/presentation/controllers/sale-fiscal-controller'
 import { EstablishmentRepository } from '@/modules/establishments/data/repositories/establishment-repository'
 import { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
@@ -119,6 +124,23 @@ export function makeDownloadFiscalDanfeUseCase(): DownloadFiscalDanfeUseCase {
 
 export function makeExportFiscalXmlsUseCase(): ExportFiscalXmlsUseCase {
   return new ExportFiscalXmlsUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeFiscalEventsRepository(): FiscalEventsRepository {
+  return new FiscalEventsRepository()
+}
+
+/**
+ * Controller das cartas de correção, montado ao lado do detalhe do documento.
+ */
+export function makeCorrectionLettersController(): CorrectionLettersController {
+  const repository = makeFiscalEventsRepository()
+
+  return new CorrectionLettersController(
+    new ListCorrectionLettersUseCase(repository),
+    new CreateCorrectionLetterUseCase(repository),
+    new DownloadCorrectionLetterXmlUseCase(repository),
+  )
 }
 
 /**

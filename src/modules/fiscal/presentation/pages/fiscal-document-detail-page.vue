@@ -5,7 +5,13 @@ import { Button, Icon, Skeleton } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
 import FiscalDocumentStatusBadge from '@/modules/fiscal/presentation/components/fiscal-document-status-badge.vue'
 import CancelFiscalDocumentDialog from '@/modules/fiscal/presentation/components/cancel-fiscal-document-dialog.vue'
-import { makeFiscalDocumentDetailController } from '@/modules/fiscal/factories/fiscal.factory'
+import CorrectionLetterDialog from '@/modules/fiscal/presentation/components/correction-letter-dialog.vue'
+import CorrectionLettersSection from '@/modules/fiscal/presentation/components/correction-letters-section.vue'
+import type { FiscalCorrectionLetter } from '@/modules/fiscal/domain/entities/fiscal-correction-letter.entity'
+import {
+  makeCorrectionLettersController,
+  makeFiscalDocumentDetailController,
+} from '@/modules/fiscal/factories/fiscal.factory'
 import type { FiscalXmlType } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import { fiscalDocumentModelLabels } from '@/core/enums/fiscal-document-model.enum'
 import { fiscalEnvironmentLabels } from '@/core/enums/fiscal-environment.enum'
@@ -16,6 +22,7 @@ import { routeNames } from '@/router/route-names'
 import { usePermissions } from '@/shared/composables'
 
 const controller = makeFiscalDocumentDetailController()
+const lettersController = makeCorrectionLettersController()
 const route = useRoute()
 const { can } = usePermissions()
 
@@ -24,10 +31,20 @@ const document = computed(() => controller.document.value)
 const canCancel = computed(() => can('fiscal.cancel'))
 const canRead = computed(() => can('fiscal.read'))
 const canEmit = computed(() => can('fiscal.emit'))
+const canCce = computed(() => can('fiscal.cce'))
 
 /** Cancelar só faz sentido para documento autorizado. */
 const showCancel = computed(
   () => canCancel.value && document.value?.status === 'AUTORIZADO',
+)
+/** Corrigir também: nota rejeitada ou cancelada não se corrige, se reemite. */
+const showCorrectionLetter = computed(
+  () => canCce.value && document.value?.status === 'AUTORIZADO',
+)
+/** Última condição de uso lida — vem do servidor, não de constante local. */
+const condicaoDeUso = computed(
+  () =>
+    lettersController.letters.value.at(-1)?.condicaoDeUso ?? null,
 )
 /** Reprocessar disponível para documentos em falha. */
 const showRetry = computed(
@@ -48,9 +65,15 @@ const hasActions = computed(
 )
 
 const cancelOpen = ref(false)
+const correctionOpen = ref(false)
 const qrCopied = ref(false)
 
-onMounted(() => controller.load(String(route.params.id)))
+onMounted(() => {
+  const id = String(route.params.id)
+  void controller.load(id)
+  // Só quem lê o documento lê as correções — as duas usam `fiscal.read`.
+  if (canRead.value) void lettersController.load(id)
+})
 onUnmounted(() => controller.dispose())
 
 function goBack(): void {
@@ -60,6 +83,18 @@ function goBack(): void {
 async function onCancelConfirm(justificativa: string): Promise<void> {
   const ok = await controller.cancel(justificativa)
   if (ok) cancelOpen.value = false
+}
+
+async function onCorrectionConfirm(correcao: string): Promise<void> {
+  const ok = await lettersController.create(correcao)
+  if (ok) correctionOpen.value = false
+}
+
+function onDownloadLetterXml(letter: FiscalCorrectionLetter): void {
+  void lettersController.downloadXml(
+    letter,
+    document.value?.chaveAcesso ?? undefined,
+  )
 }
 
 async function copyQrCode(): Promise<void> {
@@ -283,6 +318,13 @@ function ncmOf(item: { ncm?: string; ncm_code?: string }): string {
           </li>
         </ol>
       </FormSection>
+
+      <!-- Cartas de correção — some quando não há nenhuma -->
+      <CorrectionLettersSection
+        :letters="lettersController.letters.value"
+        :downloading-sequencia="lettersController.downloadingSequencia.value"
+        @download="onDownloadLetterXml"
+      />
 
       <!-- Eventos técnicos -->
       <FormSection
@@ -534,6 +576,18 @@ function ncmOf(item: { ncm?: string; ncm_code?: string }): string {
             Consultar situação
           </Button>
 
+          <!-- Carta de correção -->
+          <Button
+            v-if="showCorrectionLetter"
+            variant="ghost"
+            class="w-full justify-center"
+            :disabled="lettersController.creating.value"
+            @click="correctionOpen = true"
+          >
+            <template #icon><Icon name="PenLine" size="sm" /></template>
+            Carta de correção
+          </Button>
+
           <!-- Cancelar -->
           <Button
             v-if="showCancel"
@@ -564,5 +618,14 @@ function ncmOf(item: { ncm?: string; ncm_code?: string }): string {
     v-model="cancelOpen"
     :loading="controller.cancelling.value"
     @confirm="onCancelConfirm"
+  />
+
+  <!-- Diálogo da carta de correção -->
+  <CorrectionLetterDialog
+    v-model="correctionOpen"
+    :loading="lettersController.creating.value"
+    :restantes="lettersController.restantes.value"
+    :condicao-de-uso="condicaoDeUso"
+    @confirm="onCorrectionConfirm"
   />
 </template>
