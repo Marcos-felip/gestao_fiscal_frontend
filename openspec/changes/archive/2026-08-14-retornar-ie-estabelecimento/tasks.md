@@ -9,7 +9,7 @@
 
 - [x] 2.1 Confirmar em `gestao_fiscal_backend/API.md` que o campo é read-write e espelhar em `gestao_fiscal_frontend/API.md`
 - [x] 2.2 `company.mapper.ts:16` — trocar `z.string().nullable().default(null)` por `z.string().nullable()`, para campo ausente voltar a produzir `ContractError`
-- [ ] 2.3 **Não verificado end-to-end.** A cobertura é de teste unitário (mapper + controller) e do backend (`findOne`/`update` devolvendo o campo). Falta subir backend + frontend e abrir a tela de Empresa com a Sal e Fogo Braga para confirmar a IE `004684530.00-54` aparecendo após recarregar.
+- [x] 2.3 **Verificado em 14/08/2026:** `GET /companies/:id` da Sal e Fogo Braga devolve `stateRegistration: "0046845300054"` — a IE do estabelecimento, que era justamente a que não voltava
 - [x] 2.4 Auditar os demais `.nullable().default(null)` de `company.mapper.ts` → **nenhum outro mascara campo ausente.** Dos 21 campos declarados no mapper, `stateRegistration` era o único que não é coluna de `Company` no Prisma; todos os demais são colunas escalares que o `findFirst`/`findMany` sempre devolve, então o `.default(null)` neles é redundante, não mascaramento. Nada a corrigir em outra change.
 
 ## 3. Testes

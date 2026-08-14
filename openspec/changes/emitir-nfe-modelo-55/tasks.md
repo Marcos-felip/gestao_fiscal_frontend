@@ -24,8 +24,8 @@
 
 ## 4. Configuração fiscal
 
-- [ ] 4.1 Série e próxima numeração de NF-e na tela, ao lado das de NFC-e — **não feito.** O backend já tem os campos e o default (série 1, número 1) serve para começar; a tela só é necessária quando alguém precisar continuar uma numeração vinda de outro sistema
-- [ ] 4.2 Deixar explícito que as sequências são independentes — junto com 4.1
+- [x] 4.1 **Feito em 13/08/2026:** série e próxima numeração da NF-e na tela, em bloco próprio ao lado das da NFC-e
+- [x] 4.2 Cada modelo tem seu `fieldset` com `legend`, o que deixa as duas sequências visivelmente separadas
 
 ## 5. Emissão
 
