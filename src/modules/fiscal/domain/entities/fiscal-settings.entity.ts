@@ -1,3 +1,4 @@
+import type { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 
 /** Dados do estabelecimento referenciados na resposta de configuração fiscal. */
@@ -16,6 +17,11 @@ export class FiscalSettings {
   readonly establishmentId: string
   readonly companyId: string
   readonly ambiente: FiscalEnvironment
+  /**
+   * Modelos que o estabelecimento emite. Define o que a liberação de produção
+   * cobra: CSC e consulta pública só valem para quem emite NFC-e.
+   */
+  readonly modelosEmitidos: FiscalDocumentModel[]
   readonly serieNfce: number
   readonly proximoNumeroNfce: number
   /** Série da NF-e modelo 55, independente da NFC-e. */
@@ -37,6 +43,7 @@ export class FiscalSettings {
     establishmentId: string
     companyId: string
     ambiente: FiscalEnvironment
+    modelosEmitidos: FiscalDocumentModel[]
     serieNfce: number
     proximoNumeroNfce: number
     serieNfe: number
@@ -56,6 +63,7 @@ export class FiscalSettings {
     this.establishmentId = fields.establishmentId
     this.companyId = fields.companyId
     this.ambiente = fields.ambiente
+    this.modelosEmitidos = fields.modelosEmitidos
     this.serieNfce = fields.serieNfce
     this.proximoNumeroNfce = fields.proximoNumeroNfce
     this.serieNfe = fields.serieNfe

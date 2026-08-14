@@ -1,10 +1,13 @@
 import { z } from 'zod'
+import { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 import { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 import { toFormErrors } from '@/core/utils/zod-errors'
 
 /** Valores do formulário de configuração fiscal (números como texto no input). */
 export interface FiscalSettingsFormValues {
   ambiente: FiscalEnvironment
+  /** Modelos que o estabelecimento emite — ao menos um. */
+  modelosEmitidos: FiscalDocumentModel[]
   serieNfce: string
   proximoNumeroNfce: string
   /** Série e numeração da NF-e modelo 55, independentes das da NFC-e. */
@@ -76,6 +79,11 @@ const idCscField = z
 
 const baseSchema = z.object({
   ambiente: z.nativeEnum(FiscalEnvironment),
+  // Sem modelo o estabelecimento não emite nada — e o checklist de produção
+  // não teria o que cobrar.
+  modelosEmitidos: z
+    .array(z.nativeEnum(FiscalDocumentModel))
+    .min(1, 'Escolha ao menos um modelo que este estabelecimento emite'),
   serieNfce: serieField,
   serieNfe: serieField,
   codigoCsc: codigoCscField,

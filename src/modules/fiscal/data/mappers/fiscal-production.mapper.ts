@@ -8,6 +8,7 @@ import type {
   ProductionChecklistItem,
   ConsultaPublicaResult,
 } from '@/modules/fiscal/domain/responses/production-checklist'
+import { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 function toDate(value: string): Date {
@@ -25,6 +26,8 @@ const checklistItemSchema = z.object({
   ok: z.boolean(),
   detalhe: z.string().optional(),
   bloqueante: z.boolean().optional(),
+  // Ausente = vale para todos os modelos, como o certificado.
+  modelo: z.nativeEnum(FiscalDocumentModel).optional(),
 })
 
 const productionChecklistSchema = z.object({
@@ -54,6 +57,7 @@ export function toProductionChecklist(
         ok: i.ok,
         detalhe: i.detalhe,
         bloqueante: i.bloqueante,
+        modelo: i.modelo,
       }),
     ),
   })

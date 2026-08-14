@@ -4,6 +4,7 @@ import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { FiscalSettings } from '@/modules/fiscal/domain/entities/fiscal-settings.entity'
 import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
+import { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 function toDate(value: string): Date {
@@ -28,6 +29,8 @@ const fiscalSettingsSchema = z.object({
   establishmentId: z.string(),
   companyId: z.string(),
   ambiente: z.string(),
+  // Lista vazia é o que a configuração antiga significava: os dois modelos.
+  modelosEmitidos: z.array(z.nativeEnum(FiscalDocumentModel)).default([]),
   serieNfce: z.number().default(1),
   proximoNumeroNfce: z.number().default(1),
   serieNfe: z.number().default(1),
@@ -52,6 +55,10 @@ function build(value: FiscalSettingsPayload): FiscalSettings {
     establishmentId: value.establishmentId,
     companyId: value.companyId,
     ambiente: value.ambiente as FiscalEnvironment,
+    modelosEmitidos:
+      value.modelosEmitidos.length > 0
+        ? value.modelosEmitidos
+        : [FiscalDocumentModel.NFCE, FiscalDocumentModel.NFE],
     serieNfce: value.serieNfce,
     proximoNumeroNfce: value.proximoNumeroNfce,
     serieNfe: value.serieNfe,

@@ -34,6 +34,11 @@ import {
   fiscalEnvironmentLabels,
   fiscalEnvironmentOptions,
 } from '@/core/enums/fiscal-environment.enum'
+import {
+  FiscalDocumentModel,
+  fiscalDocumentModelLabels,
+  fiscalDocumentModelOptions,
+} from '@/core/enums/fiscal-document-model.enum'
 import { establishmentTypeOptions } from '@/core/enums/establishment-type.enum'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { useProgress } from '@/shared/composables'
@@ -202,6 +207,7 @@ const isEdit = computed(() => Boolean(settings.value))
 // --- Formulário de configuração ---
 const form = reactive<FiscalSettingsFormValues>({
   ambiente: FiscalEnvironment.HOMOLOGACAO,
+  modelosEmitidos: [FiscalDocumentModel.NFCE, FiscalDocumentModel.NFE],
   serieNfce: '1',
   proximoNumeroNfce: '1',
   serieNfe: '1',
@@ -216,6 +222,7 @@ const baseline = ref<FiscalSettingsFormValues>({ ...form })
 function seedForm(value: FiscalSettings | null): void {
   if (value) {
     form.ambiente = value.ambiente
+    form.modelosEmitidos = [...value.modelosEmitidos]
     form.serieNfce = String(value.serieNfce)
     form.proximoNumeroNfce = String(value.proximoNumeroNfce)
     form.serieNfe = String(value.serieNfe)
@@ -225,6 +232,9 @@ function seedForm(value: FiscalSettings | null): void {
     form.ativo = value.ativo
   } else {
     form.ambiente = FiscalEnvironment.HOMOLOGACAO
+    // Estabelecimento novo ainda não sabe o que vai emitir; marcar os dois é o
+    // que não trava a liberação depois.
+    form.modelosEmitidos = [FiscalDocumentModel.NFCE, FiscalDocumentModel.NFE]
     form.serieNfce = '1'
     form.proximoNumeroNfce = '1'
     form.serieNfe = '1'
@@ -242,10 +252,22 @@ function seedForm(value: FiscalSettings | null): void {
 watch(settings, (value) => seedForm(value))
 
 const isDirty = computed(() =>
-  (Object.keys(form) as (keyof FiscalSettingsFormValues)[]).some(
-    (key) => form[key] !== baseline.value[key],
+  (Object.keys(form) as (keyof FiscalSettingsFormValues)[]).some((key) =>
+    // `modelosEmitidos` é array: comparar por referência acusaria alteração a
+    // cada re-semeadura do formulário.
+    key === 'modelosEmitidos'
+      ? form.modelosEmitidos.join(',') !==
+        baseline.value.modelosEmitidos.join(',')
+      : form[key] !== baseline.value[key],
   ),
 )
+
+/** Liga e desliga um modelo sem deixar a lista virar referência compartilhada. */
+function alternarModelo(modelo: FiscalDocumentModel): void {
+  form.modelosEmitidos = form.modelosEmitidos.includes(modelo)
+    ? form.modelosEmitidos.filter((m) => m !== modelo)
+    : [...form.modelosEmitidos, modelo]
+}
 
 /** Trim que devolve `undefined` quando vazio (não envia campos em branco). */
 function optional(value: string): string | undefined {
@@ -267,6 +289,7 @@ async function onSubmit(): Promise<void> {
         current.establishment.id,
         new UpdateFiscalSettingsDto({
           ambiente: form.ambiente,
+          modelosEmitidos: [...form.modelosEmitidos],
           serieNfce: Number(form.serieNfce),
           proximoNumeroNfce: Number(form.proximoNumeroNfce),
           serieNfe: Number(form.serieNfe),
@@ -381,6 +404,40 @@ const checklistOkCount = computed(() => {
 const checklistTotalCount = computed(
   () => controller.checklist.value?.itens.length ?? 0,
 )
+
+/**
+ * Pendências que **impedem** a liberação.
+ *
+ * O botão olhava o total: bastava um item não bloqueante pendente — consulta
+ * pública, que só se valida depois de liberar, ou produtos com cadastro fiscal
+ * incompleto — para a liberação ficar impossível pela tela, embora o backend a
+ * aceitasse. Quem decide o que trava é o `bloqueante` de cada item.
+ */
+const checklistBloqueiosPendentes = computed(
+  () =>
+    (controller.checklist.value?.itens ?? []).filter(
+      (i) => !i.ok && i.bloqueante !== false,
+    ).length,
+)
+
+/**
+ * Checklist agrupado: primeiro o que vale para todos, depois um bloco por
+ * modelo. Uma lista plana não responde "falta o quê, para qual nota?".
+ */
+const checklistGrupos = computed(() => {
+  const itens = controller.checklist.value?.itens ?? []
+
+  return {
+    comuns: itens.filter((i) => !i.modelo),
+    porModelo: fiscalDocumentModelOptions
+      .map((opcao) => ({
+        modelo: opcao.value,
+        label: fiscalDocumentModelLabels[opcao.value],
+        itens: itens.filter((i) => i.modelo === opcao.value),
+      }))
+      .filter((grupo) => grupo.itens.length > 0),
+  }
+})
 
 async function onReleaseProduction(): Promise<void> {
   const current = editing.value
@@ -807,6 +864,56 @@ const item = {
                     Desative para impedir a emissão neste estabelecimento.
                   </span>
                 </div>
+              </div>
+
+              <!--
+                Quais modelos este estabelecimento emite. Não é enfeite: é o
+                que a liberação de produção usa para saber o que cobrar — CSC e
+                consulta pública só valem para quem emite NFC-e.
+              -->
+              <div>
+                <span class="mb-1.5 block text-sm font-medium text-foreground">
+                  Modelos emitidos
+                </span>
+
+                <div class="flex flex-wrap gap-2">
+                  <label
+                    v-for="opcao in fiscalDocumentModelOptions"
+                    :key="opcao.value"
+                    class="flex cursor-pointer items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition-colors"
+                    :class="
+                      form.modelosEmitidos.includes(opcao.value)
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-line-2 text-muted-foreground hover:bg-muted'
+                    "
+                  >
+                    <input
+                      type="checkbox"
+                      class="sr-only"
+                      :checked="form.modelosEmitidos.includes(opcao.value)"
+                      @change="alternarModelo(opcao.value)"
+                    />
+                    <Icon
+                      :name="
+                        form.modelosEmitidos.includes(opcao.value)
+                          ? 'CheckCircle2'
+                          : 'Circle'
+                      "
+                      size="sm"
+                    />
+                    {{ opcao.label }}
+                  </label>
+                </div>
+
+                <span
+                  v-if="errors.modelosEmitidos"
+                  class="mt-1.5 block text-xs text-error-600"
+                >
+                  {{ errors.modelosEmitidos }}
+                </span>
+                <span v-else class="mt-1.5 block text-xs text-muted-foreground">
+                  Define o que a liberação de produção vai exigir.
+                </span>
               </div>
 
               <!--
@@ -1355,18 +1462,18 @@ const item = {
                   </span>
                 </div>
 
+                <!-- Itens que valem para qualquer modelo -->
                 <ul class="grid gap-2 sm:grid-cols-2">
                   <li
-                    v-for="(checkItem, index) in controller.checklist.value
-                      .itens"
-                    :key="index"
+                    v-for="(checkItem, index) in checklistGrupos.comuns"
+                    :key="`comum-${index}`"
                     :class="[
                       'flex items-start gap-2 rounded-lg border px-3 py-2 text-sm',
                       checkItem.ok
                         ? 'border-success-500/20 bg-success-500/5 text-success-600'
-                        : checkItem.bloqueante
-                          ? 'border-error-500/20 bg-error-500/5 text-error-600'
-                          : 'border-warning-500/20 bg-warning-500/5 text-warning-700',
+                        : checkItem.bloqueante === false
+                          ? 'border-warning-500/20 bg-warning-500/5 text-warning-700'
+                          : 'border-error-500/20 bg-error-500/5 text-error-600',
                     ]"
                   >
                     <Icon
@@ -1386,6 +1493,53 @@ const item = {
                   </li>
                 </ul>
 
+                <!--
+                  Um bloco por modelo: a pergunta de quem vai liberar é
+                  "falta o quê, para qual nota?".
+                -->
+                <div
+                  v-for="grupo in checklistGrupos.porModelo"
+                  :key="grupo.modelo"
+                >
+                  <p
+                    class="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                  >
+                    {{ grupo.label }}
+                  </p>
+
+                  <ul class="grid gap-2 sm:grid-cols-2">
+                    <li
+                      v-for="(checkItem, index) in grupo.itens"
+                      :key="`${grupo.modelo}-${index}`"
+                      :class="[
+                        'flex items-start gap-2 rounded-lg border px-3 py-2 text-sm',
+                        checkItem.ok
+                          ? 'border-success-500/20 bg-success-500/5 text-success-600'
+                          : checkItem.bloqueante === false
+                            ? 'border-warning-500/20 bg-warning-500/5 text-warning-700'
+                            : 'border-error-500/20 bg-error-500/5 text-error-600',
+                      ]"
+                    >
+                      <Icon
+                        :name="checkItem.ok ? 'CircleCheck' : 'CircleX'"
+                        size="sm"
+                        class="mt-0.5 shrink-0"
+                      />
+                      <span class="min-w-0">
+                        <span class="block font-medium">
+                          {{ checkItem.item }}
+                        </span>
+                        <span
+                          v-if="checkItem.detalhe"
+                          class="block text-xs opacity-80"
+                        >
+                          {{ checkItem.detalhe }}
+                        </span>
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+
                 <div class="flex flex-wrap gap-2 border-t border-line-2 pt-4">
                   <Button
                     v-if="!controller.checklist.value.liberada && canEdit"
@@ -1393,7 +1547,7 @@ const item = {
                     text-class="text-white"
                     :loading="controller.releasingProduction.value"
                     loading-text="Liberando…"
-                    :disabled="checklistOkCount < checklistTotalCount"
+                    :disabled="checklistBloqueiosPendentes > 0"
                     @click="onReleaseProduction"
                   >
                     <template #icon

@@ -1,7 +1,9 @@
+import type { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
 
 export class UpdateFiscalSettingsDto {
   ambiente?: FiscalEnvironment
+  modelosEmitidos?: FiscalDocumentModel[]
   serieNfce?: number
   proximoNumeroNfce?: number
   serieNfe?: number
@@ -16,6 +18,7 @@ export class UpdateFiscalSettingsDto {
 
   constructor(fields: {
     ambiente?: FiscalEnvironment
+    modelosEmitidos?: FiscalDocumentModel[]
     serieNfce?: number
     proximoNumeroNfce?: number
     serieNfe?: number
@@ -29,6 +32,7 @@ export class UpdateFiscalSettingsDto {
     ativo?: boolean
   }) {
     this.ambiente = fields.ambiente
+    this.modelosEmitidos = fields.modelosEmitidos
     this.serieNfce = fields.serieNfce
     this.proximoNumeroNfce = fields.proximoNumeroNfce
     this.serieNfe = fields.serieNfe

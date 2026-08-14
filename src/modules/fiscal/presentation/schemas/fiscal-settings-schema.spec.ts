@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
+import { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 import {
   validateFiscalSettings,
   type FiscalSettingsFormValues,
@@ -12,6 +13,7 @@ const values = (
   overrides: Partial<FiscalSettingsFormValues> = {},
 ): FiscalSettingsFormValues => ({
   ambiente: FiscalEnvironment.HOMOLOGACAO,
+  modelosEmitidos: [FiscalDocumentModel.NFCE],
   serieNfce: '1',
   proximoNumeroNfce: '1',
   serieNfe: '1',
@@ -20,6 +22,29 @@ const values = (
   idCsc: '000001',
   ativo: true,
   ...overrides,
+})
+
+describe('validateFiscalSettings — modelos emitidos', () => {
+  it('aceita um modelo só', () => {
+    expect(
+      validateFiscalSettings(
+        values({ modelosEmitidos: [FiscalDocumentModel.NFE] }),
+        true,
+      ).ok,
+    ).toBe(true)
+  })
+
+  it('recusa nenhum modelo, em português', () => {
+    // Sem modelo o estabelecimento não emite nada, e o checklist de produção
+    // não teria o que cobrar.
+    const resultado = validateFiscalSettings(
+      values({ modelosEmitidos: [] }),
+      true,
+    )
+
+    expect(resultado.ok).toBe(false)
+    expect(resultado.errors.modelosEmitidos).toContain('ao menos um modelo')
+  })
 })
 
 describe('validateFiscalSettings — código CSC', () => {

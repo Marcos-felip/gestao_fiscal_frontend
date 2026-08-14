@@ -1288,6 +1288,27 @@ dias e lote acima de 5.000 documentos. Os dois viram `ValidationError` e a
 O ZIP também traz `<chave>-cce-NN.xml` para cada carta de correção, e o manifesto
 ganhou a coluna **Cartas de correção**.
 
+### Checklist de produção — apurado por modelo
+
+`GET /fiscal/settings/:establishmentId/producao/checklist` devolve os itens já
+filtrados pelos modelos que o estabelecimento emite (`modelosEmitidos` da
+configuração). Cada item pode trazer:
+
+| Campo | Significado |
+|---|---|
+| `modelo` | `NFE` ou `NFCE`. **Ausente = vale para todos** (é o caso do certificado) |
+| `bloqueante` | `false` quando o item não impede a liberação. **Ausente = bloqueante** |
+
+> ⚠️ **O botão de liberar produção deve olhar `bloqueante`, não o total.** Existem
+> itens que nunca ficam `ok` antes da liberação — a consulta pública só se valida
+> depois de emitir, e produtos com cadastro fiscal incompleto são aviso. Exigir
+> todos os itens tornava a liberação impossível pela tela, embora o backend a
+> aceitasse.
+
+`modelosEmitidos` entra no `PATCH /fiscal/settings/:establishmentId` como array
+de `NFE`/`NFCE`, com **ao menos um** — o backend recusa a lista vazia com `400`.
+Lista vazia vinda do servidor (configuração antiga) vale como os dois modelos.
+
 ### Carta de correção — `fiscal.cce`
 
 | Rota | Uso |
