@@ -14,8 +14,13 @@ import {
 import FormSection from '@/shared/components/form/form-section.vue'
 import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import FiscalSettingsNav from '@/modules/fiscal/presentation/components/fiscal-settings-nav.vue'
+import InutilizeNumberingDialog from '@/modules/fiscal/presentation/components/inutilize-numbering-dialog.vue'
 import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
-import { makeFiscalSettingsController } from '@/modules/fiscal/factories/fiscal.factory'
+import type { InutilizacaoPedido } from '@/modules/fiscal/presentation/controllers/inutilization-controller'
+import {
+  makeFiscalSettingsController,
+  makeInutilizationController,
+} from '@/modules/fiscal/factories/fiscal.factory'
 import {
   validateFiscalSettings,
   type FiscalSettingsErrors,
@@ -41,8 +46,18 @@ const progress = useProgress()
 const { can } = usePermissions()
 
 const canEdit = computed(() => can('fiscal.settings.edit'))
+/** Inutilizar tem permissão própria: quem edita a série não queima numeração. */
+const canInutilizar = computed(() => can('fiscal.inutilizar'))
 
 const establishmentId = String(route.params.establishmentId)
+
+const inutilizationController = makeInutilizationController()
+const inutilizarOpen = ref(false)
+
+async function onInutilizarConfirm(pedido: InutilizacaoPedido): Promise<void> {
+  const ok = await inutilizationController.inutilize(pedido)
+  if (ok) inutilizarOpen.value = false
+}
 
 /** Estado da própria página (independente do carregamento do controller). */
 const ready = ref(false)
@@ -494,6 +509,11 @@ onMounted(async () => {
   ready.value = true
   if (found) {
     void controller.loadChecklist(establishmentId)
+    // As faixas perdidas são calculadas pelo servidor; carregar aqui é o que
+    // permite oferecê-las em vez de deixar digitar a faixa.
+    if (canInutilizar.value) {
+      void inutilizationController.loadPending(establishmentId)
+    }
   }
 })
 
@@ -873,6 +893,54 @@ const item = {
                 </div>
               </fieldset>
             </fieldset>
+          </FormSection>
+        </motion.div>
+        
+        <motion.div
+          v-if="secao === 'numeracao' && isEdit && canInutilizar"
+          :variants="item"
+        >
+          <FormSection
+            icon="FileMinus2"
+            title="Inutilizar numeração"
+            description="Regulariza números reservados que nunca viraram nota."
+          >
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div class="min-w-0 max-w-prose">
+                <p
+                  v-if="inutilizationController.hasPending.value"
+                  class="flex items-start gap-2 text-sm text-warning-700"
+                >
+                  <Icon
+                    name="TriangleAlert"
+                    size="sm"
+                    class="mt-0.5 shrink-0"
+                  />
+                  <span>
+                    Há numeração perdida neste estabelecimento — números
+                    reservados que nunca viraram documento. O fisco espera que
+                    essa faixa seja inutilizada.
+                  </span>
+                </p>
+                <p v-else class="text-sm text-muted-foreground">
+                  Nenhuma numeração perdida encontrada. A sequência das notas
+                  está contínua.
+                </p>
+
+                <p class="mt-2 text-xs text-muted-foreground">
+                  Inutilizar é irreversível: os números não voltam a ser usados.
+                </p>
+              </div>
+
+              <Button
+                variant="ghost"
+                class="shrink-0 text-error-600 hover:bg-error-500/10"
+                @click="inutilizarOpen = true"
+              >
+                <template #icon><Icon name="Ban" size="sm" /></template>
+                Inutilizar numeração
+              </Button>
+            </div>
           </FormSection>
         </motion.div>
 
@@ -1525,5 +1593,18 @@ const item = {
         </form>
       </div>
     </div>
+
+    <!-- Diálogo de inutilização -->
+    <InutilizeNumberingDialog
+      v-if="settings"
+      v-model="inutilizarOpen"
+      :loading="inutilizationController.submitting.value"
+      :pending-ranges="inutilizationController.pendingRanges.value"
+      :serie-nfce="settings.serieNfce"
+      :serie-nfe="settings.serieNfe"
+      :conflito="inutilizationController.conflito.value"
+      @confirm="onInutilizarConfirm"
+      @limpar-conflito="inutilizationController.limparConflito()"
+    />
   </template>
 </template>

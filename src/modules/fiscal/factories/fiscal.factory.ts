@@ -37,8 +37,11 @@ import type { FiscalDocumentsEstablishmentsLoader } from '@/modules/fiscal/prese
 import { CreateCorrectionLetterUseCase } from '@/modules/fiscal/application/use-cases/create-correction-letter.use-case'
 import { ListCorrectionLettersUseCase } from '@/modules/fiscal/application/use-cases/list-correction-letters.use-case'
 import { DownloadCorrectionLetterXmlUseCase } from '@/modules/fiscal/application/use-cases/download-correction-letter-xml.use-case'
+import { InutilizeNumberingUseCase } from '@/modules/fiscal/application/use-cases/inutilize-numbering.use-case'
+import { ListPendingRangesUseCase } from '@/modules/fiscal/application/use-cases/list-pending-ranges.use-case'
 import { FiscalDocumentDetailController } from '@/modules/fiscal/presentation/controllers/fiscal-document-detail-controller'
 import { CorrectionLettersController } from '@/modules/fiscal/presentation/controllers/correction-letters-controller'
+import { InutilizationController } from '@/modules/fiscal/presentation/controllers/inutilization-controller'
 import { SaleFiscalController } from '@/modules/fiscal/presentation/controllers/sale-fiscal-controller'
 import { EstablishmentRepository } from '@/modules/establishments/data/repositories/establishment-repository'
 import { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
@@ -140,6 +143,16 @@ export function makeCorrectionLettersController(): CorrectionLettersController {
     new ListCorrectionLettersUseCase(repository),
     new CreateCorrectionLetterUseCase(repository),
     new DownloadCorrectionLetterXmlUseCase(repository),
+  )
+}
+
+/** Controller da inutilização de numeração, usado na configuração fiscal. */
+export function makeInutilizationController(): InutilizationController {
+  const repository = makeFiscalEventsRepository()
+
+  return new InutilizationController(
+    new InutilizeNumberingUseCase(repository),
+    new ListPendingRangesUseCase(repository),
   )
 }
 
