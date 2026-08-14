@@ -1285,6 +1285,74 @@ exportação continua com `200`.
 dias e lote acima de 5.000 documentos. Os dois viram `ValidationError` e a
 `message` traz a orientação de como fatiar o pedido — exiba-a como veio.
 
+O ZIP também traz `<chave>-cce-NN.xml` para cada carta de correção, e o manifesto
+ganhou a coluna **Cartas de correção**.
+
+### Carta de correção — `fiscal.cce`
+
+| Rota | Uso |
+|---|---|
+| `POST /fiscal/documents/:id/carta-correcao` | emite a CC-e |
+| `GET /fiscal/documents/:id/cartas-correcao` | histórico (array cru, sem envelope) |
+| `GET /fiscal/documents/:id/cartas-correcao/:sequencia/xml` | XML, **texto cru** |
+
+**Body:** `{ "correcao": "15 a 1000 caracteres" }` — e nada mais.
+
+> ⚠️ **Não existe campo de sequência.** Quem a atribui é o servidor, a partir das
+> correções que a nota já tem. Um `sequencia` vindo daqui seria adivinhação, e
+> duas correções simultâneas escolheriam o mesmo número.
+
+**Resposta**
+
+```jsonc
+{
+  "id": "uuid",
+  "sequencia": 1,
+  "correcao": "…",
+  "condicaoDeUso": "A Carta de Correção é disciplinada pelo § 1º-A…",
+  "protocolo": "131260000000001",
+  "xmlEvento": "…",             // chave do storage ou o XML; use a rota de download
+  "createdAt": "2026-08-14T12:00:00.000Z"
+}
+```
+
+> **Exiba a `condicaoDeUso` que veio na resposta, não uma constante copiada.** O
+> texto legal muda com o tempo, e o que vale é o que estava vigente quando a
+> correção foi feita — por isso ele é gravado com a carta.
+
+**O contador de restantes sai do histórico:** `20 − cartas.length`. O limite de 20
+é legal; a 21ª volta `400` citando-o.
+
+**Erros `400`** (`ValidationError`, exiba como veio): documento não está
+`AUTORIZADO`, limite atingido, texto fora de 15–1000, ou recusa da SEFAZ.
+
+### Inutilização de numeração — `fiscal.inutilizar`
+
+| Rota | Uso |
+|---|---|
+| `POST /fiscal/inutilizacoes` | inutiliza a faixa |
+| `GET /fiscal/inutilizacoes/pendentes/:establishmentId` | faixas sugeridas |
+
+**Body:** `establishmentId`, `modelo` (`NFE`/`NFCE`), `serie`, `numeroInicial`,
+`numeroFinal`, `justificativa` (15–255) e `ano` opcional (padrão: o corrente).
+
+**Sugira, não peça para digitar.** `pendentes` devolve os números reservados que
+nunca viraram documento, já agrupados em faixas contíguas:
+
+```json
+[{ "modelo": "NFE", "serie": 1, "faixas": [{ "inicio": 1, "fim": 1 }] }]
+```
+
+> ⚠️ **É irreversível.** Faixa errada queima numeração válida. Por isso a tela
+> confirma duas vezes e repete os números por extenso na segunda etapa.
+
+**A recusa por conflito nomeia o número e a chave** — exiba a mensagem como veio,
+junto do formulário preenchido: é ela que permite corrigir o intervalo. Uma
+mensagem genérica deixaria o operador sem saber qual número tirar da faixa.
+
+Documento em `ERRO` ou `REJEITADO` dentro da faixa passa a `INUTILIZADO` — o
+décimo valor do enum de status, que até agora nada produzia.
+
 ---
 
 ## Paginação
