@@ -1,5 +1,20 @@
 > **Reveja esta proposta antes de começar** — escrita antes da etapa 3.
 
+> **Contrato fechado do lado do backend em 14/08/2026.** As quatro rotas estão em
+> `gestao_fiscal_backend/API.md` → *Carta de correção e inutilização*. O que muda
+> o desenho desta tela e não estava previsto aqui:
+>
+> - **A sequência da CC-e não é enviada** — o servidor a atribui. Não exista campo
+>   para ela; o contador de restantes vem de `GET /fiscal/documents/:id/cartas-correcao`.
+> - **A `condicaoDeUso` volta na resposta** (e também no `400` de recusa) e é
+>   gravada com a carta. É esse texto que a tela deve exibir, não uma constante
+>   copiada — o texto legal muda com o tempo.
+> - **Existe `GET /fiscal/inutilizacoes/pendentes/:establishmentId`**, que devolve
+>   as faixas de numeração perdida já calculadas. Sugerir a faixa é melhor do que
+>   deixar digitar: errar a faixa aqui é irreversível.
+> - **O conflito de faixa nomeia o número e a chave** na mensagem do `400` — dá
+>   para exibi-la direto, sem interpretação.
+
 ## 1. Pré-requisitos
 
 - [ ] 1.1 Change irmã do backend aplicada, com as permissões `fiscal.cce` e `fiscal.inutilizar` semeadas
