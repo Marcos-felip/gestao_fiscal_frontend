@@ -165,7 +165,7 @@ const destinatario = computed(() => {
   const nfe = snapshot.destinatarioNfe
   if (nfe) {
     return {
-      descricao: 'Identificado na nota, como o modelo 55 exige.',
+      descricao: 'Identificado na nota.',
       nome: nfe.nome,
       cpfCnpj: nfe.cpfCnpj,
       endereco: `${nfe.logradouro}, ${nfe.numero} — ${nfe.bairro}, ${nfe.municipio}/${nfe.uf}`,
@@ -588,7 +588,7 @@ function fmtDate(value: Date | null): string {
     <!-- Lateral -->
     <aside class="space-y-6">
       <!-- Identificação -->
-      <div class="rounded-xl border border-line-2 bg-background p-5">
+      <div class="ui-shadow-soft rounded-xl border border-line-2 bg-background p-5">
         <div class="flex items-center gap-3">
           <span
             class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
@@ -652,7 +652,7 @@ function fmtDate(value: Date | null): string {
       </div>
 
       <!-- Datas -->
-      <div class="rounded-xl border border-line-2 bg-background p-5">
+      <div class="ui-shadow-soft rounded-xl border border-line-2 bg-background p-5">
         <p
           class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
         >
@@ -692,7 +692,7 @@ function fmtDate(value: Date | null): string {
       <!-- Download de XML -->
       <div
         v-if="availableXmlTypes.length"
-        class="rounded-xl border border-line-2 bg-background p-5"
+        class="ui-shadow-soft rounded-xl border border-line-2 bg-background p-5"
       >
         <p
           class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
@@ -730,7 +730,7 @@ function fmtDate(value: Date | null): string {
       <!-- QR Code (NFC-e) -->
       <div
         v-if="document.qrCode"
-        class="rounded-xl border border-line-2 bg-background p-5"
+        class="ui-shadow-soft rounded-xl border border-line-2 bg-background p-5"
       >
         <p
           class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
@@ -768,7 +768,7 @@ function fmtDate(value: Date | null): string {
       <!-- Ações -->
       <div
         v-if="hasActions"
-        class="rounded-xl border border-line-2 bg-background p-5"
+        class="ui-shadow-soft rounded-xl border border-line-2 bg-background p-5"
       >
         <p
           class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
