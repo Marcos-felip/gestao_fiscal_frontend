@@ -76,5 +76,7 @@
   `condicaoDeUso` vinda na resposta, XML íntegro) e três faixas inutilizadas, incluindo
   modelo 65. A guarda recusou a faixa nomeando os números ocupados — que é a mensagem que
   o diálogo exibe junto do formulário
-- [ ] 8.2 Passar as mesmas ações **pela interface**, com o app aberto — só o contrato foi
-  exercitado até aqui
+- [x] 8.2 Percorridas **pela interface** em 14/08/2026: carta de correção no detalhe do
+  documento e inutilização na seção de numeração. Achado no caminho: o ícone
+  `FileMinus2` não existe nesta versão do Lucide, e a seção aparecia com o aviso de
+  ícone ausente

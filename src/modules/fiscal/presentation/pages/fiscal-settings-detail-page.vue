@@ -901,7 +901,7 @@ const item = {
           :variants="item"
         >
           <FormSection
-            icon="FileMinus2"
+            icon="FileMinus"
             title="Inutilizar numeração"
             description="Regulariza números reservados que nunca viraram nota."
           >
