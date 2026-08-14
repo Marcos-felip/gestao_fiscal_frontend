@@ -69,7 +69,12 @@
 
 - [x] 7.1 Atualizar `AGENTS.md` com os dois eventos
 
-## 8. Fora do escopo desta change
+## 8. Validação em homologação — feita em 14/08/2026
 
-- [ ] 8.1 Validação ponta a ponta em homologação: uma CC-e numa nota real e uma
-  inutilização de faixa — depende do motor no ar e do certificado A1
+- [x] 8.1 Os contratos que estas telas consomem foram exercitados contra a SEFAZ pelo
+  backend: duas CC-e homologadas numa NF-e real (sequência atribuída pelo servidor,
+  `condicaoDeUso` vinda na resposta, XML íntegro) e três faixas inutilizadas, incluindo
+  modelo 65. A guarda recusou a faixa nomeando os números ocupados — que é a mensagem que
+  o diálogo exibe junto do formulário
+- [ ] 8.2 Passar as mesmas ações **pela interface**, com o app aberto — só o contrato foi
+  exercitado até aqui
