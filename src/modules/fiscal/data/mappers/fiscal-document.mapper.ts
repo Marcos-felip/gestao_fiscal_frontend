@@ -5,7 +5,7 @@ import { ContractError } from '@/core/errors/contract-error'
 import { FiscalDocument } from '@/modules/fiscal/domain/entities/fiscal-document.entity'
 import { FiscalStatusHistory } from '@/modules/fiscal/domain/entities/fiscal-status-history.entity'
 import { FiscalDocumentEvent } from '@/modules/fiscal/domain/entities/fiscal-document-event.entity'
-import type { FiscalSnapshot } from '@/modules/fiscal/domain/value-objects/fiscal-snapshot'
+import { toFiscalSnapshot } from '@/modules/fiscal/data/mappers/fiscal-snapshot.mapper'
 import type { FiscalDocumentListResponse } from '@/modules/fiscal/domain/responses/fiscal-document-list-response'
 import type { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 import type { FiscalEnvironment } from '@/core/enums/fiscal-environment.enum'
@@ -136,6 +136,8 @@ function buildEvent(value: EventPayload): FiscalDocumentEvent {
 }
 
 function build(value: FiscalDocumentPayload): FiscalDocument {
+  const snapshot = toFiscalSnapshot(value.snapshot)
+
   return new FiscalDocument({
     id: value.id,
     companyId: value.companyId,
@@ -162,7 +164,10 @@ function build(value: FiscalDocumentPayload): FiscalDocument {
     idempotencyKey: value.idempotencyKey,
     attempts: value.attempts,
     engine: value.engine,
-    snapshot: (value.snapshot as FiscalSnapshot | null) ?? null,
+    snapshot,
+    // Havia snapshot e não foi possível lê-lo: a tela precisa dizer isso, em
+    // vez de mostrar uma nota sem itens.
+    snapshotIlegivel: value.snapshot != null && snapshot === null,
     createdAt: toDate(value.createdAt),
     updatedAt: toDate(value.updatedAt),
     establishment: value.establishment

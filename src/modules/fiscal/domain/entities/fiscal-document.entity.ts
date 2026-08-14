@@ -52,6 +52,12 @@ export class FiscalDocument {
   readonly attempts: number
   readonly engine: string | null
   readonly snapshot: FiscalSnapshot | null
+  /**
+   * Havia snapshot e não foi possível lê-lo. Distingue "nota sem retrato" de
+   * "retrato em formato desconhecido" — sem isso, a tela mostra uma nota sem
+   * itens como se ela realmente não tivesse nenhum.
+   */
+  readonly snapshotIlegivel: boolean
   readonly createdAt: Date
   readonly updatedAt: Date
   readonly establishment: FiscalDocumentEstablishmentRef | null
@@ -86,6 +92,7 @@ export class FiscalDocument {
     attempts: number
     engine: string | null
     snapshot: FiscalSnapshot | null
+    snapshotIlegivel?: boolean
     createdAt: Date
     updatedAt: Date
     establishment: FiscalDocumentEstablishmentRef | null
@@ -119,6 +126,7 @@ export class FiscalDocument {
     this.attempts = fields.attempts
     this.engine = fields.engine
     this.snapshot = fields.snapshot
+    this.snapshotIlegivel = fields.snapshotIlegivel ?? false
     this.createdAt = fields.createdAt
     this.updatedAt = fields.updatedAt
     this.establishment = fields.establishment

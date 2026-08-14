@@ -34,18 +34,60 @@ const validRaw = {
   idempotencyKey: 'idem-1',
   attempts: 1,
   engine: 'nfe-io',
+  // Formato real gravado pelo backend desde a versão 2: chaves em português.
+  // O fixture anterior usava `sale`/`items`/`payments`, que nunca existiram —
+  // por isso o teste passava enquanto a tela mostrava toda nota sem itens.
   snapshot: {
-    sale: { id: 'sale-1', saleNumber: 'V-1', totalAmount: 150.5 },
-    items: [
+    versao: 2,
+    venda: {
+      id: 'sale-1',
+      numero: 1,
+      subtotal: 150.5,
+      desconto: 0,
+      total: 150.5,
+      data: '2026-08-01T10:00:00.000Z',
+    },
+    emitente: {
+      cnpj: '51720322000146',
+      razaoSocial: 'Empresa Teste LTDA',
+      inscricaoEstadual: '0011234560012',
+      crt: '1',
+      logradouro: 'Rua Um',
+      numero: '10',
+      bairro: 'Centro',
+      codigoMunicipio: '3143302',
+      municipio: 'Montes Claros',
+      uf: 'MG',
+      cep: '39400000',
+    },
+    itens: [
       {
-        productId: 'p-1',
-        name: 'Produto',
-        quantity: 2,
-        unitPrice: 75.25,
-        total: 150.5,
+        numeroItem: 1,
+        codigoProduto: 'p-1',
+        descricao: 'Produto',
+        ncm: '16025000',
+        cfop: '5102',
+        unidadeComercial: 'UN',
+        quantidade: 2,
+        valorUnitario: 75.25,
+        imposto: {
+          icms: { situacao: '102', origem: 0 },
+          pis: { situacao: '07' },
+          cofins: { situacao: '07' },
+        },
       },
     ],
-    payments: [{ method: 'DINHEIRO', amount: 150.5 }],
+    pagamentos: [{ tipo: 'DINHEIRO', valor: 150.5 }],
+    valorTotal: 150.5,
+    totais: {
+      vProd: 150.5,
+      vBC: 0,
+      vICMS: 0,
+      vST: 0,
+      vPIS: 0,
+      vCOFINS: 0,
+      vNF: 150.5,
+    },
   },
   createdAt: '2026-08-01T09:59:00.000Z',
   updatedAt: '2026-08-01T10:00:05.000Z',
@@ -89,7 +131,10 @@ describe('toFiscalDocument', () => {
     expect(doc.hasXml('autorizado')).toBe(true)
     expect(doc.hasXml('cancelamento')).toBe(false)
     expect(doc.sale?.totalAmount).toBe(150.5)
-    expect(doc.snapshot?.items?.[0].total).toBe(150.5)
+    expect(doc.snapshot?.itens[0].descricao).toBe('Produto')
+    expect(doc.snapshot?.itens[0].imposto?.icms.situacao).toBe('102')
+    expect(doc.snapshot?.pagamentos[0].tipo).toBe('DINHEIRO')
+    expect(doc.snapshotIlegivel).toBe(false)
     expect(doc.statusHistory[0].statusTo).toBe('AUTORIZADO')
     expect(doc.statusHistory[0].createdAt).toBeInstanceOf(Date)
     expect(doc.events[0].tipo).toBe('AUTORIZACAO')

@@ -16,6 +16,11 @@ import type { FiscalXmlType } from '@/modules/fiscal/domain/entities/fiscal-docu
 import { fiscalDocumentModelLabels } from '@/core/enums/fiscal-document-model.enum'
 import { fiscalEnvironmentLabels } from '@/core/enums/fiscal-environment.enum'
 import { fiscalDocumentStatusLabels } from '@/core/enums/fiscal-document-status.enum'
+import {
+  fiscalPaymentCodeLabels,
+  type FiscalPaymentCode,
+} from '@/core/enums/fiscal-payment-code.enum'
+import type { FiscalSnapshotItem } from '@/modules/fiscal/domain/value-objects/fiscal-snapshot'
 import { formatDateTime } from '@/core/utils/date'
 import { formatMoney, formatQuantity } from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'
@@ -119,10 +124,99 @@ const hasRejection = computed(() => {
   )
 })
 
-const snapshotItems = computed(() => document.value?.snapshot?.items ?? [])
+const snapshotItems = computed(() => document.value?.snapshot?.itens ?? [])
 const snapshotPayments = computed(
-  () => document.value?.snapshot?.payments ?? [],
+  () => document.value?.snapshot?.pagamentos ?? [],
 )
+const snapshotNfe = computed(() => document.value?.snapshot?.nfe ?? null)
+const snapshotTotais = computed(() => document.value?.snapshot?.totais ?? null)
+const snapshotRecebimento = computed(
+  () => document.value?.snapshot?.recebimento ?? null,
+)
+
+const FINALIDADES: Record<number, string> = {
+  1: 'Normal',
+  2: 'Complementar',
+  3: 'Ajuste',
+  4: 'Devolução',
+}
+
+const finalidadeLabel = computed(() =>
+  snapshotNfe.value
+    ? (FINALIDADES[snapshotNfe.value.finalidade] ??
+      String(snapshotNfe.value.finalidade))
+    : '',
+)
+
+const INDICADORES_IE: Record<number, string> = {
+  1: 'Contribuinte de ICMS',
+  2: 'Isento de inscrição estadual',
+  9: 'Não contribuinte',
+}
+
+/**
+ * Destinatário exibido, venha ele do bloco da NF-e (completo e obrigatório) ou
+ * do da NFC-e (opcional, só quando o consumidor se identificou).
+ */
+const destinatario = computed(() => {
+  const snapshot = document.value?.snapshot
+  if (!snapshot) return null
+
+  const nfe = snapshot.destinatarioNfe
+  if (nfe) {
+    return {
+      descricao: 'Identificado na nota, como o modelo 55 exige.',
+      nome: nfe.nome,
+      cpfCnpj: nfe.cpfCnpj,
+      endereco: `${nfe.logradouro}, ${nfe.numero} — ${nfe.bairro}, ${nfe.municipio}/${nfe.uf}`,
+      indicadorIe: INDICADORES_IE[nfe.indicadorIe] ?? String(nfe.indicadorIe),
+      inscricaoEstadual: nfe.inscricaoEstadual ?? null,
+    }
+  }
+
+  const nfce = snapshot.destinatario
+  if (!nfce) return null
+
+  const endereco =
+    nfce.logradouro && nfce.municipio
+      ? `${nfce.logradouro}, ${nfce.numero ?? 's/n'} — ${nfce.municipio}/${nfce.uf ?? ''}`
+      : null
+
+  return {
+    descricao: 'Consumidor identificado na venda.',
+    nome: nfce.nome ?? null,
+    cpfCnpj: nfce.cpfCnpj ?? null,
+    endereco,
+    indicadorIe: null,
+    inscricaoEstadual: null,
+  }
+})
+
+const totaisExibidos = computed(() => {
+  const totais = snapshotTotais.value
+  if (!totais) return []
+
+  return [
+    { rotulo: 'Produtos', valor: totais.vProd },
+    { rotulo: 'Base do ICMS', valor: totais.vBC },
+    { rotulo: 'ICMS', valor: totais.vICMS },
+    { rotulo: 'ICMS ST', valor: totais.vST },
+    { rotulo: 'PIS', valor: totais.vPIS },
+    { rotulo: 'COFINS', valor: totais.vCOFINS },
+    { rotulo: 'Total da nota', valor: totais.vNF },
+  ]
+})
+
+/** Situação tributária do item, que é o que o contador procura primeiro. */
+function situacaoDoItem(item: FiscalSnapshotItem): string {
+  const icms = item.imposto?.icms
+  if (!icms) return ''
+  return `CSOSN/CST ${icms.situacao} · origem ${icms.origem}`
+}
+
+function formaDePagamento(tipo: string): string {
+  return fiscalPaymentCodeLabels[tipo as FiscalPaymentCode] ?? tipo
+}
 
 /** Tipos de XML disponíveis para download (só os que existem). */
 const xmlTypes: { tipo: FiscalXmlType; label: string; icon: string }[] = [
@@ -139,9 +233,6 @@ function fmtDate(value: Date | null): string {
   return value ? formatDateTime(value.toISOString()) : '—'
 }
 
-function ncmOf(item: { ncm?: string; ncm_code?: string }): string {
-  return item.ncm ?? item.ncm_code ?? '—'
-}
 </script>
 
 <template>
@@ -210,6 +301,97 @@ function ncmOf(item: { ncm?: string; ncm_code?: string }): string {
         </p>
       </div>
 
+      <!-- Snapshot ilegível: dizer, em vez de mostrar nota sem itens -->
+      <div
+        v-if="document.snapshotIlegivel"
+        class="flex items-start gap-2 rounded-xl border border-warning-500/30 bg-warning-500/10 px-4 py-3 text-sm text-warning-700"
+      >
+        <Icon name="TriangleAlert" size="sm" class="mt-0.5 shrink-0" />
+        <span>
+          Não foi possível ler o retrato desta nota — o formato guardado não é
+          reconhecido por esta versão do sistema. Os dados enviados à SEFAZ estão
+          no XML, que continua disponível para download.
+        </span>
+      </div>
+
+      <!-- Operação: o cabeçalho que só a NF-e tem -->
+      <FormSection
+        v-if="snapshotNfe"
+        icon="FileSignature"
+        title="Operação"
+        description="Cabeçalho declarado na emissão da NF-e."
+      >
+        <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <dt class="text-xs text-muted-foreground">Natureza da operação</dt>
+            <dd class="text-sm text-foreground">
+              {{ snapshotNfe.naturezaOperacao }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground">Tipo</dt>
+            <dd class="text-sm text-foreground">
+              {{ snapshotNfe.tipoOperacao === 0 ? 'Entrada' : 'Saída' }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground">Finalidade</dt>
+            <dd class="text-sm text-foreground">{{ finalidadeLabel }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted-foreground">Destino da mercadoria</dt>
+            <dd class="text-sm text-foreground">
+              {{
+                snapshotNfe.consumidorFinal
+                  ? 'Consumo ou uso do destinatário'
+                  : 'Revenda'
+              }}
+            </dd>
+          </div>
+        </dl>
+      </FormSection>
+
+      <!-- Destinatário: obrigatório na NF-e, opcional na NFC-e -->
+      <FormSection
+        v-if="destinatario"
+        icon="UserRound"
+        title="Destinatário"
+        :description="destinatario.descricao"
+      >
+        <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div v-if="destinatario.nome">
+            <dt class="text-xs text-muted-foreground">Nome</dt>
+            <dd class="text-sm text-foreground">{{ destinatario.nome }}</dd>
+          </div>
+          <div v-if="destinatario.cpfCnpj">
+            <dt class="text-xs text-muted-foreground">CNPJ / CPF</dt>
+            <dd class="text-sm tabular-nums text-foreground">
+              {{ destinatario.cpfCnpj }}
+            </dd>
+          </div>
+          <div v-if="destinatario.endereco" class="sm:col-span-2">
+            <dt class="text-xs text-muted-foreground">Endereço</dt>
+            <dd class="text-sm text-foreground">
+              {{ destinatario.endereco }}
+            </dd>
+          </div>
+          <div v-if="destinatario.indicadorIe">
+            <dt class="text-xs text-muted-foreground">
+              Indicador de inscrição estadual
+            </dt>
+            <dd class="text-sm text-foreground">
+              {{ destinatario.indicadorIe }}
+            </dd>
+          </div>
+          <div v-if="destinatario.inscricaoEstadual">
+            <dt class="text-xs text-muted-foreground">Inscrição estadual</dt>
+            <dd class="text-sm tabular-nums text-foreground">
+              {{ destinatario.inscricaoEstadual }}
+            </dd>
+          </div>
+        </dl>
+      </FormSection>
+
       <!-- Itens do snapshot -->
       <FormSection
         icon="ShoppingBag"
@@ -217,32 +399,33 @@ function ncmOf(item: { ncm?: string; ncm_code?: string }): string {
         :description="
           snapshotItems.length
             ? `${snapshotItems.length} item(ns) na nota.`
-            : 'Sem itens no snapshot.'
+            : 'Sem itens no retrato da emissão.'
         "
       >
         <div v-if="snapshotItems.length" class="divide-y divide-line-2">
           <div
-            v-for="(item, index) in snapshotItems"
-            :key="`${item.productId}-${index}`"
+            v-for="item in snapshotItems"
+            :key="`${item.codigoProduto}-${item.numeroItem}`"
             class="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
           >
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-medium text-foreground">
-                {{ item.name }}
+                {{ item.descricao }}
               </p>
               <p class="mt-0.5 text-xs text-muted-foreground">
-                {{ formatQuantity(item.quantity) }} × R$
-                {{ formatMoney(item.unitPrice) }}
-                <span v-if="item.ncm || item.ncm_code">
-                  · NCM {{ ncmOf(item) }}
+                {{ formatQuantity(item.quantidade) }} {{ item.unidadeComercial }}
+                × R$ {{ formatMoney(item.valorUnitario) }}
+                <span> · NCM {{ item.ncm }}</span>
+                <span> · CFOP {{ item.cfop }}</span>
+                <span v-if="item.imposto">
+                  · {{ situacaoDoItem(item) }}
                 </span>
-                <span v-if="item.cfop"> · CFOP {{ item.cfop }} </span>
               </p>
             </div>
             <span
               class="shrink-0 text-sm font-semibold tabular-nums text-foreground"
             >
-              R$ {{ formatMoney(item.total) }}
+              R$ {{ formatMoney(item.quantidade * item.valorUnitario) }}
             </span>
           </div>
         </div>
@@ -265,13 +448,67 @@ function ncmOf(item: { ncm?: string; ncm_code?: string }): string {
             class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
           >
             <p class="text-sm text-foreground">
-              {{ payment.method || 'Pagamento' }}
+              {{ formaDePagamento(payment.tipo) }}
             </p>
             <span class="text-sm font-semibold tabular-nums text-foreground">
-              R$ {{ formatMoney(payment.amount) }}
+              R$ {{ formatMoney(payment.valor) }}
             </span>
           </div>
         </div>
+
+        <p
+          v-if="snapshotRecebimento"
+          class="mt-3 border-t border-line-2 pt-3 text-xs text-muted-foreground"
+        >
+          Recebido R$ {{ formatMoney(snapshotRecebimento.valorRecebido) }} ·
+          troco R$ {{ formatMoney(snapshotRecebimento.troco) }}
+        </p>
+      </FormSection>
+
+      <!-- Totais fiscais: o que o contador confere -->
+      <FormSection
+        v-if="snapshotTotais"
+        icon="Calculator"
+        title="Totais fiscais"
+        description="Somados dos itens no momento da emissão."
+      >
+        <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div v-for="total in totaisExibidos" :key="total.rotulo">
+            <dt class="text-xs text-muted-foreground">{{ total.rotulo }}</dt>
+            <dd class="text-sm font-medium tabular-nums text-foreground">
+              R$ {{ formatMoney(total.valor) }}
+            </dd>
+          </div>
+        </dl>
+      </FormSection>
+
+      <!-- Transporte e cobrança: presentes só quando informados -->
+      <FormSection
+        v-if="snapshotNfe?.transporte || snapshotNfe?.cobranca"
+        icon="Truck"
+        title="Transporte e cobrança"
+        description="Grupos informados na emissão."
+      >
+        <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div v-if="snapshotNfe?.transporte?.transportadora?.nome">
+            <dt class="text-xs text-muted-foreground">Transportadora</dt>
+            <dd class="text-sm text-foreground">
+              {{ snapshotNfe.transporte.transportadora.nome }}
+            </dd>
+          </div>
+          <div v-if="snapshotNfe?.transporte?.volumes?.length">
+            <dt class="text-xs text-muted-foreground">Volumes</dt>
+            <dd class="text-sm text-foreground">
+              {{ snapshotNfe.transporte.volumes.length }}
+            </dd>
+          </div>
+          <div v-if="snapshotNfe?.cobranca?.duplicatas?.length">
+            <dt class="text-xs text-muted-foreground">Duplicatas</dt>
+            <dd class="text-sm text-foreground">
+              {{ snapshotNfe.cobranca.duplicatas.length }}
+            </dd>
+          </div>
+        </dl>
       </FormSection>
 
       <!-- Histórico de status -->
