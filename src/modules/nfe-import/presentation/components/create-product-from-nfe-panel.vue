@@ -139,7 +139,6 @@ function close(): void {
       :initial="initial"
       :loading="props.loading"
       submit-label="Cadastrar e vincular"
-      always-show-actions
       @submit="emit('submit', $event)"
       @cancel="close"
     />

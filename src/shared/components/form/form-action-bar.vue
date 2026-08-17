@@ -59,9 +59,10 @@ import { Button, Icon } from '@/shared/ui'
  * transição no primeiro campo alterado — é a mesma ideia da "save bar" que a
  * configuração fiscal e a tela de conta já usavam, agora padrão para todos.
  *
- * `always` é a exceção, e existe por um caso concreto: formulário que **nasce
- * preenchido** — o cadastro de produto a partir do XML da nota de entrada — não
- * tem o que alterar, e esconder a barra tiraria o único caminho adiante.
+ * Consequência conhecida: formulário que **nasce preenchido** — como o cadastro
+ * de produto a partir do XML da nota de entrada — só libera a barra depois que
+ * alguém encostar num campo. É o preço de a regra valer para todas as telas,
+ * sem exceção por chamador.
  *
  * O submit é `type="submit"`, então o `@submit` do <form> pai é quem dispara o
  * envio; o botão secundário emite o evento `secondary`.
@@ -74,21 +75,18 @@ const props = withDefaults(
     secondaryLabel?: string
     /** Há alteração pendente? É o que faz a barra aparecer. */
     dirty?: boolean
-    /** Mantém a barra visível mesmo sem alteração. Ver o comentário acima. */
-    always?: boolean
   }>(),
   {
     loading: false,
     loadingText: 'Salvando…',
     secondaryLabel: 'Cancelar',
     dirty: false,
-    always: false,
   },
 )
 
 const emit = defineEmits<{ secondary: [] }>()
 
-const visible = computed(() => props.always || props.dirty)
+const visible = computed(() => props.dirty)
 </script>
 
 <style scoped lang="css">

@@ -29,17 +29,8 @@ const props = withDefaults(
     loading: boolean
     submitLabel: string
     readonly?: boolean
-    /**
-     * Mantém a barra de ações visível mesmo sem alteração.
-     *
-     * O padrão é ela aparecer só quando algo muda. A exceção existe por um caso
-     * concreto: o cadastro a partir do XML da nota de entrada **nasce
-     * preenchido** — não há o que alterar, e esconder a barra tiraria o único
-     * caminho adiante.
-     */
-    alwaysShowActions?: boolean
   }>(),
-  { readonly: false, alwaysShowActions: false },
+  { readonly: false },
 )
 
 const emit = defineEmits<{
@@ -580,7 +571,6 @@ const item = {
       :submit-label="props.submitLabel"
       :loading="props.loading"
       :dirty="isDirty"
-      :always="props.alwaysShowActions"
       @secondary="emit('cancel')"
     />
   </form>

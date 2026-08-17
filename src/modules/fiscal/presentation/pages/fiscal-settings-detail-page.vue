@@ -1765,7 +1765,6 @@ const item = {
             "
             secondary-label="Descartar"
             :dirty="isDirty"
-            :always="!isEdit"
             :loading="controller.saving.value"
             @secondary="discard"
           />
