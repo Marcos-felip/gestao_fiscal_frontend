@@ -8,8 +8,13 @@ import type {
   NfeImportItem,
 } from '@/modules/nfe-import/domain/entities/nfe-import.entity'
 import type { ListProductsUseCase } from '@/modules/products/application/use-cases/list-products.use-case'
+import type { CreateProductUseCase } from '@/modules/products/application/use-cases/create-product.use-case'
 import { ListProductsDto } from '@/modules/products/domain/dto/list-products-dto'
+import { CreateProductDto } from '@/modules/products/domain/dto/create-product-dto'
 import type { Product } from '@/modules/products/domain/entities/product.entity'
+import type { ProductFormValues } from '@/modules/products/presentation/schemas/product-schema'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
+import { parseDecimal } from '@/shared/ui/utils/masks'
 import { useToast } from '@/shared/composables'
 
 /** Catálogo carregado de uma vez para o seletor, como nas telas de compra. */
@@ -20,6 +25,7 @@ export class NfeImportDetailController extends BaseController {
   private readonly setItemUseCase: SetImportItemProductUseCase
   private readonly confirmUseCase: ConfirmNfeImportUseCase
   private readonly listProductsUseCase: ListProductsUseCase
+  private readonly createProductUseCase: CreateProductUseCase
   private readonly toast = useToast()
 
   readonly nfeImport = ref<NfeImport | null>(null)
@@ -27,6 +33,7 @@ export class NfeImportDetailController extends BaseController {
   readonly loaded = ref(false)
   readonly confirming = ref(false)
   readonly savingItemId = ref<string | null>(null)
+  readonly creatingProduct = ref(false)
 
   /**
    * Pendentes primeiro.
@@ -48,12 +55,14 @@ export class NfeImportDetailController extends BaseController {
     setItemUseCase: SetImportItemProductUseCase,
     confirmUseCase: ConfirmNfeImportUseCase,
     listProductsUseCase: ListProductsUseCase,
+    createProductUseCase: CreateProductUseCase,
   ) {
     super()
     this.getUseCase = getUseCase
     this.setItemUseCase = setItemUseCase
     this.confirmUseCase = confirmUseCase
     this.listProductsUseCase = listProductsUseCase
+    this.createProductUseCase = createProductUseCase
   }
 
   async load(id: string): Promise<void> {
@@ -101,6 +110,73 @@ export class NfeImportDetailController extends BaseController {
 
     this.savingItemId.value = null
     return ok
+  }
+
+  /**
+   * Cadastra o produto e já vincula ao item, sem sair da conferência.
+   *
+   * Os dois passos vivem juntos porque separá-los deixaria o usuário com um
+   * produto novo no catálogo e o item ainda pendente — pior do que antes de
+   * começar. Se a criação falha, nada é vinculado; se a vinculação falha, o
+   * produto criado continua lá e o item pode ser apontado à mão.
+   */
+  async createProductForItem(
+    itemId: string,
+    values: ProductFormValues,
+  ): Promise<boolean> {
+    if (this.creatingProduct.value) return false
+
+    this.creatingProduct.value = true
+    let created: Product | null = null
+
+    const result = await this.createProductUseCase.execute(
+      this.toCreateProductDto(values),
+    )
+    this.handleResult(result, (product) => {
+      created = product
+    })
+
+    this.creatingProduct.value = false
+
+    if (!created) return false
+
+    // `products` alimenta o seletor: sem isto o item recém-vinculado apareceria
+    // como "Produto do catálogo", sem nome.
+    this.products.value = [created, ...this.products.value]
+
+    return this.setItemProduct(itemId, (created as Product).id)
+  }
+
+  private toCreateProductDto(values: ProductFormValues): CreateProductDto {
+    const optional = (raw: string): string | undefined =>
+      raw.trim() === '' ? undefined : raw.trim()
+
+    const decimal = (raw: string): number | undefined => {
+      const parsed = parseDecimal(raw)
+      return parsed === 0 && raw.trim() === '' ? undefined : parsed
+    }
+
+    return new CreateProductDto({
+      name: values.name.trim(),
+      description: optional(values.description),
+      sku: optional(values.sku),
+      barcode: optional(values.barcode),
+      unit: values.unit as UnitOfMeasure,
+      costPrice: decimal(values.costPrice),
+      salePrice: decimal(values.salePrice),
+      minStock: decimal(values.minStock),
+      ncm: optional(values.ncm),
+      cest: optional(values.cest),
+      cfop: optional(values.cfop),
+      origin: values.origin === '' ? undefined : Number(values.origin),
+      csosn: optional(values.csosn),
+      cstIcms: optional(values.cstIcms),
+      cstPis: optional(values.cstPis),
+      cstCofins: optional(values.cstCofins),
+      aliquotaIcms: decimal(values.aliquotaIcms),
+      aliquotaPis: decimal(values.aliquotaPis),
+      aliquotaCofins: decimal(values.aliquotaCofins),
+    })
   }
 
   /** Devolve o id da compra criada, para a página levar o usuário até ela. */

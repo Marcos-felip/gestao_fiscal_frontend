@@ -8,6 +8,7 @@ import {
   NfeImport,
   NfeImportItem,
 } from '@/modules/nfe-import/domain/entities/nfe-import.entity'
+import { emptyProductForm } from '@/modules/products/presentation/schemas/product-schema'
 import { NfeImportDetailController } from './nfe-import-detail-controller'
 
 /**
@@ -25,6 +26,7 @@ const makeItem = (overrides: Partial<ConstructorParameters<typeof NfeImportItem>
     gtin: '789',
     description: 'REFRIG LATA 350',
     ncm: null,
+    cest: null,
     cfop: null,
     unit: 'CX',
     quantity: 10,
@@ -32,6 +34,10 @@ const makeItem = (overrides: Partial<ConstructorParameters<typeof NfeImportItem>
     totalAmount: 255,
     productId: 'prod-1',
     match: NfeImportMatch.GTIN,
+    origem: 0,
+    situacaoIcms: '00',
+    cstPis: '07',
+    cstCofins: '07',
     ...overrides,
   })
 
@@ -64,6 +70,7 @@ const build = () => {
   const setItemUseCase = { execute: vi.fn() }
   const confirmUseCase = { execute: vi.fn() }
   const listProductsUseCase = { execute: vi.fn() }
+  const createProductUseCase = { execute: vi.fn() }
 
   getUseCase.execute.mockResolvedValue(Either.right(makeImport([makeItem()])))
   listProductsUseCase.execute.mockResolvedValue(
@@ -75,9 +82,16 @@ const build = () => {
     setItemUseCase as never,
     confirmUseCase as never,
     listProductsUseCase as never,
+    createProductUseCase as never,
   )
 
-  return { controller, getUseCase, setItemUseCase, confirmUseCase }
+  return {
+    controller,
+    getUseCase,
+    setItemUseCase,
+    confirmUseCase,
+    createProductUseCase,
+  }
 }
 
 describe('NfeImportDetailController', () => {
@@ -148,6 +162,110 @@ describe('NfeImportDetailController', () => {
     // fora perderia isso.
     expect(controller.nfeImport.value?.status).toBe(NfeImportStatus.READY)
     expect(controller.nfeImport.value?.canConfirm).toBe(true)
+  })
+
+  describe('cadastrar produto a partir do item', () => {
+    const values = {
+      ...emptyProductForm(),
+      name: 'SUCO UVA INTEGRAL 1L',
+      ncm: '20096900',
+      costPrice: '8,50',
+    }
+
+    const pendente = () =>
+      makeImport(
+        [
+          makeItem({
+            id: 'item-1',
+            productId: null,
+            match: NfeImportMatch.UNMATCHED,
+          }),
+        ],
+        NfeImportStatus.PENDING,
+      )
+
+    it('cria o produto e vincula o item no mesmo passo', async () => {
+      const { controller, getUseCase, setItemUseCase, createProductUseCase } =
+        build()
+      getUseCase.execute.mockResolvedValue(Either.right(pendente()))
+      createProductUseCase.execute.mockResolvedValue(
+        Either.right({ id: 'prod-novo', name: 'SUCO UVA INTEGRAL 1L' }),
+      )
+      setItemUseCase.execute.mockResolvedValue(
+        Either.right(
+          makeImport([makeItem({ id: 'item-1', match: NfeImportMatch.MANUAL })]),
+        ),
+      )
+
+      const ok = await controller.load('import-1').then(() =>
+        controller.createProductForItem('item-1', values),
+      )
+
+      expect(ok).toBe(true)
+      // Vincular junto é o ponto: separado, o usuário ficaria com o produto no
+      // catálogo e o item ainda pendente — pior do que antes de começar.
+      const [, itemId, productId] = setItemUseCase.execute.mock.calls[0] as [
+        string,
+        string,
+        string,
+      ]
+      expect(itemId).toBe('item-1')
+      expect(productId).toBe('prod-novo')
+    })
+
+    it('produto recusado não vincula nada', async () => {
+      const { controller, getUseCase, setItemUseCase, createProductUseCase } =
+        build()
+      getUseCase.execute.mockResolvedValue(Either.right(pendente()))
+      createProductUseCase.execute.mockResolvedValue(
+        Either.left(new ValidationError('Já existe produto com este código')),
+      )
+
+      await controller.load('import-1')
+      const ok = await controller.createProductForItem('item-1', values)
+
+      expect(ok).toBe(false)
+      expect(setItemUseCase.execute).not.toHaveBeenCalled()
+      expect(controller.errorMessage).toContain('Já existe produto')
+    })
+
+    it('o produto novo entra no seletor, para o item não ficar sem nome', async () => {
+      const { controller, getUseCase, setItemUseCase, createProductUseCase } =
+        build()
+      getUseCase.execute.mockResolvedValue(Either.right(pendente()))
+      createProductUseCase.execute.mockResolvedValue(
+        Either.right({ id: 'prod-novo', name: 'SUCO UVA INTEGRAL 1L' }),
+      )
+      setItemUseCase.execute.mockResolvedValue(
+        Either.right(
+          makeImport([makeItem({ id: 'item-1', match: NfeImportMatch.MANUAL })]),
+        ),
+      )
+
+      await controller.load('import-1')
+      await controller.createProductForItem('item-1', values)
+
+      expect(controller.products.value[0].name).toBe('SUCO UVA INTEGRAL 1L')
+    })
+
+    it('não cadastra duas vezes em paralelo', async () => {
+      const { controller, getUseCase, createProductUseCase } = build()
+      getUseCase.execute.mockResolvedValue(Either.right(pendente()))
+      createProductUseCase.execute.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve(Either.left(new ValidationError('x'))), 10),
+          ),
+      )
+
+      await controller.load('import-1')
+      await Promise.all([
+        controller.createProductForItem('item-1', values),
+        controller.createProductForItem('item-1', values),
+      ])
+
+      expect(createProductUseCase.execute).toHaveBeenCalledTimes(1)
+    })
   })
 
   it('confirmar devolve o id da compra, para a tela levar até ela', async () => {

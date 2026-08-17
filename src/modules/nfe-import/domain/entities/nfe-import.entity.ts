@@ -10,6 +10,7 @@ export class NfeImportItem {
   readonly gtin: string | null
   readonly description: string
   readonly ncm: string | null
+  readonly cest: string | null
   readonly cfop: string | null
   readonly unit: string
   readonly quantity: number
@@ -17,6 +18,17 @@ export class NfeImportItem {
   readonly totalAmount: number
   readonly productId: string | null
   readonly match: NfeImportMatch
+  /**
+   * Quadro tributário **do fornecedor**, lido do grupo `imposto` do item.
+   *
+   * `origem` é propriedade da mercadoria e transfere direto. A situação
+   * tributária é a da venda dele, sob o regime dele — ponto de partida para o
+   * cadastro, nunca verdade sobre a nossa operação.
+   */
+  readonly origem: number | null
+  readonly situacaoIcms: string | null
+  readonly cstPis: string | null
+  readonly cstCofins: string | null
 
   constructor(fields: {
     id: string
@@ -25,6 +37,7 @@ export class NfeImportItem {
     gtin: string | null
     description: string
     ncm: string | null
+    cest: string | null
     cfop: string | null
     unit: string
     quantity: number
@@ -32,6 +45,10 @@ export class NfeImportItem {
     totalAmount: number
     productId: string | null
     match: NfeImportMatch
+    origem: number | null
+    situacaoIcms: string | null
+    cstPis: string | null
+    cstCofins: string | null
   }) {
     this.id = fields.id
     this.itemNumber = fields.itemNumber
@@ -39,6 +56,7 @@ export class NfeImportItem {
     this.gtin = fields.gtin
     this.description = fields.description
     this.ncm = fields.ncm
+    this.cest = fields.cest
     this.cfop = fields.cfop
     this.unit = fields.unit
     this.quantity = fields.quantity
@@ -46,6 +64,10 @@ export class NfeImportItem {
     this.totalAmount = fields.totalAmount
     this.productId = fields.productId
     this.match = fields.match
+    this.origem = fields.origem
+    this.situacaoIcms = fields.situacaoIcms
+    this.cstPis = fields.cstPis
+    this.cstCofins = fields.cstCofins
   }
 
   get isMatched(): boolean {

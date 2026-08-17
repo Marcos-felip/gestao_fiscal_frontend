@@ -29,6 +29,7 @@ const itemSchema = z.object({
   gtin: z.string().nullable().default(null),
   description: z.string(),
   ncm: z.string().nullable().default(null),
+  cest: z.string().nullable().default(null),
   cfop: z.string().nullable().default(null),
   unit: z.string(),
   quantity: decimal,
@@ -36,6 +37,10 @@ const itemSchema = z.object({
   totalAmount: decimal,
   productId: z.string().nullable().default(null),
   match: z.nativeEnum(NfeImportMatch),
+  origem: z.number().nullable().default(null),
+  situacaoIcms: z.string().nullable().default(null),
+  cstPis: z.string().nullable().default(null),
+  cstCofins: z.string().nullable().default(null),
 })
 
 const importSchema = z.object({
@@ -116,6 +121,7 @@ function build(value: ImportPayload): NfeImport {
           gtin: item.gtin,
           description: item.description,
           ncm: item.ncm,
+          cest: item.cest,
           cfop: item.cfop,
           unit: item.unit,
           quantity: toNumber(item.quantity),
@@ -123,6 +129,10 @@ function build(value: ImportPayload): NfeImport {
           totalAmount: toNumber(item.totalAmount),
           productId: item.productId,
           match: item.match,
+          origem: item.origem,
+          situacaoIcms: item.situacaoIcms,
+          cstPis: item.cstPis,
+          cstCofins: item.cstCofins,
         }),
     ),
     createdAt: toDate(value.createdAt),

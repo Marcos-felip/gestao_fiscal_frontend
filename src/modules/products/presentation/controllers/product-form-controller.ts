@@ -9,9 +9,10 @@ import type {
   Product,
   TechnicalAttributes,
 } from '@/modules/products/domain/entities/product.entity'
-import type {
-  AttributeRow,
-  ProductFormValues,
+import {
+  emptyProductForm,
+  type AttributeRow,
+  type ProductFormValues,
 } from '@/modules/products/presentation/schemas/product-schema'
 import { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 import { useToast } from '@/shared/composables'
@@ -22,32 +23,6 @@ import {
 } from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'
 
-function emptyValues(): ProductFormValues {
-  return {
-    name: '',
-    sku: '',
-    barcode: '',
-    unit: UnitOfMeasure.UN,
-    description: '',
-    costPrice: '',
-    salePrice: '',
-    minStock: '',
-    ncm: '',
-    cest: '',
-    cfop: '',
-    origin: '',
-    csosn: '',
-    cstIcms: '',
-    cstPis: '',
-    cstCofins: '',
-    aliquotaIcms: '',
-    aliquotaPis: '',
-    aliquotaCofins: '',
-    fiscalComplete: false,
-    attributes: [],
-  }
-}
-
 export class ProductFormController extends BaseController {
   private readonly getUseCase: GetProductUseCase
   private readonly createUseCase: CreateProductUseCase
@@ -56,7 +31,7 @@ export class ProductFormController extends BaseController {
 
   private editingId: string | null = null
 
-  readonly values = ref<ProductFormValues>(emptyValues())
+  readonly values = ref<ProductFormValues>(emptyProductForm())
   readonly loaded = ref(false)
 
   constructor(
@@ -76,7 +51,7 @@ export class ProductFormController extends BaseController {
 
   prepareCreate(): void {
     this.editingId = null
-    this.values.value = emptyValues()
+    this.values.value = emptyProductForm()
     this.loaded.value = true
   }
 

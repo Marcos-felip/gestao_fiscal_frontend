@@ -152,3 +152,36 @@ export interface ProductFormValues {
   fiscalComplete: boolean
   attributes: AttributeRow[]
 }
+
+/**
+ * Formulário de produto em branco.
+ *
+ * Vive aqui, e não no controller, porque outros fluxos partem dele já
+ * preenchido — a importação de nota de entrada cadastra o produto a partir do
+ * que o XML trouxe, sem sair da conferência.
+ */
+export function emptyProductForm(): ProductFormValues {
+  return {
+    name: '',
+    sku: '',
+    barcode: '',
+    unit: UnitOfMeasure.UN,
+    description: '',
+    costPrice: '',
+    salePrice: '',
+    minStock: '',
+    ncm: '',
+    cest: '',
+    cfop: '',
+    origin: '',
+    csosn: '',
+    cstIcms: '',
+    cstPis: '',
+    cstCofins: '',
+    aliquotaIcms: '',
+    aliquotaPis: '',
+    aliquotaCofins: '',
+    fiscalComplete: false,
+    attributes: [],
+  }
+}

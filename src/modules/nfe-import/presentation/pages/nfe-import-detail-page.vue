@@ -12,7 +12,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { motion } from 'motion-v'
 import { Button, Combobox, Icon, Skeleton } from '@/shared/ui'
+import CreateProductFromNfePanel from '@/modules/nfe-import/presentation/components/create-product-from-nfe-panel.vue'
 import { makeNfeImportDetailController } from '@/modules/nfe-import/factories/nfe-import.factory'
+import type { ProductFormValues } from '@/modules/products/presentation/schemas/product-schema'
 import type { NfeImportItem } from '@/modules/nfe-import/domain/entities/nfe-import.entity'
 import {
   NfeImportMatch,
@@ -79,6 +81,26 @@ async function apply(item: NfeImportItem): Promise<void> {
 
   const ok = await controller.setItemProduct(item.id, productId)
   if (ok) delete picked.value[item.id]
+}
+
+/** Item que está sendo cadastrado como produto novo. */
+const creatingFor = ref<NfeImportItem | null>(null)
+const createOpen = ref(false)
+
+function openCreate(item: NfeImportItem): void {
+  creatingFor.value = item
+  createOpen.value = true
+}
+
+async function onCreateProduct(values: ProductFormValues): Promise<void> {
+  const item = creatingFor.value
+  if (!item) return
+
+  const ok = await controller.createProductForItem(item.id, values)
+  if (ok) {
+    createOpen.value = false
+    creatingFor.value = null
+  }
 }
 
 async function onConfirm(): Promise<void> {
@@ -318,29 +340,72 @@ function goPurchase(): void {
           </span>
         </div>
 
-        <!-- Não casado: o seletor fica no próprio item -->
+        <!--
+          Não reconhecido: **duas saídas, as duas visíveis**.
+
+          Antes havia só o seletor, e quem recebia mercadoria nova ficava
+          travado: procurava numa lista que não continha o produto, e a nota
+          inteira parava por causa de um item.
+        -->
         <div
           v-else-if="canImport"
-          class="mt-3 flex flex-col gap-2 border-t border-line-2 pt-3 sm:flex-row sm:items-end"
+          class="mt-3 space-y-3 border-t border-line-2 pt-3"
         >
-          <div class="sm:flex-1">
-            <Combobox
-              v-model="picked[item.id]"
-              :options="productOptions"
-              placeholder="Buscar produto do catálogo…"
-              empty-text="Nenhum produto encontrado"
-            />
+          <p class="text-xs text-muted-foreground">
+            Este item não foi reconhecido no seu catálogo. Escolha o que fazer:
+          </p>
+
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div class="sm:flex-1">
+              <Combobox
+                v-model="picked[item.id]"
+                :options="productOptions"
+                placeholder="Buscar produto do catálogo…"
+                empty-text="Nenhum produto encontrado"
+              >
+                <template #label>Vincular a um produto existente</template>
+              </Combobox>
+            </div>
+            <Button
+              variant="primary"
+              text-class="text-white"
+              :disabled="!picked[item.id]"
+              :loading="controller.savingItemId.value === item.id"
+              loading-text="Vinculando…"
+              @click="apply(item)"
+            >
+              Vincular
+            </Button>
           </div>
-          <Button
-            variant="primary"
-            text-class="text-white"
-            :disabled="!picked[item.id]"
-            :loading="controller.savingItemId.value === item.id"
-            loading-text="Salvando…"
-            @click="apply(item)"
+
+          <!-- A saída para quem não tem o produto: separador honesto, não decorativo -->
+          <div class="flex items-center gap-3">
+            <span class="h-px flex-1 bg-line-2"></span>
+            <span class="text-xs text-muted-foreground">ou</span>
+            <span class="h-px flex-1 bg-line-2"></span>
+          </div>
+
+          <button
+            type="button"
+            class="flex w-full items-start gap-3 rounded-xl border border-dashed border-line-3 px-4 py-3 text-left transition-colors hover:border-primary/50 hover:bg-primary/5"
+            @click="openCreate(item)"
           >
-            Apontar
-          </Button>
+            <span
+              class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+            >
+              <Icon name="Plus" size="sm" />
+            </span>
+            <span class="min-w-0">
+              <span class="block text-sm font-medium text-foreground">
+                Cadastrar “{{ item.description }}” como produto novo
+              </span>
+              <span class="mt-0.5 block text-xs text-muted-foreground">
+                Já vem preenchido com nome, código de barras, NCM, unidade e
+                custo da nota. Você confere o quadro tributário e ele é
+                vinculado a este item.
+              </span>
+            </span>
+          </button>
         </div>
 
         <p
@@ -354,4 +419,11 @@ function goPurchase(): void {
       </article>
     </motion.div>
   </template>
+
+  <CreateProductFromNfePanel
+    v-model="createOpen"
+    :item="creatingFor"
+    :loading="controller.creatingProduct.value"
+    @submit="onCreateProduct"
+  />
 </template>

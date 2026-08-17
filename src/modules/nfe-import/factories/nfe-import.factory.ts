@@ -6,6 +6,7 @@ import { SetImportItemProductUseCase } from '@/modules/nfe-import/application/us
 import { ConfirmNfeImportUseCase } from '@/modules/nfe-import/application/use-cases/confirm-nfe-import.use-case'
 import { ProductsRepository } from '@/modules/products/data/repositories/products-repository'
 import { ListProductsUseCase } from '@/modules/products/application/use-cases/list-products.use-case'
+import { CreateProductUseCase } from '@/modules/products/application/use-cases/create-product.use-case'
 import { NfeImportsListController } from '@/modules/nfe-import/presentation/controllers/nfe-imports-list-controller'
 import { NfeImportDetailController } from '@/modules/nfe-import/presentation/controllers/nfe-import-detail-controller'
 
@@ -20,13 +21,16 @@ export function makeNfeImportsListController(): NfeImportsListController {
 
 export function makeNfeImportDetailController(): NfeImportDetailController {
   const repository = new NfeImportRepository()
+  const productsRepository = new ProductsRepository()
 
   return new NfeImportDetailController(
     new GetNfeImportUseCase(repository),
     new SetImportItemProductUseCase(repository),
     new ConfirmNfeImportUseCase(repository),
-    // O seletor de produto precisa do catálogo: o wiring entre módulos vive na
-    // factory, como em `purchases.factory`.
-    new ListProductsUseCase(new ProductsRepository()),
+    // O seletor de produto precisa do catálogo, e o item não reconhecido pode
+    // virar produto novo sem sair da conferência. O wiring entre módulos vive
+    // na factory, como em `purchases.factory`.
+    new ListProductsUseCase(productsRepository),
+    new CreateProductUseCase(productsRepository),
   )
 }
