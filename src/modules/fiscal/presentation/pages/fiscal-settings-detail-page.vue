@@ -1764,8 +1764,8 @@ const item = {
               isEdit ? 'Salvar alterações' : 'Configurar estabelecimento'
             "
             secondary-label="Descartar"
-            :show-status="isEdit"
             :dirty="isDirty"
+            :always="!isEdit"
             :loading="controller.saving.value"
             @secondary="discard"
           />

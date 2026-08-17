@@ -158,7 +158,6 @@ function handleReset(): void {
       submit-label="Salvar alterações"
       secondary-label="Descartar"
       :loading="controller.isLoading"
-      show-status
       :dirty="dirty"
       @secondary="handleReset"
     />

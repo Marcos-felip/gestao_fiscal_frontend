@@ -29,8 +29,17 @@ const props = withDefaults(
     loading: boolean
     submitLabel: string
     readonly?: boolean
+    /**
+     * Mantém a barra de ações visível mesmo sem alteração.
+     *
+     * O padrão é ela aparecer só quando algo muda. A exceção existe por um caso
+     * concreto: o cadastro a partir do XML da nota de entrada **nasce
+     * preenchido** — não há o que alterar, e esconder a barra tiraria o único
+     * caminho adiante.
+     */
+    alwaysShowActions?: boolean
   }>(),
-  { readonly: false },
+  { readonly: false, alwaysShowActions: false },
 )
 
 const emit = defineEmits<{
@@ -52,6 +61,15 @@ watch(
       attributes: value.attributes.map((a) => ({ ...a })),
     }),
   { deep: true },
+)
+
+const isDirty = computed(
+  () =>
+    JSON.stringify({ ...form, attributes: form.attributes }) !==
+    JSON.stringify({
+      ...props.initial,
+      attributes: props.initial.attributes,
+    }),
 )
 
 // Origem é opcional: primeira opção limpa o valor.
@@ -155,7 +173,7 @@ const item = {
   <form @submit.prevent="handleSubmit">
     <ReadOnlyNotice v-if="props.readonly" />
 
-    <fieldset :disabled="props.readonly" class="min-w-0">
+    <fieldset :disabled="props.readonly" class="@container min-w-0">
       <motion.div
         class="space-y-6"
         :variants="container"
@@ -163,9 +181,9 @@ const item = {
         animate="visible"
       >
         <!-- Linha principal: informações + preços (duas colunas no desktop) -->
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 @4xl:grid-cols-3">
           <!-- Coluna principal -->
-          <motion.div :variants="item" class="min-w-0 lg:col-span-2">
+          <motion.div :variants="item" class="min-w-0 @4xl:col-span-2">
             <FormSection
               icon="Package"
               title="Informações do produto"
@@ -181,7 +199,7 @@ const item = {
                   <template #label>Nome</template>
                 </Input>
 
-                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-5 @2xl:grid-cols-2">
                   <Input
                     v-model="form.sku"
                     maxlength="60"
@@ -243,7 +261,7 @@ const item = {
           </motion.div>
 
           <!-- Coluna lateral: preços e estoque -->
-          <motion.div :variants="item" class="min-w-0 lg:col-span-1">
+          <motion.div :variants="item" class="min-w-0 @4xl:col-span-1">
             <FormSection
               icon="Tag"
               title="Preços e estoque"
@@ -342,7 +360,7 @@ const item = {
               </div>
 
               <!-- Classificação: NCM / CEST / CFOP / Origem -->
-              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div class="grid grid-cols-1 gap-5 @2xl:grid-cols-2 @4xl:grid-cols-4">
                 <Input
                   v-model="form.ncm"
                   maxlength="8"
@@ -387,7 +405,7 @@ const item = {
               </div>
 
               <!-- Situação tributária: CSOSN / CST ICMS / PIS / COFINS -->
-              <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div class="grid grid-cols-1 gap-5 @2xl:grid-cols-2 @4xl:grid-cols-4">
                 <Select
                   v-model="form.csosn"
                   :options="csosnSelectOptions"
@@ -439,7 +457,7 @@ const item = {
               </div>
 
               <!-- Alíquotas (%) -->
-              <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              <div class="grid grid-cols-1 gap-5 @2xl:grid-cols-3">
                 <Input
                   :model-value="form.aliquotaIcms"
                   inputmode="decimal"
@@ -561,6 +579,8 @@ const item = {
       v-if="!props.readonly"
       :submit-label="props.submitLabel"
       :loading="props.loading"
+      :dirty="isDirty"
+      :always="props.alwaysShowActions"
       @secondary="emit('cancel')"
     />
   </form>

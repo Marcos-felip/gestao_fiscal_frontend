@@ -1,19 +1,4 @@
 <script setup lang="ts">
-/**
- * Cadastra o produto a partir da nota, sem sair da conferência.
- *
- * **O XML já traz quase tudo** — descrição, GTIN, NCM, CEST, unidade, custo e o
- * quadro tributário do item. O parser descartava o grupo `imposto`, e por isso
- * o formulário nascia vazio justo na parte mais chata de preencher. Agora o que
- * a nota sabe chega preenchido, e sobra conferir.
- *
- * Fica num painel lateral, não num modal: formulário longo dentro de caixa
- * centralizada é o que estava incomodando. Aqui ele ocupa a altura da janela,
- * rola por dentro e mantém a conferência visível ao lado.
- *
- * O formulário é o **mesmo** do módulo de produtos, não uma cópia reduzida —
- * duplicar o cadastro criaria um segundo lugar para manter.
- */
 import { computed } from 'vue'
 import SidePanel from '@/shared/components/dialog/side-panel.vue'
 import ProductForm from '@/modules/products/presentation/components/product-form.vue'
@@ -80,10 +65,7 @@ const initial = computed<ProductFormValues>(() => {
     ncm: item.ncm ?? '',
     cest: item.cest ?? '',
     costPrice: formatMoney(item.unitPrice),
-    // Origem é propriedade da mercadoria: transfere direto.
     origin: item.origem !== null ? String(item.origem) : '',
-    // Situação tributária é a da venda **do fornecedor**. Vem preenchida para
-    // não obrigar a redigitar, e o aviso acima diz que é ponto de partida.
     csosn: icms.csosn,
     cstIcms: icms.cstIcms,
     cstPis: supportedCst(item.cstPis),
@@ -148,9 +130,8 @@ function close(): void {
           Confira a situação tributária.
         </strong>
         ICMS, PIS e COFINS vieram da venda
-        <em>do fornecedor</em>, sob o regime dele — servem de ponto de partida.
-        Quem define a da sua empresa é o contador. Falta preencher o preço de
-        venda, que a nota não tem.
+        <em>do fornecedor</em>, sob o regime dele servem de ponto de partida.
+        Quem define a da sua empresa é o contador.
       </p>
     </div>
 
@@ -158,6 +139,7 @@ function close(): void {
       :initial="initial"
       :loading="props.loading"
       submit-label="Cadastrar e vincular"
+      always-show-actions
       @submit="emit('submit', $event)"
       @cancel="close"
     />

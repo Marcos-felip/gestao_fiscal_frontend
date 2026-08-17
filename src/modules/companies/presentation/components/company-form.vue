@@ -648,7 +648,6 @@ const item = {
       v-if="!props.readonly"
       submit-label="Salvar alterações"
       secondary-label="Descartar"
-      show-status
       :dirty="isDirty"
       :loading="props.loading"
       @secondary="discard"

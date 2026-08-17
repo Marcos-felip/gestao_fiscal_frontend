@@ -40,6 +40,18 @@ const emit = defineEmits<{
 }>()
 
 const form = reactive<PartnerFormValues>({ ...props.initial })
+
+/**
+ * Há alteração em relação ao que o formulário recebeu?
+ *
+ * Comparação por conteúdo, não por referência: `initial` é recriado a cada
+ * renderização do pai, e comparar identidade acusaria alteração sem ninguém ter
+ * digitado nada — que é justamente o ruído que a barra deveria evitar.
+ */
+const isDirty = computed(
+  () => JSON.stringify(form) !== JSON.stringify(props.initial),
+)
+
 const errors = ref<Partial<Record<keyof PartnerFormData, string>>>({})
 const cepLoading = ref(false)
 
@@ -367,6 +379,7 @@ const item = {
       v-if="!props.readonly"
       :submit-label="props.submitLabel"
       :loading="props.loading"
+      :dirty="isDirty"
       @secondary="emit('cancel')"
     />
   </form>
