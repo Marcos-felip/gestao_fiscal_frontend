@@ -21,7 +21,20 @@ function nullify(value: string | null | undefined): string | null {
 
 // --- Production checklist ---
 
+const checklistItemCodeSchema = z.enum([
+  'certificado_enviado',
+  'certificado_vigente',
+  'csc',
+  'serie',
+  'proximo_numero',
+  'consulta_publica',
+  'produtos_fiscais',
+])
+
 const checklistItemSchema = z.object({
+  // `catch` e não `optional` puro: código novo que esta versão não conhece vira
+  // item sem ação, não checklist recusado inteiro.
+  codigo: checklistItemCodeSchema.optional().catch(undefined),
   item: z.string(),
   ok: z.boolean(),
   detalhe: z.string().optional(),
@@ -53,6 +66,7 @@ export function toProductionChecklist(
     liberadaEm: v.liberadaEm,
     itens: v.itens.map(
       (i): ProductionChecklistItem => ({
+        codigo: i.codigo,
         item: i.item,
         ok: i.ok,
         detalhe: i.detalhe,

@@ -44,6 +44,40 @@ describe('toProductionChecklist', () => {
     expect(result.right.itens[0].detalhe).toContain('4 produtos')
   })
 
+  it('preserva o código, que é como a tela reconhece o item', () => {
+    const result = toProductionChecklist(
+      checklist([
+        {
+          codigo: 'produtos_fiscais',
+          item: 'Produtos com quadro tributário completo',
+          ok: false,
+          bloqueante: false,
+        },
+      ]),
+    )
+
+    expect(result.right.itens[0].codigo).toBe('produtos_fiscais')
+  })
+
+  it('código desconhecido vira item sem ação, não checklist recusado', () => {
+    const result = toProductionChecklist(
+      checklist([{ codigo: 'item_do_futuro', item: 'Algo novo', ok: true }]),
+    )
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.itens[0].codigo).toBeUndefined()
+    expect(result.right.itens[0].item).toBe('Algo novo')
+  })
+
+  it('item sem código continua válido — backend anterior ao campo', () => {
+    const result = toProductionChecklist(
+      checklist([{ item: 'Certificado digital A1 enviado', ok: true }]),
+    )
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.itens[0].codigo).toBeUndefined()
+  })
+
   it('recusa modelo fora da tabela', () => {
     const result = toProductionChecklist(
       checklist([{ item: 'Série', ok: true, modelo: 'NF3E' }]),

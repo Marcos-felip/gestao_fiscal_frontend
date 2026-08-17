@@ -1,6 +1,21 @@
 import type { FiscalDocumentModel } from '@/core/enums/fiscal-document-model.enum'
 
+/**
+ * Código estável do item, para a tela agir sobre um item específico sem casar
+ * com o texto dele — que existe para ser reescrito. Opcional porque um backend
+ * anterior ao campo não deve derrubar o checklist inteiro.
+ */
+export type ProductionChecklistItemCode =
+  | 'certificado_enviado'
+  | 'certificado_vigente'
+  | 'csc'
+  | 'serie'
+  | 'proximo_numero'
+  | 'consulta_publica'
+  | 'produtos_fiscais'
+
 export interface ProductionChecklistItem {
+  codigo?: ProductionChecklistItemCode
   item: string
   ok: boolean
   detalhe?: string
