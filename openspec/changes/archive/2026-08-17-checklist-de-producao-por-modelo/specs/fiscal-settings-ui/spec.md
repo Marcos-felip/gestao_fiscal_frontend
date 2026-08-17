@@ -35,3 +35,22 @@ com caminho para a lista de produtos pendentes.
 #### Scenario: Produtos incompletos
 - **WHEN** existem produtos sem o quadro tributário completo
 - **THEN** a tela informa quantos são e leva à lista, sem impedir a liberação
+
+### Requirement: Lista de produtos com pendência fiscal
+A interface SHALL oferecer uma tela com os produtos que bloqueariam a emissão,
+trazendo o motivo de cada pendência como o backend o escreveu.
+
+A filtragem é do **servidor**: peneirar no cliente só enxergaria a página
+carregada e diria "nenhuma pendência" quando elas estivessem na página seguinte.
+
+#### Scenario: Chegando pelo checklist
+- **WHEN** o item de produtos pendentes está pendente
+- **THEN** ele oferece o caminho para a lista, reconhecido pelo código do item e não pelo texto
+
+#### Scenario: Motivos de cada produto
+- **WHEN** o usuário abre a lista
+- **THEN** vê cada produto com o que falta nele, e um caminho para completar o cadastro
+
+#### Scenario: Nenhuma pendência
+- **WHEN** todos os produtos ativos estão completos
+- **THEN** a tela diz que não há pendências, em vez de parecer uma busca sem resultado

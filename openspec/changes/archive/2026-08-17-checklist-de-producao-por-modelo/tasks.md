@@ -26,9 +26,10 @@
 ## 4. Pendência de cadastro
 
 - [x] 4.1 Aviso com a contagem de produtos pendentes, vindo do backend
-- [ ] 4.2 Caminho para a lista de produtos com pendência fiscal — **não feito.** O
-  filtro de pendências existe na tela de produtos, mas não há rota que já abra
-  filtrada; deixar um link que leva à lista inteira ensinaria pouco
+- [x] 4.2 Caminho para a lista de produtos com pendência fiscal. Tela própria em
+  `/produtos/pendencias-fiscais`, consumindo `GET /products/fiscal-pending` — a
+  filtragem é do servidor e cada produto vem com os motivos escritos pelo backend.
+  O item do checklist leva até ela pelo `codigo`, não pelo texto
 
 ## 5. Testes
 
