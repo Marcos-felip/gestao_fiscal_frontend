@@ -591,7 +591,7 @@ function fmtDate(value: Date | null): string {
       <div class="ui-shadow-soft rounded-xl border border-line-2 bg-background p-5">
         <div class="flex items-center gap-3">
           <span
-            class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+            class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-600 not-even:text-white"
           >
             <Icon name="FileText" size="md" />
           </span>
