@@ -958,6 +958,42 @@ Os mesmos códigos estão marcados com 🔹 na coluna **Perfil sugerido** do [ca
 
 ---
 
+### GET /products/fiscal-pending — Produtos com pendência fiscal
+
+> **Permissão:** `products.list`
+
+Produtos que bloqueariam a emissão, com o motivo de cada pendência. O filtro é do
+**servidor** — peneirar no cliente só enxergaria a página carregada.
+
+**Query params:** `page`, `limit`, `search`
+
+**Resposta 200:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Refrigerante Lata 350ml",
+      "sku": "REF350",
+      "ncm": "2202",
+      "cfop": "5102",
+      "origin": 0,
+      "csosn": "102",
+      "cstIcms": null,
+      "pendencias": ["NCM ausente ou fora do formato de 8 dígitos"]
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
+```
+
+`pendencias` é o campo que justifica a rota: as frases vêm prontas do backend,
+que é quem decide o que torna um produto emitível. A tela não as reescreve.
+
+---
+
 ### GET /products/:id — Buscar por ID
 
 > **Permissão:** `products.read`
@@ -1296,8 +1332,15 @@ configuração). Cada item pode trazer:
 
 | Campo | Significado |
 |---|---|
+| `codigo` | Identificador estável do item — `certificado_enviado`, `certificado_vigente`, `csc`, `serie`, `proximo_numero`, `consulta_publica`, `produtos_fiscais` |
 | `modelo` | `NFE` ou `NFCE`. **Ausente = vale para todos** (é o caso do certificado) |
 | `bloqueante` | `false` quando o item não impede a liberação. **Ausente = bloqueante** |
+
+**Aja pelo `codigo`, nunca pelo texto do item** — a frase existe para ser
+reescrita. É por ele que o item `produtos_fiscais` leva à lista de
+`GET /products/fiscal-pending`. O código repete entre modelos (`serie` da NFC-e e
+`serie` da NF-e), então a chave de lista é `codigo` + `modelo`. Código
+desconhecido deve virar item sem ação, não checklist recusado.
 
 > ⚠️ **O botão de liberar produção deve olhar `bloqueante`, não o total.** Existem
 > itens que nunca ficam `ok` antes da liberação — a consulta pública só se valida

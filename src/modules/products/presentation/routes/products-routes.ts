@@ -1,6 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
 import ProductsPage from '@/modules/products/presentation/pages/products-page.vue'
 import ProductFormPage from '@/modules/products/presentation/pages/product-form-page.vue'
+import FiscalPendingProductsPage from '@/modules/products/presentation/pages/fiscal-pending-products-page.vue'
 import { routeNames } from '@/router/route-names'
 
 export const productsRoutes: RouteRecordRaw[] = [
@@ -12,6 +13,16 @@ export const productsRoutes: RouteRecordRaw[] = [
       tab: { id: 'products', title: 'Produtos' },
       title: 'Produtos',
       icon: 'Package',
+      requiresPermission: 'products.list',
+    },
+  },
+  {
+    path: 'produtos/pendencias-fiscais',
+    name: routeNames.PRODUCTS_FISCAL_PENDING,
+    component: FiscalPendingProductsPage,
+    meta: {
+      tab: { id: 'products', title: 'Produtos' },
+      title: 'Pendências fiscais',
       requiresPermission: 'products.list',
     },
   },

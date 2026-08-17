@@ -17,6 +17,7 @@ export const routeNames = {
   PRODUCTS: 'products',
   PRODUCT_NEW: 'product-new',
   PRODUCT_EDIT: 'product-edit',
+  PRODUCTS_FISCAL_PENDING: 'products-fiscal-pending',
   STOCK: 'stock',
   PURCHASES: 'purchases',
   PURCHASE_NEW: 'purchase-new',
