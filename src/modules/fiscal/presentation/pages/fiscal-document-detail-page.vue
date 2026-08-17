@@ -47,7 +47,7 @@ const showCorrectionLetter = computed(
   () => canCce.value && document.value?.status === 'AUTORIZADO',
 )
 /** Última condição de uso lida — vem do servidor, não de constante local. */
-const condicaoDeUso = computed(
+const lastUsageCondition = computed(
   () =>
     lettersController.letters.value.at(-1)?.condicaoDeUso ?? null,
 )
@@ -129,8 +129,8 @@ const snapshotPayments = computed(
   () => document.value?.snapshot?.pagamentos ?? [],
 )
 const snapshotNfe = computed(() => document.value?.snapshot?.nfe ?? null)
-const snapshotTotais = computed(() => document.value?.snapshot?.totais ?? null)
-const snapshotRecebimento = computed(
+const snapshotTotals = computed(() => document.value?.snapshot?.totais ?? null)
+const snapshotReceipt = computed(
   () => document.value?.snapshot?.recebimento ?? null,
 )
 
@@ -141,7 +141,7 @@ const FINALIDADES: Record<number, string> = {
   4: 'Devolução',
 }
 
-const finalidadeLabel = computed(() =>
+const purposeLabel = computed(() =>
   snapshotNfe.value
     ? (FINALIDADES[snapshotNfe.value.finalidade] ??
       String(snapshotNfe.value.finalidade))
@@ -158,17 +158,17 @@ const INDICADORES_IE: Record<number, string> = {
  * Destinatário exibido, venha ele do bloco da NF-e (completo e obrigatório) ou
  * do da NFC-e (opcional, só quando o consumidor se identificou).
  */
-const destinatario = computed(() => {
+const recipient = computed(() => {
   const snapshot = document.value?.snapshot
   if (!snapshot) return null
 
   const nfe = snapshot.destinatarioNfe
   if (nfe) {
     return {
-      descricao: 'Identificado na nota.',
-      nome: nfe.nome,
+      description: 'Identificado na nota.',
+      name: nfe.nome,
       cpfCnpj: nfe.cpfCnpj,
-      endereco: `${nfe.logradouro}, ${nfe.numero} — ${nfe.bairro}, ${nfe.municipio}/${nfe.uf}`,
+      address: `${nfe.logradouro}, ${nfe.numero} — ${nfe.bairro}, ${nfe.municipio}/${nfe.uf}`,
       indicadorIe: INDICADORES_IE[nfe.indicadorIe] ?? String(nfe.indicadorIe),
       inscricaoEstadual: nfe.inscricaoEstadual ?? null,
     }
@@ -177,44 +177,44 @@ const destinatario = computed(() => {
   const nfce = snapshot.destinatario
   if (!nfce) return null
 
-  const endereco =
+  const address =
     nfce.logradouro && nfce.municipio
       ? `${nfce.logradouro}, ${nfce.numero ?? 's/n'} — ${nfce.municipio}/${nfce.uf ?? ''}`
       : null
 
   return {
-    descricao: 'Consumidor identificado na venda.',
-    nome: nfce.nome ?? null,
+    description: 'Consumidor identificado na venda.',
+    name: nfce.nome ?? null,
     cpfCnpj: nfce.cpfCnpj ?? null,
-    endereco,
+    address,
     indicadorIe: null,
     inscricaoEstadual: null,
   }
 })
 
-const totaisExibidos = computed(() => {
-  const totais = snapshotTotais.value
+const displayedTotals = computed(() => {
+  const totais = snapshotTotals.value
   if (!totais) return []
 
   return [
-    { rotulo: 'Produtos', valor: totais.vProd },
-    { rotulo: 'Base do ICMS', valor: totais.vBC },
-    { rotulo: 'ICMS', valor: totais.vICMS },
-    { rotulo: 'ICMS ST', valor: totais.vST },
-    { rotulo: 'PIS', valor: totais.vPIS },
-    { rotulo: 'COFINS', valor: totais.vCOFINS },
-    { rotulo: 'Total da nota', valor: totais.vNF },
+    { label: 'Produtos', value: totais.vProd },
+    { label: 'Base do ICMS', value: totais.vBC },
+    { label: 'ICMS', value: totais.vICMS },
+    { label: 'ICMS ST', value: totais.vST },
+    { label: 'PIS', value: totais.vPIS },
+    { label: 'COFINS', value: totais.vCOFINS },
+    { label: 'Total da nota', value: totais.vNF },
   ]
 })
 
 /** Situação tributária do item, que é o que o contador procura primeiro. */
-function situacaoDoItem(item: FiscalSnapshotItem): string {
+function itemTaxStatus(item: FiscalSnapshotItem): string {
   const icms = item.imposto?.icms
   if (!icms) return ''
   return `CSOSN/CST ${icms.situacao} · origem ${icms.origem}`
 }
 
-function formaDePagamento(tipo: string): string {
+function paymentMethodLabel(tipo: string): string {
   return fiscalPaymentCodeLabels[tipo as FiscalPaymentCode] ?? tipo
 }
 
@@ -336,7 +336,7 @@ function fmtDate(value: Date | null): string {
           </div>
           <div>
             <dt class="text-xs text-muted-foreground">Finalidade</dt>
-            <dd class="text-sm text-foreground">{{ finalidadeLabel }}</dd>
+            <dd class="text-sm text-foreground">{{ purposeLabel }}</dd>
           </div>
           <div>
             <dt class="text-xs text-muted-foreground">Destino da mercadoria</dt>
@@ -353,40 +353,40 @@ function fmtDate(value: Date | null): string {
 
       <!-- Destinatário: obrigatório na NF-e, opcional na NFC-e -->
       <FormSection
-        v-if="destinatario"
+        v-if="recipient"
         icon="UserRound"
         title="Destinatário"
-        :description="destinatario.descricao"
+        :description="recipient.description"
       >
         <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div v-if="destinatario.nome">
+          <div v-if="recipient.name">
             <dt class="text-xs text-muted-foreground">Nome</dt>
-            <dd class="text-sm text-foreground">{{ destinatario.nome }}</dd>
+            <dd class="text-sm text-foreground">{{ recipient.name }}</dd>
           </div>
-          <div v-if="destinatario.cpfCnpj">
+          <div v-if="recipient.cpfCnpj">
             <dt class="text-xs text-muted-foreground">CNPJ / CPF</dt>
             <dd class="text-sm tabular-nums text-foreground">
-              {{ destinatario.cpfCnpj }}
+              {{ recipient.cpfCnpj }}
             </dd>
           </div>
-          <div v-if="destinatario.endereco" class="sm:col-span-2">
+          <div v-if="recipient.address" class="sm:col-span-2">
             <dt class="text-xs text-muted-foreground">Endereço</dt>
             <dd class="text-sm text-foreground">
-              {{ destinatario.endereco }}
+              {{ recipient.address }}
             </dd>
           </div>
-          <div v-if="destinatario.indicadorIe">
+          <div v-if="recipient.indicadorIe">
             <dt class="text-xs text-muted-foreground">
               Indicador de inscrição estadual
             </dt>
             <dd class="text-sm text-foreground">
-              {{ destinatario.indicadorIe }}
+              {{ recipient.indicadorIe }}
             </dd>
           </div>
-          <div v-if="destinatario.inscricaoEstadual">
+          <div v-if="recipient.inscricaoEstadual">
             <dt class="text-xs text-muted-foreground">Inscrição estadual</dt>
             <dd class="text-sm tabular-nums text-foreground">
-              {{ destinatario.inscricaoEstadual }}
+              {{ recipient.inscricaoEstadual }}
             </dd>
           </div>
         </dl>
@@ -418,7 +418,7 @@ function fmtDate(value: Date | null): string {
                 <span> · NCM {{ item.ncm }}</span>
                 <span> · CFOP {{ item.cfop }}</span>
                 <span v-if="item.imposto">
-                  · {{ situacaoDoItem(item) }}
+                  · {{ itemTaxStatus(item) }}
                 </span>
               </p>
             </div>
@@ -448,7 +448,7 @@ function fmtDate(value: Date | null): string {
             class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
           >
             <p class="text-sm text-foreground">
-              {{ formaDePagamento(payment.tipo) }}
+              {{ paymentMethodLabel(payment.tipo) }}
             </p>
             <span class="text-sm font-semibold tabular-nums text-foreground">
               R$ {{ formatMoney(payment.valor) }}
@@ -457,26 +457,26 @@ function fmtDate(value: Date | null): string {
         </div>
 
         <p
-          v-if="snapshotRecebimento"
+          v-if="snapshotReceipt"
           class="mt-3 border-t border-line-2 pt-3 text-xs text-muted-foreground"
         >
-          Recebido R$ {{ formatMoney(snapshotRecebimento.valorRecebido) }} ·
-          troco R$ {{ formatMoney(snapshotRecebimento.troco) }}
+          Recebido R$ {{ formatMoney(snapshotReceipt.valorRecebido) }} ·
+          troco R$ {{ formatMoney(snapshotReceipt.troco) }}
         </p>
       </FormSection>
 
       <!-- Totais fiscais: o que o contador confere -->
       <FormSection
-        v-if="snapshotTotais"
+        v-if="snapshotTotals"
         icon="Calculator"
         title="Totais fiscais"
         description="Somados dos itens no momento da emissão."
       >
         <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div v-for="total in totaisExibidos" :key="total.rotulo">
-            <dt class="text-xs text-muted-foreground">{{ total.rotulo }}</dt>
+          <div v-for="total in displayedTotals" :key="total.label">
+            <dt class="text-xs text-muted-foreground">{{ total.label }}</dt>
             <dd class="text-sm font-medium tabular-nums text-foreground">
-              R$ {{ formatMoney(total.valor) }}
+              R$ {{ formatMoney(total.value) }}
             </dd>
           </div>
         </dl>
@@ -862,7 +862,7 @@ function fmtDate(value: Date | null): string {
     v-model="correctionOpen"
     :loading="lettersController.creating.value"
     :restantes="lettersController.restantes.value"
-    :condicao-de-uso="condicaoDeUso"
+    :condicao-de-uso="lastUsageCondition"
     @confirm="onCorrectionConfirm"
   />
 </template>
