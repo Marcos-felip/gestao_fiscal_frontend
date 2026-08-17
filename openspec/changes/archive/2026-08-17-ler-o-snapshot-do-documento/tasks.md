@@ -36,5 +36,5 @@
 
 ## 5. Verificação
 
-- [ ] 5.1 **Abrir a NF-e nº 5 e conferir na tela** — o defeito nasceu de ninguém
-  ter aberto; o teste sozinho não fecha esta change
+- [x] 5.1 **Abrir a NF-e nº 5 e conferir na tela** — o defeito nasceu de ninguém
+  ter aberto; o teste sozinho não fecha esta change. Conferido em 17/08/2026
