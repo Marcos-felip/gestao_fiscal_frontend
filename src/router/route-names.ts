@@ -22,6 +22,8 @@ export const routeNames = {
   PURCHASES: 'purchases',
   PURCHASE_NEW: 'purchase-new',
   PURCHASE_DETAIL: 'purchase-detail',
+  NFE_IMPORTS: 'nfe-imports',
+  NFE_IMPORT_DETAIL: 'nfe-import-detail',
   SALES: 'sales',
   PDV: 'pdv',
   SALE_DETAIL: 'sale-detail',

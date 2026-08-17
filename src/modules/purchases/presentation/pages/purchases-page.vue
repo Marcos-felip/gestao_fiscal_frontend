@@ -21,6 +21,7 @@ const progress = useProgress()
 const { can } = usePermissions()
 
 const canCreate = computed(() => can('purchases.create'))
+const canImport = computed(() => can('purchases.import'))
 const canView = computed(() => can('purchases.read'))
 const canDelete = computed(() => can('purchases.delete'))
 
@@ -51,6 +52,10 @@ function onStartDate(value: string): void {
 function onEndDate(value: string): void {
   endValue.value = value
   void progress.track(controller.setDateRange(startValue.value, endValue.value))
+}
+
+function goImport(): void {
+  controller.router.push({ name: routeNames.NFE_IMPORTS })
 }
 
 function goNew(): void {
@@ -107,15 +112,22 @@ function nextPage(): void {
       </p>
     </div>
 
-    <Button
-      v-if="canCreate"
-      variant="primary"
-      text-class="text-white"
-      @click="goNew"
-    >
-      <template #icon><Icon name="Plus" size="sm" /></template>
-      Nova compra
-    </Button>
+    <div class="flex items-center gap-2">
+      <Button v-if="canImport" variant="ghost" @click="goImport">
+        <template #icon><Icon name="FileUp" size="sm" /></template>
+        Importar nota
+      </Button>
+
+      <Button
+        v-if="canCreate"
+        variant="primary"
+        text-class="text-white"
+        @click="goNew"
+      >
+        <template #icon><Icon name="Plus" size="sm" /></template>
+        Nova compra
+      </Button>
+    </div>
   </header>
 
   <!-- Toolbar: status + intervalo de datas -->

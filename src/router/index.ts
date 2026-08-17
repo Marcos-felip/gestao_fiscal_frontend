@@ -14,6 +14,7 @@ import { partnersRoutes } from '@/modules/partners/presentation/routes/partners-
 import { productsRoutes } from '@/modules/products/presentation/routes/products-routes'
 import { stockRoutes } from '@/modules/stock/presentation/routes/stock-routes'
 import { purchasesRoutes } from '@/modules/purchases/presentation/routes/purchases-routes'
+import { nfeImportRoutes } from '@/modules/nfe-import/presentation/routes/nfe-import-routes'
 import {
   salesRoutes,
   pdvRoutes,
@@ -43,6 +44,9 @@ const router = createRouter({
         ...partnersRoutes,
         ...productsRoutes,
         ...stockRoutes,
+        // Antes de `purchasesRoutes`: `compras/importar` casaria com
+        // `compras/:id` e abriria o detalhe de uma compra inexistente.
+        ...nfeImportRoutes,
         ...purchasesRoutes,
         ...salesRoutes,
         ...receivablesRoutes,

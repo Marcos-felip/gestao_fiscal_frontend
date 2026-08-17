@@ -90,7 +90,9 @@ de pendências fiscais, que nasceu alcançável só pela URL.
 
 ### Requirement: Importações anteriores continuam consultáveis
 A interface SHALL listar as importações, distinguindo as que viraram compra das
-que ficaram pendentes, e SHALL permitir baixar o XML de cada uma.
+que ficaram pendentes.
+
+Não há download do XML: quem importou por upload já tem o arquivo.
 
 #### Scenario: Retomar pendente
 - **WHEN** o usuário abre uma importação com itens não resolvidos

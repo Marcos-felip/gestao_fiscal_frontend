@@ -1174,6 +1174,81 @@ que é quem decide o que torna um produto emitível. A tela não as reescreve.
 
 ---
 
+## Importação de nota de entrada
+
+> **Permissão:** `purchases.import` (por padrão OWNER e ADMIN)
+
+O XML da NF-e do fornecedor vira uma **compra em RASCUNHO**. A importação
+**nunca movimenta estoque** — quem movimenta continua sendo
+`POST /purchases/:id/confirm`.
+
+| Rota | Para quê |
+|---|---|
+| `POST /purchases/import/nfe` | `multipart/form-data`, campo **`xml`**, máx. 2 MB |
+| `GET /purchases/import` | Listar (envelope `{ data, total, page, limit }`) |
+| `GET /purchases/import/:id` | Detalhe com os itens |
+| `PATCH /purchases/import/:id/items/:itemId` | `{ "productId": "uuid" }` |
+| `POST /purchases/import/:id/confirm` | Gera a compra em rascunho |
+
+**Resposta da importação:**
+```jsonc
+{
+  "id": "uuid",
+  "status": "PENDING",           // PENDING | READY | IMPORTED | DISCARDED
+  "chaveAcesso": "3126...",
+  "number": 4321, "series": 1,
+  "issuedAt": "2026-08-15T12:30:00.000Z",
+  "issuerCnpj": "51720322000146",
+  "issuerName": "Distribuidora Teste LTDA",
+  "totalAmount": "255.00",       // decimal como string
+  "supplier": { "id": "uuid", "name": "..." },
+  "establishment": { "id": "uuid", "name": "Matriz" },
+  "purchase": { "id": "uuid", "purchaseNumber": 13 },  // null até confirmar
+  "duplicatas": [{ "numero": "001", "vencimento": "2026-09-15T00:00:00.000Z", "valor": 127.5 }],
+  "items": [
+    {
+      "id": "uuid", "itemNumber": 1,
+      "supplierCode": "007",     // código no cadastro DO FORNECEDOR
+      "gtin": "7891234567895",   // null quando o XML diz "SEM GTIN"
+      "description": "REFRIG LATA 350",
+      "ncm": "22021000", "cfop": "1102",
+      "unit": "CX", "quantity": "10.0000",
+      "unitPrice": "25.5000", "totalAmount": "255.00",
+      "productId": "uuid",       // null enquanto não casar
+      "match": "GTIN"
+    }
+  ]
+}
+```
+
+> ⚠️ **`match` é confiança, não detalhe técnico — e a tela precisa mostrá-la.**
+>
+> | Valor | O que a tela deve comunicar |
+> |---|---|
+> | `GTIN` | O código de barras bateu. É a evidência mais forte da nota |
+> | `SUPPLIER_CODE` | Veio da **memória** de uma nota anterior deste fornecedor, e carrega o erro de quem escolheu daquela vez |
+> | `MANUAL` | Escolhido nesta importação |
+> | `UNMATCHED` | Bloqueia a confirmação |
+>
+> Exibir `GTIN` e `SUPPLIER_CODE` com a mesma aparência faz alguém autorizar
+> uma entrada de estoque sem saber no que está confiando. Valor desconhecido
+> deve virar `ContractError`, nunca item de cara normal.
+
+**Erros que a tela exibe como vieram:** arquivo que não é NF-e modelo 55 (`400`,
+dizendo o que o arquivo é), destinatário de outra empresa (`400` nomeando o
+CNPJ), chave já importada (`409` com o número da compra que já existe), e
+confirmação com item pendente (`400` nomeando os itens).
+
+**Não há download do XML.** Quem importa por upload já tem o arquivo. Ele fica
+guardado no servidor para a busca na SEFAZ, onde o XML só existe dentro do
+sistema, e para reprocessar quando o parser melhorar.
+
+**Unidade divergente não é convertida.** A tela aponta quando a unidade do XML
+difere da do produto; converter por palpite multiplicaria o estoque por um
+número que ninguém conferiu.
+
+---
+
 ## Fiscal
 
 > O módulo fiscal completo está em `gestao_fiscal_backend/API.md` e em
