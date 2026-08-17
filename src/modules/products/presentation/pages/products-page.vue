@@ -22,17 +22,6 @@ const canView = computed(() => can('products.read'))
 
 const searchTerm = ref('')
 
-// Filtro de pendências fiscais: aplicado no client sobre a página carregada.
-// Não há endpoint dedicado; a listagem é paginada no servidor, então o filtro
-// atua apenas sobre os itens já trazidos (a nota na UI deixa isso claro).
-const onlyFiscalPending = ref(false)
-
-const displayedProducts = computed(() =>
-  onlyFiscalPending.value
-    ? controller.products.value.filter((p) => p.isFiscalPending)
-    : controller.products.value,
-)
-
 const confirmOpen = ref(false)
 const target = ref<Product | null>(null)
 
@@ -54,6 +43,17 @@ onUnmounted(() => {
 
 function goNew(): void {
   controller.router.push({ name: routeNames.PRODUCT_NEW })
+}
+
+/**
+ * Pendências fiscais têm tela própria, filtrada **no servidor**.
+ *
+ * Aqui existia um filtro de cliente que peneirava só a página carregada: com o
+ * catálogo em três páginas, ele dizia "nenhuma pendência" enquanto o produto
+ * pendente estava na página seguinte.
+ */
+function goFiscalPending(): void {
+  controller.router.push({ name: routeNames.PRODUCTS_FISCAL_PENDING })
 }
 
 function goEdit(product: Product): void {
@@ -102,53 +102,32 @@ function nextPage(): void {
       </p>
     </div>
 
-    <Button
-      v-if="canCreate"
-      variant="primary"
-      text-class="text-white"
-      @click="goNew"
-    >
-      <template #icon><Icon name="Plus" size="sm" /></template>
-      Novo produto
-    </Button>
+    <div class="flex items-center gap-2">
+      <Button variant="ghost" @click="goFiscalPending">
+        <template #icon><Icon name="CircleAlert" size="sm" /></template>
+        Pendências fiscais
+      </Button>
+
+      <Button
+        v-if="canCreate"
+        variant="primary"
+        text-class="text-white"
+        @click="goNew"
+      >
+        <template #icon><Icon name="Plus" size="sm" /></template>
+        Novo produto
+      </Button>
+    </div>
   </header>
 
-  <!-- Toolbar: busca por nome + filtro fiscal -->
-  <div class="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center">
-    <div class="sm:max-w-xs sm:flex-1">
-      <SearchInput
-        :model-value="searchTerm"
-        placeholder="Buscar por nome…"
-        @update:model-value="onSearch"
-      />
-    </div>
-
-    <button
-      type="button"
-      :aria-pressed="onlyFiscalPending"
-      :class="[
-        'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
-        onlyFiscalPending
-          ? 'border-warning-500/40 bg-warning-500/10 text-warning-700'
-          : 'border-line-2 text-muted-foreground hover:bg-muted hover:text-foreground',
-      ]"
-      @click="onlyFiscalPending = !onlyFiscalPending"
-    >
-      <Icon name="Filter" size="sm" />
-      Somente pendências fiscais
-    </button>
+  <!-- Toolbar: busca por nome -->
+  <div class="mb-4 sm:max-w-xs">
+    <SearchInput
+      :model-value="searchTerm"
+      placeholder="Buscar por nome…"
+      @update:model-value="onSearch"
+    />
   </div>
-
-  <!-- Nota: o filtro fiscal atua no client, sobre a página atual -->
-  <p
-    v-if="onlyFiscalPending"
-    class="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground"
-  >
-    <Icon name="Info" size="xs" />
-    O filtro fiscal atua apenas sobre a página atual (a listagem é paginada no
-    servidor).
-  </p>
-  <div v-else class="mb-4"></div>
 
   <!-- Erro -->
   <div
@@ -175,33 +154,6 @@ function nextPage(): void {
       <Skeleton class="h-5 w-12 rounded-full" />
       <Skeleton class="h-3 w-20 rounded" />
       <Skeleton class="h-3 w-16 rounded" />
-    </div>
-  </div>
-
-  <!-- Empty: nenhuma pendência na página (filtro ativo) -->
-  <div
-    v-else-if="
-      displayedProducts.length === 0 && controller.products.value.length > 0
-    "
-    class="rounded-2xl border border-dashed border-line-3 bg-background px-6 py-16 text-center"
-  >
-    <span
-      class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-success-500/10 text-success-600"
-    >
-      <Icon name="CircleCheck" size="lg" />
-    </span>
-    <h2 class="font-display mt-4 text-lg font-semibold text-foreground">
-      Nenhuma pendência fiscal nesta página
-    </h2>
-    <p class="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-      Todos os produtos desta página estão fiscalmente completos. Desative o
-      filtro para ver todos.
-    </p>
-    <div class="mt-5">
-      <Button variant="ghost" @click="onlyFiscalPending = false">
-        <template #icon><Icon name="Filter" size="sm" /></template>
-        Limpar filtro
-      </Button>
     </div>
   </div>
 
@@ -252,7 +204,7 @@ function nextPage(): void {
         </thead>
         <tbody class="divide-y divide-line-2">
           <tr
-            v-for="product in displayedProducts"
+            v-for="product in controller.products.value"
             :key="product.id"
             class="transition-colors hover:bg-muted/40"
           >
