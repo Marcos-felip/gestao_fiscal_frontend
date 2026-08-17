@@ -81,7 +81,7 @@ const notFound = ref(false)
 const SECAO_PADRAO = 'visao-geral'
 const secao = computed(() => String(route.params.secao || SECAO_PADRAO))
 
-function irParaSecao(id: string): void {
+function goToSection(id: string): void {
   controller.router.push({
     name: routeNames.FISCAL_SETTINGS_DETAIL,
     params: { establishmentId: establishmentId, secao: id },
@@ -89,7 +89,7 @@ function irParaSecao(id: string): void {
 }
 
 /** Troca de estabelecimento sem sair da seção em que a pessoa está. */
-function trocarEstabelecimento(id: string): void {
+function changeEstablishment(id: string): void {
   if (id === establishmentId) return
   controller.router.push({
     name: routeNames.FISCAL_SETTINGS_DETAIL,
@@ -102,7 +102,7 @@ const establishmentOptions = computed(() =>
 )
 
 /** Frase curta do estado de cada seção, para a visão geral. */
-function situacaoDaSecao(id: string): string {
+function sectionStatus(id: string): string {
   const s = settings.value
 
   if (!s && id !== 'sefaz') return 'Ainda não configurado'
@@ -263,7 +263,7 @@ const isDirty = computed(() =>
 )
 
 /** Liga e desliga um modelo sem deixar a lista virar referência compartilhada. */
-function alternarModelo(modelo: FiscalDocumentModel): void {
+function toggleModel(modelo: FiscalDocumentModel): void {
   form.modelosEmitidos = form.modelosEmitidos.includes(modelo)
     ? form.modelosEmitidos.filter((m) => m !== modelo)
     : [...form.modelosEmitidos, modelo]
@@ -413,7 +413,7 @@ const checklistTotalCount = computed(
  * incompleto — para a liberação ficar impossível pela tela, embora o backend a
  * aceitasse. Quem decide o que trava é o `bloqueante` de cada item.
  */
-const checklistBloqueiosPendentes = computed(
+const checklistBlockingPending = computed(
   () =>
     (controller.checklist.value?.itens ?? []).filter(
       (i) => !i.ok && i.bloqueante !== false,
@@ -424,7 +424,18 @@ const checklistBloqueiosPendentes = computed(
  * Checklist agrupado: primeiro o que vale para todos, depois um bloco por
  * modelo. Uma lista plana não responde "falta o quê, para qual nota?".
  */
-const checklistGrupos = computed(() => {
+/**
+ * O item de produtos pendentes leva à lista de quais são.
+ *
+ * Dizer "4 produtos não emitem" e parar aí obrigava a caçar os quatro no
+ * catálogo inteiro. O item é reconhecido pelo `codigo`, nunca pelo texto — a
+ * frase existe para ser reescrita.
+ */
+function goToFiscalPending(): void {
+  void controller.router.push({ name: routeNames.PRODUCTS_FISCAL_PENDING })
+}
+
+const checklistGroups = computed(() => {
   const itens = controller.checklist.value?.itens ?? []
 
   return {
@@ -731,7 +742,7 @@ const item = {
       <FiscalSettingsNav
         :items="navItems"
         :active="secao"
-        @select="irParaSecao"
+        @select="goToSection"
       />
 
       <div class="min-w-0 flex-1">
@@ -744,7 +755,7 @@ const item = {
             :model-value="establishmentId"
             :options="establishmentOptions"
             class="w-full sm:w-80"
-            @update:model-value="trocarEstabelecimento(String($event))"
+            @update:model-value="changeEstablishment(String($event))"
           >
             <template #label>Estabelecimento</template>
           </Select>
@@ -798,14 +809,14 @@ const item = {
                     {{ linha.label }}
                   </span>
                   <span class="block text-xs text-muted-foreground">
-                    {{ situacaoDaSecao(linha.id) }}
+                    {{ sectionStatus(linha.id) }}
                   </span>
                 </span>
 
                 <Button
                   variant="ghost"
                   size="sm"
-                  @click="irParaSecao(linha.id)"
+                  @click="goToSection(linha.id)"
                 >
                   Abrir
                 </Button>
@@ -891,7 +902,7 @@ const item = {
                       type="checkbox"
                       class="sr-only"
                       :checked="form.modelosEmitidos.includes(opcao.value)"
-                      @change="alternarModelo(opcao.value)"
+                      @change="toggleModel(opcao.value)"
                     />
                     <Icon
                       :name="
@@ -1465,7 +1476,7 @@ const item = {
                 <!-- Itens que valem para qualquer modelo -->
                 <ul class="grid gap-2 sm:grid-cols-2">
                   <li
-                    v-for="(checkItem, index) in checklistGrupos.comuns"
+                    v-for="(checkItem, index) in checklistGroups.comuns"
                     :key="`comum-${index}`"
                     :class="[
                       'flex items-start gap-2 rounded-lg border px-3 py-2 text-sm',
@@ -1489,6 +1500,20 @@ const item = {
                       >
                         {{ checkItem.detalhe }}
                       </span>
+
+                      <!-- Saber quantos faltam não basta: é preciso ver quais -->
+                      <button
+                        v-if="
+                          checkItem.codigo === 'produtos_fiscais' &&
+                          !checkItem.ok
+                        "
+                        type="button"
+                        class="mt-1 inline-flex items-center gap-1 text-xs font-medium underline underline-offset-2 hover:opacity-80"
+                        @click="goToFiscalPending"
+                      >
+                        Ver quais produtos
+                        <Icon name="ArrowRight" size="xs" />
+                      </button>
                     </span>
                   </li>
                 </ul>
@@ -1498,7 +1523,7 @@ const item = {
                   "falta o quê, para qual nota?".
                 -->
                 <div
-                  v-for="grupo in checklistGrupos.porModelo"
+                  v-for="grupo in checklistGroups.porModelo"
                   :key="grupo.modelo"
                 >
                   <p
@@ -1547,7 +1572,7 @@ const item = {
                     text-class="text-white"
                     :loading="controller.releasingProduction.value"
                     loading-text="Liberando…"
-                    :disabled="checklistBloqueiosPendentes > 0"
+                    :disabled="checklistBlockingPending > 0"
                     @click="onReleaseProduction"
                   >
                     <template #icon
