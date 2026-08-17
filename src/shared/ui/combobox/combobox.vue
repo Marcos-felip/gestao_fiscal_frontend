@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="ui-combobox-wrapper">
+  <div class="ui-combobox-wrapper">
     <!-- Label opcional (mesma API do Input/Select) -->
     <label
       v-if="$slots.label"
@@ -19,6 +19,7 @@
 
       <input
         :id="comboId"
+        :ref="setTriggerRef"
         :value="query"
         type="text"
         role="combobox"
@@ -64,18 +65,21 @@
         />
       </span>
 
-      <AnimatePresence>
-        <motion.ul
-          v-if="open"
-          key="combobox-panel"
-          role="listbox"
-          :tabindex="-1"
-          :initial="{ opacity: 0, y: -6, scale: 0.98 }"
-          :animate="{ opacity: 1, y: 0, scale: 1 }"
-          :exit="{ opacity: 0, y: -6, scale: 0.98 }"
-          :transition="{ type: 'spring', stiffness: 480, damping: 34 }"
-          class="ui-shadow-float absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-lg border border-line-2 bg-background p-1"
-        >
+      <Teleport to="body">
+        <AnimatePresence>
+          <motion.ul
+            v-if="open"
+            key="combobox-panel"
+            :ref="setPanelRef"
+            role="listbox"
+            :tabindex="-1"
+            :style="panelStyle"
+            :initial="{ opacity: 0, y: -6, scale: 0.98 }"
+            :animate="{ opacity: 1, y: 0, scale: 1 }"
+            :exit="{ opacity: 0, y: -6, scale: 0.98 }"
+            :transition="{ type: 'spring', stiffness: 480, damping: 34 }"
+            class="ui-shadow-float fixed z-[70] max-h-60 overflow-auto rounded-lg border border-line-2 bg-background p-1"
+          >
           <li
             v-for="(option, index) in filteredOptions"
             :key="option.value"
@@ -104,9 +108,10 @@
             class="px-3 py-2 text-sm text-muted-foreground"
           >
             {{ emptyText }}
-          </li>
-        </motion.ul>
-      </AnimatePresence>
+            </li>
+          </motion.ul>
+        </AnimatePresence>
+      </Teleport>
     </div>
 
     <!-- Dica ou erro (mesma API do Input/Select) -->
@@ -126,6 +131,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
+import { useAnchoredPanel } from '@/shared/composables/useAnchoredPanel'
 import { motion, AnimatePresence } from 'motion-v'
 import Icon from '@/shared/ui/icon/icon.vue'
 import type { SelectOption } from '@/shared/ui/select/select.vue'
@@ -166,8 +172,10 @@ const generatedId = useId()
 const comboId = computed(() => props.id || `combobox-${generatedId}`)
 const helperId = computed(() => `${comboId.value}-helper`)
 
-const rootRef = ref<HTMLElement | null>(null)
 const open = ref(false)
+
+const { setTriggerRef, setPanelRef, panelStyle, anchor, isOutside } =
+  useAnchoredPanel(open)
 const activeIndex = ref(-1)
 const query = ref('')
 // Enquanto o usuário digita, filtramos; ao fechar, o texto volta ao rótulo.
@@ -196,6 +204,7 @@ const filteredOptions = computed(() => {
 
 function openPanel(): void {
   if (props.disabled) return
+  anchor()
   open.value = true
   const current = filteredOptions.value.findIndex(
     (o) => o.value === props.modelValue,
@@ -274,10 +283,7 @@ function onKeydown(event: KeyboardEvent): void {
 }
 
 function onClickOutside(event: MouseEvent): void {
-  if (!open.value) return
-  if (rootRef.value && !rootRef.value.contains(event.target as Node)) {
-    closePanel()
-  }
+  if (open.value && isOutside(event.target as Node)) closePanel()
 }
 
 onMounted(() => document.addEventListener('mousedown', onClickOutside))

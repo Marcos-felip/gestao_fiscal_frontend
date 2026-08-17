@@ -75,7 +75,7 @@ function submit(): void {
   <Modal
     :model-value="props.modelValue"
     title="Registrar pagamento"
-    size="sm"
+    size="md"
     @update:model-value="emit('update:modelValue', $event)"
   >
     <form class="space-y-4" @submit.prevent="submit">

@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="ui-datepicker-wrapper">
+  <div class="ui-datepicker-wrapper">
     <!-- Label opcional (mesma API do Input/Select) -->
     <label
       v-if="$slots.label"
@@ -13,6 +13,7 @@
       <!-- Gatilho: parece um input, abre o calendário -->
       <button
         :id="pickerId"
+        :ref="setTriggerRef"
         type="button"
         :disabled="disabled"
         aria-haspopup="dialog"
@@ -45,20 +46,23 @@
         </button>
       </button>
 
-      <!-- Painel do calendário -->
-      <AnimatePresence>
-        <motion.div
-          v-if="open"
-          key="datepicker-panel"
-          role="dialog"
-          :tabindex="-1"
-          :initial="{ opacity: 0, y: -6, scale: 0.98 }"
-          :animate="{ opacity: 1, y: 0, scale: 1 }"
-          :exit="{ opacity: 0, y: -6, scale: 0.98 }"
-          :transition="{ type: 'spring', stiffness: 480, damping: 34 }"
-          class="ui-shadow-float absolute z-50 mt-2 w-72 rounded-xl border border-line-2 bg-background p-3"
-          :class="alignClass"
-        >
+      <!-- Painel do calendário. Fora do wrapper: `absolute` era recortado por
+           qualquer container com rolagem. Ver `useAnchoredPanel`. -->
+      <Teleport to="body">
+        <AnimatePresence>
+          <motion.div
+            v-if="open"
+            key="datepicker-panel"
+            :ref="setPanelRef"
+            role="dialog"
+            :tabindex="-1"
+            :style="panelStyle"
+            :initial="{ opacity: 0, y: -6, scale: 0.98 }"
+            :animate="{ opacity: 1, y: 0, scale: 1 }"
+            :exit="{ opacity: 0, y: -6, scale: 0.98 }"
+            :transition="{ type: 'spring', stiffness: 480, damping: 34 }"
+            class="ui-shadow-float fixed z-[70] w-72 rounded-xl border border-line-2 bg-background p-3"
+          >
           <!-- Cabeçalho: navegação -->
           <div class="mb-2 flex items-center justify-between gap-2">
             <button
@@ -170,8 +174,9 @@
               Limpar
             </button>
           </div>
-        </motion.div>
-      </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+      </Teleport>
     </div>
 
     <!-- Dica ou erro (mesma API do Input/Select) -->
@@ -191,6 +196,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
+import { useAnchoredPanel } from '@/shared/composables/useAnchoredPanel'
 import { motion, AnimatePresence } from 'motion-v'
 import Icon from '@/shared/ui/icon/icon.vue'
 
@@ -264,11 +270,19 @@ const generatedId = useId()
 const pickerId = computed(() => props.id || `datepicker-${generatedId}`)
 const helperId = computed(() => `${pickerId.value}-helper`)
 
-const rootRef = ref<HTMLElement | null>(null)
 const open = ref(false)
+
+// O calendário tem largura própria (w-72) e pode alinhar à direita do campo.
+const { setTriggerRef, setPanelRef, panelStyle, anchor, isOutside } =
+  useAnchoredPanel(open, {
+    maxHeight: 420,
+    minHeight: 320,
+    matchTriggerWidth: false,
+    width: 288,
+    align: props.align,
+  })
 const mode = ref<'days' | 'months'>('days')
 
-const alignClass = computed(() => (props.align === 'end' ? 'end-0' : 'start-0'))
 
 interface ParsedDate {
   y: number
@@ -421,14 +435,12 @@ function clear(): void {
 
 function toggle(): void {
   if (props.disabled) return
+  if (!open.value) anchor()
   open.value = !open.value
 }
 
 function onClickOutside(event: MouseEvent): void {
-  if (!open.value) return
-  if (rootRef.value && !rootRef.value.contains(event.target as Node)) {
-    open.value = false
-  }
+  if (open.value && isOutside(event.target as Node)) open.value = false
 }
 
 function onKeydown(event: KeyboardEvent): void {
