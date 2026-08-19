@@ -1,4 +1,12 @@
 <script setup lang="ts">
+/**
+ * Saudação e a data da operação.
+ *
+ * A data fica visível porque a tela inteira é "hoje" e "este mês", e o recorte
+ * é o do fuso da operação — não o do relógio da máquina. Sem a data escrita,
+ * quem abre o sistema às 21h não teria como saber a que dia os números se
+ * referem.
+ */
 import { computed } from 'vue'
 import { motion } from 'motion-v'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
@@ -9,6 +17,15 @@ const firstName = computed(() => {
   const name = authStore.user?.name?.trim()
   return name ? name.split(/\s+/)[0] : 'por aqui'
 })
+
+const today = computed(() =>
+  new Intl.DateTimeFormat('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'America/Sao_Paulo',
+  }).format(new Date()),
+)
 </script>
 
 <template>
@@ -27,9 +44,8 @@ const firstName = computed(() => {
     >
       Olá, {{ firstName }}
     </h1>
-    <p class="mt-2 max-w-prose text-sm text-muted-foreground">
-      Um panorama da sua operação fiscal. Comece cadastrando produtos e
-      parceiros para ver os números ganharem vida.
+    <p class="mt-2 text-sm capitalize text-muted-foreground">
+      {{ today }}
     </p>
   </motion.header>
 </template>
