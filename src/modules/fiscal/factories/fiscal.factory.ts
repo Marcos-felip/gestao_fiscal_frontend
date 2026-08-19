@@ -1,0 +1,246 @@
+import { FiscalSettingsRepository } from '@/modules/fiscal/data/repositories/fiscal-settings-repository'
+import { FiscalDocumentsRepository } from '@/modules/fiscal/data/repositories/fiscal-documents-repository'
+import { FiscalEventsRepository } from '@/modules/fiscal/data/repositories/fiscal-events-repository'
+import { ListFiscalSettingsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-settings.use-case'
+import { GetFiscalSettingsByEstablishmentUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-settings-by-establishment.use-case'
+import { CreateFiscalSettingsUseCase } from '@/modules/fiscal/application/use-cases/create-fiscal-settings.use-case'
+import { UpdateFiscalSettingsUseCase } from '@/modules/fiscal/application/use-cases/update-fiscal-settings.use-case'
+import { UploadFiscalCertificate } from '@/modules/fiscal/application/use-cases/upload-fiscal-certificate.use-case'
+import { GetFiscalCertificate } from '@/modules/fiscal/application/use-cases/get-fiscal-certificate.use-case'
+import { GetFiscalCertificateHistory } from '@/modules/fiscal/application/use-cases/get-fiscal-certificate-history.use-case'
+import { TestSefazStatus } from '@/modules/fiscal/application/use-cases/test-sefaz-status.use-case'
+import { GetFiscalEngineHealth } from '@/modules/fiscal/application/use-cases/get-fiscal-engine-health.use-case'
+import { ListSettingsByEnvironmentUseCase } from '@/modules/fiscal/application/use-cases/list-settings-by-environment.use-case'
+import { ActivateEnvironmentUseCase } from '@/modules/fiscal/application/use-cases/activate-environment.use-case'
+import { GetProductionChecklistUseCase } from '@/modules/fiscal/application/use-cases/get-production-checklist.use-case'
+import { ReleaseProductionUseCase } from '@/modules/fiscal/application/use-cases/release-production.use-case'
+import { RevokeProductionUseCase } from '@/modules/fiscal/application/use-cases/revoke-production.use-case'
+import { ValidatePublicConsultationUseCase } from '@/modules/fiscal/application/use-cases/validate-public-consultation.use-case'
+import { GetSettingsHistoryUseCase } from '@/modules/fiscal/application/use-cases/get-settings-history.use-case'
+import { ListFiscalDocumentsUseCase } from '@/modules/fiscal/application/use-cases/list-fiscal-documents.use-case'
+import { GetFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document.use-case'
+import { GetFiscalDocumentBySaleUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-by-sale.use-case'
+import { EmitNfceUseCase } from '@/modules/fiscal/application/use-cases/emit-nfce.use-case'
+import { EmitNfeUseCase } from '@/modules/fiscal/application/use-cases/emit-nfe.use-case'
+import { GetFiscalDocumentHistoryUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-history.use-case'
+import { GetFiscalDocumentEventsUseCase } from '@/modules/fiscal/application/use-cases/get-fiscal-document-events.use-case'
+import { DownloadFiscalXmlUseCase } from '@/modules/fiscal/application/use-cases/download-fiscal-xml.use-case'
+import { CancelFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/cancel-fiscal-document.use-case'
+import { ConsultFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/consult-fiscal-document.use-case'
+import { RetryFiscalDocumentUseCase } from '@/modules/fiscal/application/use-cases/retry-fiscal-document.use-case'
+import { DownloadFiscalDanfeUseCase } from '@/modules/fiscal/application/use-cases/download-fiscal-danfe.use-case'
+import { ExportFiscalXmlsUseCase } from '@/modules/fiscal/application/use-cases/export-fiscal-xmls.use-case'
+import { FiscalSettingsController } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
+import type { FiscalEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-settings-controller'
+import { FiscalDocumentsListController } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
+import type { FiscalDocumentsEstablishmentsLoader } from '@/modules/fiscal/presentation/controllers/fiscal-documents-list-controller'
+import { CreateCorrectionLetterUseCase } from '@/modules/fiscal/application/use-cases/create-correction-letter.use-case'
+import { ListCorrectionLettersUseCase } from '@/modules/fiscal/application/use-cases/list-correction-letters.use-case'
+import { DownloadCorrectionLetterXmlUseCase } from '@/modules/fiscal/application/use-cases/download-correction-letter-xml.use-case'
+import { InutilizeNumberingUseCase } from '@/modules/fiscal/application/use-cases/inutilize-numbering.use-case'
+import { ListPendingRangesUseCase } from '@/modules/fiscal/application/use-cases/list-pending-ranges.use-case'
+import { FiscalDocumentDetailController } from '@/modules/fiscal/presentation/controllers/fiscal-document-detail-controller'
+import { CorrectionLettersController } from '@/modules/fiscal/presentation/controllers/correction-letters-controller'
+import { InutilizationController } from '@/modules/fiscal/presentation/controllers/inutilization-controller'
+import { SaleFiscalController } from '@/modules/fiscal/presentation/controllers/sale-fiscal-controller'
+import { EstablishmentRepository } from '@/modules/establishments/data/repositories/establishment-repository'
+import { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
+
+/**
+ * Composition root do módulo fiscal. Monta repositórios, use-cases e os
+ * controllers da camada de apresentação.
+ */
+
+export function makeFiscalSettingsRepository(): FiscalSettingsRepository {
+  return new FiscalSettingsRepository()
+}
+
+export function makeFiscalDocumentsRepository(): FiscalDocumentsRepository {
+  return new FiscalDocumentsRepository()
+}
+
+export function makeListFiscalSettingsUseCase(): ListFiscalSettingsUseCase {
+  return new ListFiscalSettingsUseCase(makeFiscalSettingsRepository())
+}
+
+export function makeGetFiscalSettingsByEstablishmentUseCase(): GetFiscalSettingsByEstablishmentUseCase {
+  return new GetFiscalSettingsByEstablishmentUseCase(
+    makeFiscalSettingsRepository(),
+  )
+}
+
+export function makeCreateFiscalSettingsUseCase(): CreateFiscalSettingsUseCase {
+  return new CreateFiscalSettingsUseCase(makeFiscalSettingsRepository())
+}
+
+export function makeUpdateFiscalSettingsUseCase(): UpdateFiscalSettingsUseCase {
+  return new UpdateFiscalSettingsUseCase(makeFiscalSettingsRepository())
+}
+
+export function makeListFiscalDocumentsUseCase(): ListFiscalDocumentsUseCase {
+  return new ListFiscalDocumentsUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeGetFiscalDocumentUseCase(): GetFiscalDocumentUseCase {
+  return new GetFiscalDocumentUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeGetFiscalDocumentBySaleUseCase(): GetFiscalDocumentBySaleUseCase {
+  return new GetFiscalDocumentBySaleUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeEmitNfceUseCase(): EmitNfceUseCase {
+  return new EmitNfceUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeEmitNfeUseCase(): EmitNfeUseCase {
+  return new EmitNfeUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeGetFiscalDocumentHistoryUseCase(): GetFiscalDocumentHistoryUseCase {
+  return new GetFiscalDocumentHistoryUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeGetFiscalDocumentEventsUseCase(): GetFiscalDocumentEventsUseCase {
+  return new GetFiscalDocumentEventsUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeDownloadFiscalXmlUseCase(): DownloadFiscalXmlUseCase {
+  return new DownloadFiscalXmlUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeCancelFiscalDocumentUseCase(): CancelFiscalDocumentUseCase {
+  return new CancelFiscalDocumentUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeConsultFiscalDocumentUseCase(): ConsultFiscalDocumentUseCase {
+  return new ConsultFiscalDocumentUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeRetryFiscalDocumentUseCase(): RetryFiscalDocumentUseCase {
+  return new RetryFiscalDocumentUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeDownloadFiscalDanfeUseCase(): DownloadFiscalDanfeUseCase {
+  return new DownloadFiscalDanfeUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeExportFiscalXmlsUseCase(): ExportFiscalXmlsUseCase {
+  return new ExportFiscalXmlsUseCase(makeFiscalDocumentsRepository())
+}
+
+export function makeFiscalEventsRepository(): FiscalEventsRepository {
+  return new FiscalEventsRepository()
+}
+
+/**
+ * Controller das cartas de correção, montado ao lado do detalhe do documento.
+ */
+export function makeCorrectionLettersController(): CorrectionLettersController {
+  const repository = makeFiscalEventsRepository()
+
+  return new CorrectionLettersController(
+    new ListCorrectionLettersUseCase(repository),
+    new CreateCorrectionLetterUseCase(repository),
+    new DownloadCorrectionLetterXmlUseCase(repository),
+  )
+}
+
+/** Controller da inutilização de numeração, usado na configuração fiscal. */
+export function makeInutilizationController(): InutilizationController {
+  const repository = makeFiscalEventsRepository()
+
+  return new InutilizationController(
+    new InutilizeNumberingUseCase(repository),
+    new ListPendingRangesUseCase(repository),
+  )
+}
+
+/**
+ * Adapta a listagem de estabelecimentos (outro módulo) para o formato mínimo
+ * `{ id, name, type }` que a tela de configuração fiscal precisa. A costura
+ * entre módulos vive na factory — o único ponto autorizado a cruzar fronteiras.
+ */
+function makeFiscalEstablishmentsLoader(): FiscalEstablishmentsLoader {
+  const listEstablishments = new ListEstablishmentsUseCase(
+    new EstablishmentRepository(),
+  )
+  return async () => {
+    const result = await listEstablishments.execute()
+    return result.map((items) =>
+      items.map((e) => ({ id: e.id, name: e.name, type: e.type })),
+    )
+  }
+}
+
+/**
+ * Adapta a listagem de estabelecimentos para o formato `{ id, name }` usado no
+ * filtro da tela de documentos fiscais.
+ */
+function makeFiscalDocumentsEstablishmentsLoader(): FiscalDocumentsEstablishmentsLoader {
+  const listEstablishments = new ListEstablishmentsUseCase(
+    new EstablishmentRepository(),
+  )
+  return async () => {
+    const result = await listEstablishments.execute()
+    return result.map((items) => items.map((e) => ({ id: e.id, name: e.name })))
+  }
+}
+
+export function makeFiscalDocumentsListController(): FiscalDocumentsListController {
+  return new FiscalDocumentsListController(
+    makeListFiscalDocumentsUseCase(),
+    makeRetryFiscalDocumentUseCase(),
+    makeExportFiscalXmlsUseCase(),
+    makeFiscalDocumentsEstablishmentsLoader(),
+  )
+}
+
+export function makeFiscalDocumentDetailController(): FiscalDocumentDetailController {
+  return new FiscalDocumentDetailController(
+    makeGetFiscalDocumentUseCase(),
+    makeDownloadFiscalXmlUseCase(),
+    makeCancelFiscalDocumentUseCase(),
+    makeConsultFiscalDocumentUseCase(),
+    makeRetryFiscalDocumentUseCase(),
+    makeDownloadFiscalDanfeUseCase(),
+  )
+}
+
+/**
+ * Controller que orquestra o status fiscal na página de detalhe da venda:
+ * documento vinculado, emissão manual (fallback) e polling do processamento.
+ */
+export function makeSaleFiscalController(): SaleFiscalController {
+  return new SaleFiscalController(
+    makeGetFiscalDocumentBySaleUseCase(),
+    makeGetFiscalDocumentUseCase(),
+    makeEmitNfceUseCase(),
+    makeEmitNfeUseCase(),
+  )
+}
+
+export function makeFiscalSettingsController(): FiscalSettingsController {
+  const repository = makeFiscalSettingsRepository()
+
+  return new FiscalSettingsController(
+    new ListFiscalSettingsUseCase(repository),
+    new GetFiscalSettingsByEstablishmentUseCase(repository),
+    new CreateFiscalSettingsUseCase(repository),
+    new UpdateFiscalSettingsUseCase(repository),
+    new UploadFiscalCertificate(repository),
+    new GetFiscalCertificate(repository),
+    new GetFiscalCertificateHistory(repository),
+    new TestSefazStatus(repository),
+    new GetFiscalEngineHealth(repository),
+    new ListSettingsByEnvironmentUseCase(repository),
+    new ActivateEnvironmentUseCase(repository),
+    new GetProductionChecklistUseCase(repository),
+    new ReleaseProductionUseCase(repository),
+    new RevokeProductionUseCase(repository),
+    new ValidatePublicConsultationUseCase(repository),
+    new GetSettingsHistoryUseCase(repository),
+    makeFiscalEstablishmentsLoader(),
+  )
+}
+

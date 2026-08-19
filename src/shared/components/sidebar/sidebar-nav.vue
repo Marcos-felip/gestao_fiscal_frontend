@@ -1,18 +1,48 @@
 <template>
   <nav class="sidebar-nav flex-1 overflow-y-auto px-3 py-2">
-    <!-- Item fixo: início -->
     <SidebarLink :to="home.to" :label="home.label" class="mb-1">
       <template #icon>
         <Icon :name="home.icon" size="md" />
       </template>
     </SidebarLink>
 
+    <div v-if="favorites.length > 0" class="mt-3">
+      <p
+        class="mb-1 px-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase"
+      >
+        Favoritos
+      </p>
+
+      <div class="space-y-0.5">
+        <div
+          v-for="favorite in favorites"
+          :key="favorite.path"
+          class="group/fav relative"
+        >
+          <SidebarLink
+            :to="favorite.path"
+            :label="favorite.label"
+            size="sm"
+          >
+            <template #icon>
+              <Icon :name="favorite.icon" size="sm" />
+            </template>
+          </SidebarLink>
+
+          <button
+            type="button"
+            class="absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer rounded p-1 text-muted-foreground opacity-0 transition-opacity group-hover/fav:opacity-100 hover:bg-muted hover:text-foreground"
+            :aria-label="`Remover ${favorite.label} dos favoritos`"
+            @click.prevent.stop="removeFavorite(favorite.path)"
+          >
+            <Icon name="X" size="xs" />
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Grupos: seção → sub-itens -->
-    <div
-      v-for="group in visibleGroups"
-      :key="group.id"
-      class="mt-2 first:mt-1"
-    >
+    <div v-for="group in visibleGroups" :key="group.id" class="mt-2 first:mt-1">
       <!-- Cabeçalho da seção (colapsa/expande) — mesma cara do item "Início" -->
       <button
         type="button"
@@ -62,8 +92,9 @@ import { computed, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { SidebarLink, Icon } from '@/shared/ui'
 import { usePermissions } from '@/shared/composables/usePermissions'
+import { useFavorites } from '@/shared/composables/useFavorites'
 import { StorageKeys } from '@/core/constants/storage-keys'
-import type { MembershipRole } from '@/enums/membership-role.enum'
+import type { MembershipRole } from '@/core/enums/membership-role.enum'
 
 interface NavLink {
   to: string
@@ -92,9 +123,24 @@ const groups: NavGroup[] = [
     label: 'Operação',
     icon: 'Zap',
     links: [
-      { to: '/pdv', label: 'PDV', icon: 'ScanBarcode', permission: 'sales.create' },
-      { to: '/vendas', label: 'Vendas', icon: 'ShoppingBag', permission: 'sales.list' },
-      { to: '/compras', label: 'Compras', icon: 'ShoppingCart', permission: 'purchases.list' },
+      {
+        to: '/pdv',
+        label: 'PDV',
+        icon: 'ScanBarcode',
+        permission: 'sales.create',
+      },
+      {
+        to: '/vendas',
+        label: 'Vendas',
+        icon: 'ShoppingBag',
+        permission: 'sales.list',
+      },
+      {
+        to: '/compras',
+        label: 'Compras',
+        icon: 'ShoppingCart',
+        permission: 'purchases.list',
+      },
       {
         to: '/sessoes-de-caixa',
         label: 'Sessões de caixa',
@@ -123,14 +169,53 @@ const groups: NavGroup[] = [
     ],
   },
   {
+    id: 'fiscal',
+    label: 'Fiscal',
+    icon: 'ScrollText',
+    links: [
+      {
+        to: '/documentos-fiscais',
+        label: 'Documentos fiscais',
+        icon: 'FileText',
+        permission: 'fiscal.read',
+      },
+      {
+        to: '/configuracao-fiscal',
+        label: 'Configuração fiscal',
+        icon: 'ScrollText',
+        permission: 'fiscal.settings.read',
+      },
+    ],
+  },
+  {
     id: 'cadastros',
     label: 'Cadastros',
     icon: 'Database',
     links: [
-      { to: '/produtos', label: 'Produtos', icon: 'Package', permission: 'products.list' },
-      { to: '/parceiros', label: 'Parceiros', icon: 'Users', permission: 'partners.list' },
-      { to: '/estoque', label: 'Estoque', icon: 'Layers', permission: 'stock.list' },
-      { to: '/caixas', label: 'Caixas', icon: 'Monitor', permission: 'cash-registers.list' },
+      {
+        to: '/produtos',
+        label: 'Produtos',
+        icon: 'Package',
+        permission: 'products.list',
+      },
+      {
+        to: '/parceiros',
+        label: 'Parceiros',
+        icon: 'Users',
+        permission: 'partners.list',
+      },
+      {
+        to: '/estoque',
+        label: 'Estoque',
+        icon: 'Layers',
+        permission: 'stock.list',
+      },
+      {
+        to: '/caixas',
+        label: 'Caixas',
+        icon: 'Monitor',
+        permission: 'cash-registers.list',
+      },
       {
         to: '/estabelecimentos',
         label: 'Estabelecimentos',
@@ -144,8 +229,18 @@ const groups: NavGroup[] = [
     label: 'Configurações',
     icon: 'Settings',
     links: [
-      { to: '/empresa', label: 'Empresa', icon: 'Building', permission: 'company.read' },
-      { to: '/usuarios', label: 'Usuários', icon: 'Users', permission: 'users.list' },
+      {
+        to: '/empresa',
+        label: 'Empresa',
+        icon: 'Building',
+        permission: 'company.read',
+      },
+      {
+        to: '/usuarios',
+        label: 'Usuários',
+        icon: 'Users',
+        permission: 'users.list',
+      },
       {
         to: '/perfis-de-permissao',
         label: 'Perfis',
@@ -158,6 +253,7 @@ const groups: NavGroup[] = [
 
 const route = useRoute()
 const { can, isAtLeast } = usePermissions()
+const { favorites, removeFavorite } = useFavorites()
 
 function isVisible(link: NavLink): boolean {
   if (link.permission && !can(link.permission)) return false

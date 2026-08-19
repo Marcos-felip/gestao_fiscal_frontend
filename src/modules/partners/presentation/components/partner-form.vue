@@ -6,8 +6,9 @@ import FormSection from '@/shared/components/form/form-section.vue'
 import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
 import { brazilianStateOptions } from '@/core/constants/brazilian-states'
-import { partnerTypeOptions } from '@/enums/partner-type.enum'
-import { PersonType, personTypeOptions } from '@/enums/person-type.enum'
+import { partnerTypeOptions } from '@/core/enums/partner-type.enum'
+import { PersonType, personTypeOptions } from '@/core/enums/person-type.enum'
+import { indIeDestOptions } from '@/core/enums/ind-ie-dest.enum'
 import {
   formatCpf,
   formatCnpj,
@@ -39,6 +40,18 @@ const emit = defineEmits<{
 }>()
 
 const form = reactive<PartnerFormValues>({ ...props.initial })
+
+/**
+ * Há alteração em relação ao que o formulário recebeu?
+ *
+ * Comparação por conteúdo, não por referência: `initial` é recriado a cada
+ * renderização do pai, e comparar identidade acusaria alteração sem ninguém ter
+ * digitado nada — que é justamente o ruído que a barra deveria evitar.
+ */
+const isDirty = computed(
+  () => JSON.stringify(form) !== JSON.stringify(props.initial),
+)
+
 const errors = ref<Partial<Record<keyof PartnerFormData, string>>>({})
 const cepLoading = ref(false)
 
@@ -59,6 +72,27 @@ const documentMaxlength = computed(() => (isPessoaFisica.value ? '14' : '18'))
 function maskDocument(value: string): string {
   return isPessoaFisica.value ? formatCpf(value) : formatCnpj(value)
 }
+
+// O `Select` só fala string; o contrato da NF-e usa os números da NT.
+const indIeDestSelectOptions = indIeDestOptions.map((opcao) => ({
+  value: String(opcao.value),
+  label: opcao.label,
+}))
+
+/**
+ * A dica muda com a escolha porque "contribuinte" e "não contribuinte" não são
+ * óbvios para quem não é contador — e a escolha errada é rejeição da SEFAZ.
+ */
+const indIeDestHint = computed(() => {
+  const escolhida = indIeDestOptions.find(
+    (opcao) => String(opcao.value) === form.indIeDest,
+  )
+
+  return (
+    escolhida?.description ??
+    'Necessário para emitir NF-e. Não se deduz do tipo de pessoa.'
+  )
+})
 
 // Ao trocar o tipo de pessoa, reaplica a máscara ao documento já digitado.
 watch(
@@ -84,10 +118,17 @@ async function onCepInput(value: string): Promise<void> {
   if (address.neighborhood) form.neighborhood = address.neighborhood
   if (address.city) form.city = address.city
   if (address.state) form.state = address.state
+  // Vem de graça na mesma consulta e é exigido na NF-e: preencher aqui evita
+  // que o lojista precise procurar um número que ele não tem por que conhecer.
+  if (address.ibgeCode) form.ibgeCode = address.ibgeCode
 }
 
 function handleSubmit(): void {
-  const result = partnerSchema.safeParse({ ...form })
+  // O `Select` trabalha com string; o schema e o backend, com o número da NT.
+  const result = partnerSchema.safeParse({
+    ...form,
+    indIeDest: form.indIeDest ? Number(form.indIeDest) : null,
+  })
   if (!result.success) {
     errors.value = toFormErrors(result.error)
     return
@@ -302,6 +343,32 @@ const item = {
                   <template #label>Estado</template>
                 </Select>
               </div>
+
+              <div class="sm:col-span-3">
+                <Input
+                  v-model="form.ibgeCode"
+                  placeholder="3143302"
+                  maxlength="7"
+                  :error="errors.ibgeCode"
+                >
+                  <template #label>Código IBGE do município</template>
+                  <template #hint>
+                    Preenchido pelo CEP. Exigido para emitir NF-e.
+                  </template>
+                </Input>
+              </div>
+
+              <div class="sm:col-span-3">
+                <Select
+                  v-model="form.indIeDest"
+                  :options="indIeDestSelectOptions"
+                  placeholder="Selecione"
+                  :error="errors.indIeDest"
+                >
+                  <template #label>Situação perante o ICMS</template>
+                  <template #hint>{{ indIeDestHint }}</template>
+                </Select>
+              </div>
             </div>
           </FormSection>
         </motion.div>
@@ -312,6 +379,7 @@ const item = {
       v-if="!props.readonly"
       :submit-label="props.submitLabel"
       :loading="props.loading"
+      :dirty="isDirty"
       @secondary="emit('cancel')"
     />
   </form>

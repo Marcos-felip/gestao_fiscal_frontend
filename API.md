@@ -398,6 +398,30 @@ Permite atualizar dados da empresa: nome, tipo, CNPJ, inscrição estadual, tele
 - `phone`: formato (XX) XXXXX-XXXX ou variações
 - `taxRegime`: enum válido (SIMPLES_NACIONAL, LUCRO_PRESUMIDO, LUCRO_REAL, MEI)
 
+##### As duas Inscrições Estaduais — atenção no mapper
+
+| Campo | Onde grava | Papel na emissão |
+|---|---|---|
+| `stateRegistration` | estabelecimento **MATRIZ** | **É a IE do emitente da NFC-e** |
+| `inscricaoEstadual` | própria empresa | Fallback, se a matriz não tiver IE |
+
+`stateRegistration` é **read-write**, mas só nas rotas que fazem o join da matriz:
+
+| Rota | Traz `stateRegistration`? |
+|---|---|
+| `GET /companies/:id` | **sim** (derivado da matriz; `null` se não houver matriz) |
+| `PATCH /companies/:id` (resposta) | **sim** |
+| `GET /companies` (listagem) | **não** — a listagem não carrega estabelecimento |
+| `POST /companies` (resposta) | **não** — empresa nova ainda não tem matriz |
+
+Por isso o mapper tem **dois schemas**: `companySchema` (detalhe/PATCH) exige o campo, e
+`companyBaseSchema` (listagem/criação) não o declara. O campo **não** deve ganhar
+`.default(null)` no schema de detalhe — foi exatamente esse default que fez a IE sumir da tela
+de Empresa sem gerar `ContractError`.
+
+Enviar `inscricaoEstadual` e `stateRegistration` com **valores diferentes na mesma requisição**
+é recusado com `400`.
+
 **Resposta 200:**
 ```json
 {
@@ -405,6 +429,7 @@ Permite atualizar dados da empresa: nome, tipo, CNPJ, inscrição estadual, tele
   "name": "string",
   "type": "string",
   "cnpj": "string",
+  "stateRegistration": "string | null — IE da matriz (derivado)",
   "taxRegime": "string",
   "phone": "string",
   "isOnboarded": "boolean",
@@ -933,6 +958,42 @@ Os mesmos códigos estão marcados com 🔹 na coluna **Perfil sugerido** do [ca
 
 ---
 
+### GET /products/fiscal-pending — Produtos com pendência fiscal
+
+> **Permissão:** `products.list`
+
+Produtos que bloqueariam a emissão, com o motivo de cada pendência. O filtro é do
+**servidor** — peneirar no cliente só enxergaria a página carregada.
+
+**Query params:** `page`, `limit`, `search`
+
+**Resposta 200:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Refrigerante Lata 350ml",
+      "sku": "REF350",
+      "ncm": "2202",
+      "cfop": "5102",
+      "origin": 0,
+      "csosn": "102",
+      "cstIcms": null,
+      "pendencias": ["NCM ausente ou fora do formato de 8 dígitos"]
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
+```
+
+`pendencias` é o campo que justifica a rota: as frases vêm prontas do backend,
+que é quem decide o que torna um produto emitível. A tela não as reescreve.
+
+---
+
 ### GET /products/:id — Buscar por ID
 
 > **Permissão:** `products.read`
@@ -1113,6 +1174,554 @@ Os mesmos códigos estão marcados com 🔹 na coluna **Perfil sugerido** do [ca
 
 ---
 
+## Importação de nota de entrada
+
+> **Permissão:** `purchases.import` (por padrão OWNER e ADMIN)
+
+O XML da NF-e do fornecedor vira uma **compra em RASCUNHO**. A importação
+**nunca movimenta estoque** — quem movimenta continua sendo
+`POST /purchases/:id/confirm`.
+
+| Rota | Para quê |
+|---|---|
+| `POST /purchases/import/nfe` | `multipart/form-data`, campo **`xml`**, máx. 2 MB |
+| `GET /purchases/import` | Listar (envelope `{ data, total, page, limit }`) |
+| `GET /purchases/import/:id` | Detalhe com os itens |
+| `PATCH /purchases/import/:id/items/:itemId` | `{ "productId": "uuid" }` |
+| `POST /purchases/import/:id/confirm` | Gera a compra em rascunho |
+
+**Resposta da importação:**
+```jsonc
+{
+  "id": "uuid",
+  "status": "PENDING",           // PENDING | READY | IMPORTED | DISCARDED
+  "chaveAcesso": "3126...",
+  "number": 4321, "series": 1,
+  "issuedAt": "2026-08-15T12:30:00.000Z",
+  "issuerCnpj": "51720322000146",
+  "issuerName": "Distribuidora Teste LTDA",
+  "totalAmount": "255.00",       // decimal como string
+  "supplier": { "id": "uuid", "name": "..." },
+  "establishment": { "id": "uuid", "name": "Matriz" },
+  "purchase": { "id": "uuid", "purchaseNumber": 13 },  // null até confirmar
+  "duplicatas": [{ "numero": "001", "vencimento": "2026-09-15T00:00:00.000Z", "valor": 127.5 }],
+  "items": [
+    {
+      "id": "uuid", "itemNumber": 1,
+      "supplierCode": "007",     // código no cadastro DO FORNECEDOR
+      "gtin": "7891234567895",   // null quando o XML diz "SEM GTIN"
+      "description": "REFRIG LATA 350",
+      "ncm": "22021000", "cfop": "1102",
+      "unit": "CX", "quantity": "10.0000",
+      "unitPrice": "25.5000", "totalAmount": "255.00",
+      "productId": "uuid",       // null enquanto não casar
+      "match": "GTIN"
+    }
+  ]
+}
+```
+
+> ⚠️ **`match` é confiança, não detalhe técnico — e a tela precisa mostrá-la.**
+>
+> | Valor | O que a tela deve comunicar |
+> |---|---|
+> | `GTIN` | O código de barras bateu. É a evidência mais forte da nota |
+> | `SUPPLIER_CODE` | Veio da **memória** de uma nota anterior deste fornecedor, e carrega o erro de quem escolheu daquela vez |
+> | `MANUAL` | Escolhido nesta importação |
+> | `UNMATCHED` | Bloqueia a confirmação |
+>
+> Exibir `GTIN` e `SUPPLIER_CODE` com a mesma aparência faz alguém autorizar
+> uma entrada de estoque sem saber no que está confiando. Valor desconhecido
+> deve virar `ContractError`, nunca item de cara normal.
+
+**Erros que a tela exibe como vieram:** arquivo que não é NF-e modelo 55 (`400`,
+dizendo o que o arquivo é), destinatário de outra empresa (`400` nomeando o
+CNPJ), chave já importada (`409` com o número da compra que já existe), e
+confirmação com item pendente (`400` nomeando os itens).
+
+**Não há download do XML.** Quem importa por upload já tem o arquivo. Ele fica
+guardado no servidor para a busca na SEFAZ, onde o XML só existe dentro do
+sistema, e para reprocessar quando o parser melhorar.
+
+**Unidade divergente não é convertida.** A tela aponta quando a unidade do XML
+difere da do produto; converter por palpite multiplicaria o estoque por um
+número que ninguém conferiu.
+
+---
+
+## Fiscal
+
+> O módulo fiscal completo está em `gestao_fiscal_backend/API.md` e em
+> `gestao_fiscal_backend/FISCAL.md`. Aqui ficam os contratos que o frontend
+> consome com alguma particularidade.
+
+### Campos fiscais do produto — o que passou a ser exigido
+
+O motor fiscal deixou de decidir imposto. Cada item da nota passou a carregar o
+quadro tributário completo, montado a partir do **cadastro do produto** — e isso
+mudou o que `fiscalComplete` exige.
+
+| Campo | Antes | Agora |
+|---|---|---|
+| `cstPis` | opcional, texto livre | **obrigatório**, código da tabela |
+| `cstCofins` | opcional, texto livre | **obrigatório**, código da tabela |
+| `aliquotaPis` | opcional | obrigatória quando o CST é tributado |
+| `aliquotaCofins` | opcional | obrigatória quando o CST é tributado |
+| `csosn` | 5 códigos | **10 códigos** |
+| `cstIcms` | 3 códigos | **11 códigos** |
+
+**Sem CST de PIS e COFINS o produto não emite.** Não existe valor padrão: o
+código é decisão do contador, e preencher automaticamente esconderia
+classificação errada num cadastro que ninguém revisita. Bebida fria costuma ser
+monofásica (`04`); alimento preparado costuma ser isento (`07`) — mas confirme.
+
+**A alíquota depende da situação.** CST `01` e `02` apuram por percentual e
+exigem alíquota; `03` apura por quantidade e também exige; `04` a `09` não são
+tributados e **não comportam alíquota**. A regra está em
+`core/enums/cst-contribuicao.enum.ts` (`exigeAliquota`), espelhando
+`formaDaContribuicao` do backend. O formulário esconde o campo e limpa o valor
+quando ele deixa de caber.
+
+**Situações de ICMS aceitas no cadastro mas ainda não emitíveis:** `101`, `201`,
+`202`, `203`, `500` (CSOSN) e `10`, `20`, `30`, `60`, `70` (CST). Elas exigem
+substituição tributária, redução de base ou crédito do Simples, que dependem da
+matriz tributária por operação — etapa 2 do roteiro fiscal. O cadastro as aceita
+para nascer correto antes de a emissão alcançar; a emissão recusa nomeando o
+campo que falta.
+
+> **Mapper:** `cstPis`, `cstCofins` e `unit` são validados contra a tabela com
+> `z.enum`/`z.nativeEnum`, não coagidos com `as`. Código fora da tabela vira
+> `ContractError` na listagem — que é o sintoma certo para dado que não emite.
+
+### POST /fiscal/documents/nfe — Emitir NF-e modelo 55
+
+> **Permissão:** `fiscal.nfe.emit` — **separada** de `fiscal.emit`. Quem opera o
+> caixa emite NFC-e e não necessariamente NF-e.
+
+**Recorte vigente (13/08/2026):** venda **interna** (mesma UF), saída, finalidade
+normal, destinatário **pessoa jurídica**. Pessoa física continua na NFC-e.
+
+```jsonc
+{
+  "saleId": "uuid",
+  "consumidorFinal": false,     // obrigatório
+  "establishmentId": "uuid",    // opcional
+  "naturezaOperacao": "…",      // opcional; padrão "VENDA DE MERCADORIA"
+  "presenca": 1,                // opcional; padrão 1
+  "transporte": { … },          // opcional; ausente = sem frete
+  "cobranca": { … }             // opcional; venda a prazo
+}
+```
+
+**O destinatário não vai no payload.** Ele vem do cliente da venda, e o backend
+o monta a partir do cadastro do parceiro. A conferência de completude fica lá:
+duplicá-la aqui criaria uma segunda regra para divergir da primeira.
+
+**`consumidorFinal` não tem padrão.** Distingue venda para revenda (`false`) de
+venda para consumo (`true`) — o mesmo produto muda conforme o destino da
+mercadoria, e quem sabe é quem lançou a venda. O diálogo pergunta em português
+("Revender" / "Consumir ou usar") em vez de expor `indFinal`.
+
+**Erros `400`** chegam com `isUserFacing` e nomeiam o campo que falta no cadastro
+do cliente — endereço, código IBGE, indicador de IE, inscrição estadual. É a
+mensagem do backend que deve ser exibida, não uma genérica.
+
+**O DANFE da NF-e é HTML, não PDF.** O download responde `text/html`; não assuma
+`application/pdf` no fluxo de exibição.
+
+### Parceiro: campos que a NF-e exige
+
+| Campo | Observação |
+|---|---|
+| `ibgeCode` | 7 dígitos. **Preenchido pelo ViaCEP** ao digitar o CEP |
+| `indIeDest` | `1` contribuinte · `2` isento · `9` não contribuinte |
+
+Os dois são **opcionais no cadastro** e obrigatórios na emissão: quem cadastra
+cliente de balcão não deve ser obrigado a saber o código IBGE do município dele.
+
+**`indIeDest` não se deduz do tipo de pessoa** — prestadora de serviço é PJ e não
+é contribuinte de ICMS. Quando é `1`, o campo `rgIe` passa a valer como inscrição
+estadual e o formulário passa a exigi-lo; nos outros dois casos o backend não o
+envia ao motor.
+
+> **Mapper:** `type` e `personType` passaram a usar `z.nativeEnum` — os casts com
+> `as` saíram. `indIeDest` fora da tabela degrada para `null` com `.catch()`, em
+> vez de virar `ContractError`: é dado velho no cadastro, e quem precisa recusar
+> é a emissão, que consegue dizer ao lojista o que corrigir.
+
+### GET /fiscal/documents/xml/export — Exportar os XMLs de um período
+
+> **Permissão:** `fiscal.read` · responde `application/zip` em stream
+
+O pacote que o contador usa para escriturar o mês. Substitui abrir 300 telas de
+detalhe para baixar 300 XMLs.
+
+**Query**
+
+| Campo | Obrigatório | Observação |
+|---|---|---|
+| `dataInicio` | ✅ | `aaaa-MM-dd` |
+| `dataFim` | ✅ | `aaaa-MM-dd` |
+| `establishmentId` | | UUID |
+| `modelo` | | `NFE` ou `NFCE` |
+| `ambiente` | | `PRODUCAO` (padrão) ou `HOMOLOGACAO` |
+
+> ⚠️ **Mande as datas sem hora.** O backend lê `2026-08-31` como o **dia
+> inteiro**; se o valor vier como ISO com hora (`dateInputToIso`), ele vale o
+> instante exato e as notas do dia 31 ficam fora do fechamento. Por isso o
+> `ExportFiscalXmlsDto` carrega a string crua do `<input type="date">` — é a
+> única data do app que **não** passa por `dateInputToIso`.
+
+**Resposta**
+
+ZIP com um `<chave>-nfe.xml` por documento, mais `<chave>-cancelamento.xml`
+quando a nota foi cancelada, e o manifesto `_relacao.csv` (separado por `;`, com
+BOM — abre direto no Excel em português).
+
+Entram apenas documentos `AUTORIZADO` e `CANCELADO`. Documento cujo XML não foi
+recuperado do armazenamento aparece no manifesto marcado como ausente, e a
+exportação continua com `200`.
+
+**Particularidades no consumo**
+
+- **Resposta binária:** `responseType: 'blob'`, sem mapper Zod — não é JSON.
+- **O nome do arquivo é montado no cliente.** O backend manda um no
+  `Content-Disposition`, mas o navegador não enxerga o header: ele não está em
+  `Access-Control-Expose-Headers`.
+- **Período vazio devolve `200`** com um ZIP só de manifesto — não é `404`.
+
+**Erros**
+
+`400` com `{ statusCode, message, error }` em dois casos: período acima de 92
+dias e lote acima de 5.000 documentos. Os dois viram `ValidationError` e a
+`message` traz a orientação de como fatiar o pedido — exiba-a como veio.
+
+O ZIP também traz `<chave>-cce-NN.xml` para cada carta de correção, e o manifesto
+ganhou a coluna **Cartas de correção**.
+
+### Checklist de produção — apurado por modelo
+
+`GET /fiscal/settings/:establishmentId/producao/checklist` devolve os itens já
+filtrados pelos modelos que o estabelecimento emite (`modelosEmitidos` da
+configuração). Cada item pode trazer:
+
+| Campo | Significado |
+|---|---|
+| `codigo` | Identificador estável do item — `certificado_enviado`, `certificado_vigente`, `csc`, `serie`, `proximo_numero`, `consulta_publica`, `produtos_fiscais` |
+| `modelo` | `NFE` ou `NFCE`. **Ausente = vale para todos** (é o caso do certificado) |
+| `bloqueante` | `false` quando o item não impede a liberação. **Ausente = bloqueante** |
+
+**Aja pelo `codigo`, nunca pelo texto do item** — a frase existe para ser
+reescrita. É por ele que o item `produtos_fiscais` leva à lista de
+`GET /products/fiscal-pending`. O código repete entre modelos (`serie` da NFC-e e
+`serie` da NF-e), então a chave de lista é `codigo` + `modelo`. Código
+desconhecido deve virar item sem ação, não checklist recusado.
+
+> ⚠️ **O botão de liberar produção deve olhar `bloqueante`, não o total.** Existem
+> itens que nunca ficam `ok` antes da liberação — a consulta pública só se valida
+> depois de emitir, e produtos com cadastro fiscal incompleto são aviso. Exigir
+> todos os itens tornava a liberação impossível pela tela, embora o backend a
+> aceitasse.
+
+`modelosEmitidos` entra no `PATCH /fiscal/settings/:establishmentId` como array
+de `NFE`/`NFCE`, com **ao menos um** — o backend recusa a lista vazia com `400`.
+Lista vazia vinda do servidor (configuração antiga) vale como os dois modelos.
+
+### Carta de correção — `fiscal.cce`
+
+| Rota | Uso |
+|---|---|
+| `POST /fiscal/documents/:id/carta-correcao` | emite a CC-e |
+| `GET /fiscal/documents/:id/cartas-correcao` | histórico (array cru, sem envelope) |
+| `GET /fiscal/documents/:id/cartas-correcao/:sequencia/xml` | XML, **texto cru** |
+
+**Body:** `{ "correcao": "15 a 1000 caracteres" }` — e nada mais.
+
+> ⚠️ **Não existe campo de sequência.** Quem a atribui é o servidor, a partir das
+> correções que a nota já tem. Um `sequencia` vindo daqui seria adivinhação, e
+> duas correções simultâneas escolheriam o mesmo número.
+
+**Resposta**
+
+```jsonc
+{
+  "id": "uuid",
+  "sequencia": 1,
+  "correcao": "…",
+  "condicaoDeUso": "A Carta de Correção é disciplinada pelo § 1º-A…",
+  "protocolo": "131260000000001",
+  "xmlEvento": "…",             // chave do storage ou o XML; use a rota de download
+  "createdAt": "2026-08-14T12:00:00.000Z"
+}
+```
+
+> **Exiba a `condicaoDeUso` que veio na resposta, não uma constante copiada.** O
+> texto legal muda com o tempo, e o que vale é o que estava vigente quando a
+> correção foi feita — por isso ele é gravado com a carta.
+
+**O contador de restantes sai do histórico:** `20 − cartas.length`. O limite de 20
+é legal; a 21ª volta `400` citando-o.
+
+**Erros `400`** (`ValidationError`, exiba como veio): documento não está
+`AUTORIZADO`, limite atingido, texto fora de 15–1000, ou recusa da SEFAZ.
+
+### Inutilização de numeração — `fiscal.inutilizar`
+
+| Rota | Uso |
+|---|---|
+| `POST /fiscal/inutilizacoes` | inutiliza a faixa |
+| `GET /fiscal/inutilizacoes/pendentes/:establishmentId` | faixas sugeridas |
+
+**Body:** `establishmentId`, `modelo` (`NFE`/`NFCE`), `serie`, `numeroInicial`,
+`numeroFinal`, `justificativa` (15–255) e `ano` opcional (padrão: o corrente).
+
+**Sugira, não peça para digitar.** `pendentes` devolve os números reservados que
+nunca viraram documento, já agrupados em faixas contíguas:
+
+```json
+[{ "modelo": "NFE", "serie": 1, "faixas": [{ "inicio": 1, "fim": 1 }] }]
+```
+
+> ⚠️ **É irreversível.** Faixa errada queima numeração válida. Por isso a tela
+> confirma duas vezes e repete os números por extenso na segunda etapa.
+
+**A recusa por conflito nomeia o número e a chave** — exiba a mensagem como veio,
+junto do formulário preenchido: é ela que permite corrigir o intervalo. Uma
+mensagem genérica deixaria o operador sem saber qual número tirar da faixa.
+
+Documento em `ERRO` ou `REJEITADO` dentro da faixa passa a `INUTILIZADO` — o
+décimo valor do enum de status, que até agora nada produzia.
+
+---
+
+## Dashboard (tela de início)
+
+Indicadores consolidados da primeira tela. **Uma rota por bloco**, para que a
+home componha em paralelo e cada parte falhe sozinha.
+
+**Não existe permissão `dashboard.*`.** Cada rota exige a permissão do domínio
+que resume — a tela de início não é uma porta lateral para números que a tela do
+domínio nega. O frontend já conhece as permissões efetivas (`GET
+/permissions/me`) e deve chamar só o que o usuário pode ver.
+
+| Rota | Permissão |
+|---|---|
+| `GET /dashboard/sales` | `sales.list` |
+| `GET /dashboard/sales-chart` | `sales.list` |
+| `GET /dashboard/receivables` | `receivables.list` |
+| `GET /dashboard/payables` | `payables.list` |
+| `GET /dashboard/fiscal` | `fiscal.read` |
+| `GET /dashboard/stock-alerts` | `products.list` |
+| `GET /dashboard/cash` | `cash.list` |
+
+**Query param comum:** `establishmentId` (UUID, opcional) — sem ele, os números
+somam toda a empresa ativa. Estabelecimento de outra empresa devolve `404
+Estabelecimento não encontrado`. **Exceção:** `stock-alerts` ignora o filtro
+(ver abaixo).
+
+**Recortes de tempo.** "Hoje", "ontem" e "mês" são calculados no fuso da
+operação (`APP_TIMEZONE`, padrão `America/Sao_Paulo`), não em UTC. Uma venda às
+21h de Brasília conta no dia em que foi feita.
+
+**Valores monetários trafegam como string**, como no resto da API.
+
+---
+
+### GET /dashboard/sales — Faturamento de hoje, de ontem e do mês
+
+> **Permissão:** `sales.list`
+
+Só vendas `CONCLUIDA` e não excluídas compõem o faturamento. `ORCAMENTO` é
+proposta e `EM_ABERTO` é venda em digitação: os dois aparecem apartados em
+`openQuotes`, como funil, e nunca somam receita.
+
+**Resposta 200:**
+```json
+{
+  "today": { "count": 12, "total": "1450.00", "averageTicket": "120.83" },
+  "yesterday": { "count": 9, "total": "980.00", "averageTicket": "108.89" },
+  "month": { "count": 210, "total": "24500.00", "averageTicket": "116.67" },
+  "previousMonth": { "count": 190, "total": "22100.00", "averageTicket": "116.32" },
+  "openQuotes": { "count": 4, "total": "820.00" }
+}
+```
+
+Dia sem venda devolve zero em tudo — não é erro nem lista vazia.
+
+---
+
+### GET /dashboard/sales-chart — Série de faturamento
+
+> **Permissão:** `sales.list`
+
+**Query params:** `range` (`30d` padrão, ou `12m`), `establishmentId`
+
+`range` fora desses dois valores devolve `400` com
+`Período inválido. Use "30d" para dias ou "12m" para meses.`
+
+**Todo intervalo do eixo vem preenchido**, inclusive os sem venda. Devolver só
+os dias com movimento faria o gráfico ligar duas datas distantes por uma reta, e
+uma queda seria lida como estabilidade.
+
+**Resposta 200:**
+```json
+{
+  "range": "30d",
+  "points": [
+    { "key": "2026-07-21", "total": "0.00", "count": 0 },
+    { "key": "2026-07-22", "total": "430.00", "count": 5 }
+  ]
+}
+```
+
+`key` é `AAAA-MM-DD` em `30d` (30 pontos) e `AAAA-MM` em `12m` (12 pontos).
+
+---
+
+### GET /dashboard/receivables — Contas a receber
+
+> **Permissão:** `receivables.list`
+
+### GET /dashboard/payables — Contas a pagar
+
+> **Permissão:** `payables.list`
+
+Mesma forma de resposta, permissões separadas: quem só enxerga o que entra não
+recebe o que sai de brinde.
+
+**`total` é o saldo em aberto (`amount - paidAmount`), nunca o valor de face.**
+Um título de R$ 500 com R$ 100 baixados pesa R$ 400.
+
+`overdue` é derivado contra o agora (`status ∈ {ABERTO, PARCIAL}` e vencimento no
+passado), pelo mesmo critério que `GET /receivables` usa na leitura — os dois
+lugares nunca discordam sobre quantos títulos estão vencidos.
+
+**Resposta 200:**
+```json
+{
+  "overdue": { "count": 3, "total": "1200.00" },
+  "dueToday": { "count": 1, "total": "300.00" },
+  "dueNext7Days": { "count": 5, "total": "2100.00" },
+  "open": { "count": 20, "total": "8000.00" },
+  "settledThisMonth": "5400.00"
+}
+```
+
+`settledThisMonth` é o que foi **efetivamente baixado** no mês (soma de
+`FinancialPayment`), não o que venceu.
+
+> Título financeiro tem `establishmentId` anulável. Com o filtro ligado, os
+> títulos sem estabelecimento ficam de fora.
+
+---
+
+### GET /dashboard/fiscal — Documentos do mês e certificado
+
+> **Permissão:** `fiscal.read`
+
+**Resposta 200:**
+```json
+{
+  "month": {
+    "total": 10,
+    "authorized": 6,
+    "rejected": 2,
+    "cancelled": 1,
+    "pending": 0,
+    "contingency": 0,
+    "failed": 0
+  },
+  "authorizedTotal": "308.00",
+  "certificateAlerts": [
+    {
+      "establishmentId": "uuid",
+      "establishmentName": "Matriz",
+      "expiresAt": "2026-09-08T00:00:00.000Z",
+      "daysToExpire": 20,
+      "expired": false
+    }
+  ]
+}
+```
+
+- `cancelled` soma `CANCELADO` e `CANCELAMENTO_PENDENTE`; `pending` soma
+  `PENDENTE` e `PROCESSANDO`; `failed` é `ERRO`.
+- `authorizedTotal` considera **só** os autorizados.
+- `certificateAlerts` traz apenas os certificados que vencem em até **30 dias**,
+  do mais urgente para o menos. `daysToExpire` negativo com `expired: true`
+  significa certificado já vencido.
+- Empresa que ainda não emite responde com tudo zerado e `certificateAlerts: []`
+  — sem erro.
+
+---
+
+### GET /dashboard/stock-alerts — Produtos zerados e no mínimo
+
+> **Permissão:** `products.list`
+
+> **`establishmentId` não se aplica a esta rota.** `Product` não tem
+> estabelecimento: o saldo é da empresa. O filtro é aceito nas outras rotas e
+> ignorado aqui — não rotule este cartão com o nome da loja.
+
+Produto sem `minStock` cadastrado **não** entra no alerta de mínimo (não há
+parâmetro contra o qual comparar), mas entra no de zerado se o saldo for zero.
+Produto inativo ou excluído fica fora dos dois.
+
+**Resposta 200:**
+```json
+{
+  "outOfStock": 3,
+  "belowMinimum": 7,
+  "items": [
+    {
+      "id": "uuid",
+      "name": "Refrigerante Lata 350ml",
+      "sku": "REF350",
+      "unit": "UN",
+      "currentStock": "0.0000",
+      "minStock": "10.0000"
+    }
+  ]
+}
+```
+
+`items` é uma **amostra** dos 5 mais críticos (menor saldo primeiro), para o
+cartão ter o que mostrar sem virar listagem. A lista completa é
+`GET /products`.
+
+---
+
+### GET /dashboard/cash — Caixas abertos
+
+> **Permissão:** `cash.list`
+
+**Resposta 200:**
+```json
+{
+  "blindClose": false,
+  "closedToday": 2,
+  "openSessions": [
+    {
+      "id": "uuid",
+      "cashRegisterId": "uuid",
+      "cashRegisterName": "Caixa 1",
+      "operatorId": "uuid",
+      "operatorName": "Ana Souza",
+      "openedAt": "2026-08-19T11:00:00.000Z",
+      "openingAmount": "100.00",
+      "salesTotal": "526.00"
+    }
+  ]
+}
+```
+
+**`salesTotal` vem `null` quando `blindClose` é `true`.** A conferência às cegas
+existe para o operador contar a gaveta sem saber o esperado; publicar o total na
+home entregaria justamente esse número. Trate o nulo como "não disponível", não
+como zero.
+
+---
+
 ## Paginação
 
 Todos os endpoints de listagem suportam paginação:
@@ -1283,6 +1892,28 @@ Vale em `PATCH /users/:id`, `DELETE /memberships/:id` e `PUT /memberships/:id/pr
 | 1 | `PATCH /companies/:id` ignora o `:id` e atualiza sempre a empresa ativa. | Baixo — enviar o ID da empresa ativa para evitar confusão |
 | 2 | Permissões `sales.*` remanescentes do módulo de vendas removido continuam no catálogo e são copiadas para cada empresa nova. | Baixo — ruído em `GET /permissions`; nenhum endpoint as utiliza |
 | 3 | Código de permissão inexistente devolve `404` em `PATCH /permissions/:role` e `422` nos perfis. | Baixo — tratar os dois status ao validar o formulário de permissões |
+| 4 | **`POST/PATCH /fiscal/settings` validam o formato do CSC**: `codigoCsc` de 16 a 64 caracteres alfanuméricos, `idCsc` de 1 a 6 dígitos. Fora disso, `400`. | Médio — o formulário fiscal aplica a mesma regra antes de enviar; ver abaixo |
+
+### Formato do CSC (NFC-e)
+
+O par `idCsc` + `codigoCsc` vem do portal da SEFAZ da UF (credenciamento de NFC-e) e é
+**específico do ambiente**: o par de homologação não vale em produção.
+
+| Campo | Formato |
+|---|---|
+| `codigoCsc` | 16 a 64 caracteres alfanuméricos |
+| `idCsc` | 1 a 6 dígitos (é o `cIdToken` do QR Code, preenchido com zeros à esquerda) |
+
+O mínimo do código é **16 e não 32** porque o tamanho varia por UF — MG emite 32
+hexadecimais, outras emitem 36.
+
+Por que validar na tela em vez de deixar a API recusar: um CSC errado **não falha de forma
+legível**. Ele entra no hash do QR Code, o XML é montado e assinado normalmente, a numeração
+da nota é consumida, e a SEFAZ devolve **rejeição 464 — "QR-Code com hash inválido"**, sem
+mencionar o CSC. Foi o que aconteceu em 10/08/2026 com um CSC de 6 dígitos salvo por esta
+tela.
+
+O CSC é segredo: não deve aparecer em log, toast nem telemetria.
 
 ---
 
@@ -1292,7 +1923,8 @@ Vale em `PATCH /users/:id`, `DELETE /memberships/:id` e `PUT /memberships/:id/pr
 |------|----------------|
 | `CompanyType` | `MEI`, `ME`, `EPP`, `LTDA`, `SA`, `EIRELI`, `SLU` |
 | `BusinessSegment` | `ALUMINIO_PORTAS`, `SUPERMERCADO`, `PAPELARIA`, `MERCEARIA`, `LANCHONETE`, `GENERICO` |
-| `TaxRegime` | `SIMPLES_NACIONAL`, `LUCRO_PRESUMIDO`, `LUCRO_REAL`, `MEI` |
+| `TaxRegime` | `SIMPLES_NACIONAL`, `LUCRO_PRESUMIDO`, `LUCRO_REAL`, `MEI` — regime **cadastral** |
+| `TaxRegimeCode` (CRT) | `SIMPLES_NACIONAL` (1), `SIMPLES_EXCESSO` (2), `REGIME_NORMAL` (3), `SIMPLES_MEI` (4) — código **fiscal**, usado na emissão |
 | `EstablishmentType` | `MATRIZ`, `FILIAL` |
 | `MembershipRole` | `OWNER`, `ADMIN`, `MEMBER` |
 | `PartnerType` | `CLIENT`, `SUPPLIER`, `BOTH` |

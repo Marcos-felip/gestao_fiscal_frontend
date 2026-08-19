@@ -5,8 +5,8 @@ import { ContractError } from '@/core/errors/contract-error'
 import { Purchase } from '@/modules/purchases/domain/entities/purchase.entity'
 import { PurchaseItem } from '@/modules/purchases/domain/entities/purchase-item.entity'
 import type { PurchaseList } from '@/modules/purchases/domain/responses/purchase-list-response'
-import type { PurchaseStatus } from '@/enums/purchase-status.enum'
-import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import type { PurchaseStatus } from '@/core/enums/purchase-status.enum'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const decimal = z.union([z.number(), z.string()]).default(0)
@@ -101,7 +101,9 @@ export function toPurchase(data: unknown): Either<DomainError, Purchase> {
   const parsed = purchaseSchema.safeParse(data)
 
   if (!parsed.success) {
-    return Either.left(new ContractError('purchases', toIssueList(parsed.error)))
+    return Either.left(
+      new ContractError('purchases', toIssueList(parsed.error)),
+    )
   }
 
   return Either.right(build(parsed.data))
@@ -113,7 +115,9 @@ export function toPurchaseList(
   const parsed = purchaseListSchema.safeParse(data)
 
   if (!parsed.success) {
-    return Either.left(new ContractError('purchases', toIssueList(parsed.error)))
+    return Either.left(
+      new ContractError('purchases', toIssueList(parsed.error)),
+    )
   }
 
   const value = parsed.data

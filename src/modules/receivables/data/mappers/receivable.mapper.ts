@@ -5,9 +5,9 @@ import { ContractError } from '@/core/errors/contract-error'
 import { Receivable } from '@/modules/receivables/domain/entities/receivable.entity'
 import { ReceivablePayment } from '@/modules/receivables/domain/entities/receivable-payment.entity'
 import type { ReceivableList } from '@/modules/receivables/domain/responses/receivable-list-response'
-import type { FinancialStatus } from '@/enums/financial-status.enum'
-import type { FinancialType } from '@/enums/financial-type.enum'
-import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { FinancialStatus } from '@/core/enums/financial-status.enum'
+import type { FinancialType } from '@/core/enums/financial-type.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const decimal = z.union([z.number(), z.string()]).default(0)
@@ -115,7 +115,9 @@ export function toReceivable(data: unknown): Either<DomainError, Receivable> {
   const parsed = receivableSchema.safeParse(data)
 
   if (!parsed.success) {
-    return Either.left(new ContractError('receivables', toIssueList(parsed.error)))
+    return Either.left(
+      new ContractError('receivables', toIssueList(parsed.error)),
+    )
   }
 
   return Either.right(build(parsed.data))
@@ -128,7 +130,9 @@ export function toReceivableArray(
   const parsed = z.array(receivableSchema).safeParse(data)
 
   if (!parsed.success) {
-    return Either.left(new ContractError('receivables', toIssueList(parsed.error)))
+    return Either.left(
+      new ContractError('receivables', toIssueList(parsed.error)),
+    )
   }
 
   return Either.right(parsed.data.map(build))
@@ -140,7 +144,9 @@ export function toReceivableList(
   const parsed = receivableListSchema.safeParse(data)
 
   if (!parsed.success) {
-    return Either.left(new ContractError('receivables', toIssueList(parsed.error)))
+    return Either.left(
+      new ContractError('receivables', toIssueList(parsed.error)),
+    )
   }
 
   const value = parsed.data

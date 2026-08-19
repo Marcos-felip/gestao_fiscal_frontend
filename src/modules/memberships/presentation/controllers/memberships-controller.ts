@@ -10,7 +10,7 @@ import type { CreatedUser } from '@/modules/memberships/domain/responses/created
 import { CreateUserDto } from '@/modules/memberships/domain/dto/create-user-dto'
 import { UpdateMemberRoleDto } from '@/modules/memberships/domain/dto/update-member-role-dto'
 import { UpdateUserDto } from '@/modules/memberships/domain/dto/update-user-dto'
-import type { MembershipRole } from '@/enums/membership-role.enum'
+import type { MembershipRole } from '@/core/enums/membership-role.enum'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
 import { StorageService } from '@/core/utils/storage'
 import { useToast } from '@/shared/composables'

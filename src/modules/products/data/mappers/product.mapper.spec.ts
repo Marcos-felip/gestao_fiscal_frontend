@@ -23,6 +23,14 @@ const respostaValida = {
   cest: '2810400',
   cfop: '5102',
   origin: 0,
+  csosn: '102',
+  cstIcms: '00',
+  cstPis: '01',
+  cstCofins: '01',
+  aliquotaIcms: '18.0000',
+  aliquotaPis: '1.6500',
+  aliquotaCofins: '7.6000',
+  fiscalComplete: true,
   technicalAttributes: { cor: 'amarelo', numeracao: 42 },
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-02T00:00:00.000Z',
@@ -39,7 +47,26 @@ describe('toProduct', () => {
     expect(product.salePrice).toBe(249.9)
     expect(product.currentStock).toBe(8)
     expect(product.minStock).toBe(10)
-    expect(product.technicalAttributes).toEqual({ cor: 'amarelo', numeracao: 42 })
+    expect(product.technicalAttributes).toEqual({
+      cor: 'amarelo',
+      numeracao: 42,
+    })
+  })
+
+  it('converte alíquotas fiscais (string) para número e lê fiscalComplete', () => {
+    const result = toProduct(respostaValida)
+
+    expect(result.isRight).toBe(true)
+    const product = result.right
+    expect(product.csosn).toBe('102')
+    expect(product.cstIcms).toBe('00')
+    expect(product.cstPis).toBe('01')
+    expect(product.cstCofins).toBe('01')
+    expect(product.aliquotaIcms).toBe(18)
+    expect(product.aliquotaPis).toBe(1.65)
+    expect(product.aliquotaCofins).toBe(7.6)
+    expect(product.fiscalComplete).toBe(true)
+    expect(product.isFiscalPending).toBe(false)
   })
 
   it('marca estoque baixo quando currentStock <= minStock', () => {
@@ -66,6 +93,13 @@ describe('toProduct', () => {
     expect(product.isActive).toBe(true)
     expect(product.isLowStock).toBe(false)
     expect(product.technicalAttributes).toBeNull()
+    expect(product.csosn).toBeNull()
+    expect(product.cstIcms).toBeNull()
+    expect(product.aliquotaIcms).toBeNull()
+    expect(product.aliquotaPis).toBeNull()
+    expect(product.aliquotaCofins).toBeNull()
+    expect(product.fiscalComplete).toBe(false)
+    expect(product.isFiscalPending).toBe(true)
   })
 
   it('rejeita resposta com campo de tipo errado (ContractError)', () => {
@@ -123,5 +157,58 @@ describe('toProductList', () => {
 
     expect(result.isLeft).toBe(true)
     expect(result.left).toBeInstanceOf(ContractError)
+  })
+})
+
+/**
+ * Enum desconhecido é quebra de contrato, não valor a tolerar: o mapper valida
+ * contra a tabela em vez de coagir com `as`. Se o backend mandar um código que
+ * a emissão não conhece, o sintoma aparece aqui — e não como rejeição da SEFAZ
+ * depois de a nota ter consumido numeração.
+ */
+describe('toProduct — enums validados contra a tabela', () => {
+  it('rejeita unidade de medida desconhecida', () => {
+    const result = toProduct({ ...respostaValida, unit: 'CAIXOTE' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('rejeita CST de PIS fora da tabela', () => {
+    const result = toProduct({ ...respostaValida, cstPis: '77' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('rejeita CST de COFINS fora da tabela', () => {
+    const result = toProduct({ ...respostaValida, cstCofins: '00' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('aceita CST válido e o mantém na entidade', () => {
+    const result = toProduct({
+      ...respostaValida,
+      cstPis: '04',
+      cstCofins: '04',
+    })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.cstPis).toBe('04')
+    expect(result.right.cstCofins).toBe('04')
+  })
+
+  it('aceita produto sem CST cadastrado', () => {
+    // Nulo é legítimo: o produto existe no cadastro e ainda não emite.
+    const result = toProduct({
+      ...respostaValida,
+      cstPis: null,
+      cstCofins: null,
+    })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.cstPis).toBeNull()
   })
 })

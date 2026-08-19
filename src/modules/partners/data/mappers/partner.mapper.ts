@@ -4,15 +4,18 @@ import type { DomainError } from '@/core/errors/domain-error'
 import { ContractError } from '@/core/errors/contract-error'
 import { Partner } from '@/modules/partners/domain/entities/partner.entity'
 import type { PartnerList } from '@/modules/partners/domain/responses/partner-list-response'
-import type { PartnerType } from '@/enums/partner-type.enum'
-import type { PersonType } from '@/enums/person-type.enum'
+import { PartnerType } from '@/core/enums/partner-type.enum'
+import { PersonType } from '@/core/enums/person-type.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
+// Import de valor, não `import type`: `z.nativeEnum` precisa do objeto em
+// runtime, e o cast que existia aqui deixava um enum desconhecido do backend
+// entrar como se fosse válido, para explodir muito depois.
 const partnerSchema = z.object({
   id: z.string(),
   companyId: z.string(),
-  type: z.string(),
-  personType: z.string(),
+  type: z.nativeEnum(PartnerType),
+  personType: z.nativeEnum(PersonType),
   name: z.string(),
   tradeName: z.string().nullable().default(null),
   cpfCnpj: z.string().nullable().default(null),
@@ -26,6 +29,15 @@ const partnerSchema = z.object({
   neighborhood: z.string().nullable().default(null),
   city: z.string().nullable().default(null),
   state: z.string().nullable().default(null),
+  ibgeCode: z.string().nullable().default(null),
+  // `.catch(null)` de propósito: indicador fora da tabela é dado velho ou
+  // errado no cadastro, não contrato quebrado — a emissão de NF-e recusa
+  // nomeando o campo, que é onde o lojista consegue agir.
+  indIeDest: z
+    .union([z.literal(1), z.literal(2), z.literal(9)])
+    .nullable()
+    .catch(null)
+    .default(null),
   isActive: z.boolean().default(true),
   createdAt: z.string().nullable().default(null),
   updatedAt: z.string().nullable().default(null),
@@ -44,8 +56,8 @@ function build(value: PartnerPayload): Partner {
   return new Partner(
     value.id,
     value.companyId,
-    value.type as PartnerType,
-    value.personType as PersonType,
+    value.type,
+    value.personType,
     value.name,
     value.tradeName,
     value.cpfCnpj,
@@ -59,6 +71,8 @@ function build(value: PartnerPayload): Partner {
     value.neighborhood,
     value.city,
     value.state,
+    value.ibgeCode,
+    value.indIeDest,
     value.isActive,
     value.createdAt,
     value.updatedAt,

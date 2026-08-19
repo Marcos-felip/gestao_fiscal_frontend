@@ -1,4 +1,4 @@
-import type { CashMovementType } from '@/enums/cash-movement-type.enum'
+import type { CashMovementType } from '@/core/enums/cash-movement-type.enum'
 
 /**
  * Movimento manual da gaveta (sangria/suprimento) durante uma sessão.

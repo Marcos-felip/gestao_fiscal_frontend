@@ -1,4 +1,4 @@
-import type { PurchaseStatus } from '@/enums/purchase-status.enum'
+import type { PurchaseStatus } from '@/core/enums/purchase-status.enum'
 
 export class ListPurchasesDto {
   page: number

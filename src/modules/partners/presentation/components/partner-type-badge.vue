@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { PartnerType, partnerTypeLabels } from '@/enums/partner-type.enum'
+import { PartnerType, partnerTypeLabels } from '@/core/enums/partner-type.enum'
 
 const props = defineProps<{ type: PartnerType }>()
 

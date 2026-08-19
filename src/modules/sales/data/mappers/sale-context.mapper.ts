@@ -6,7 +6,7 @@ import type {
   SaleContext,
   SaleContextProduct,
 } from '@/modules/sales/domain/responses/sale-context-response'
-import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 const decimal = z.union([z.number(), z.string()])

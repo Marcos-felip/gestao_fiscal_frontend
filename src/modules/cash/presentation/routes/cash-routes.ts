@@ -10,6 +10,7 @@ export const cashRoutes: RouteRecordRaw[] = [
     name: routeNames.CASH_REGISTERS,
     component: CashRegistersPage,
     meta: {
+      tab: { id: 'cash-registers', title: 'Caixas' },
       title: 'Caixas',
       icon: 'Monitor',
       requiresPermission: 'cash-registers.list',
@@ -20,6 +21,7 @@ export const cashRoutes: RouteRecordRaw[] = [
     name: routeNames.CASH_SESSIONS,
     component: CashSessionsPage,
     meta: {
+      tab: { id: 'cash-sessions', title: 'Sessões de caixa' },
       title: 'Sessões de caixa',
       icon: 'Archive',
       requiresPermission: 'cash.list',
@@ -29,6 +31,6 @@ export const cashRoutes: RouteRecordRaw[] = [
     path: 'sessoes-de-caixa/:id',
     name: routeNames.CASH_SESSION_DETAIL,
     component: CashSessionDetailPage,
-    meta: { requiresPermission: 'cash.read' },
+    meta: { tab: { id: 'cash-sessions', title: 'Sessões de caixa' }, requiresPermission: 'cash.read'  },
   },
 ]

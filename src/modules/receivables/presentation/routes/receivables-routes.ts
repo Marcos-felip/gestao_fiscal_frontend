@@ -9,6 +9,7 @@ export const receivablesRoutes: RouteRecordRaw[] = [
     name: routeNames.RECEIVABLES,
     component: ReceivablesPage,
     meta: {
+      tab: { id: 'receivables', title: 'Contas a receber' },
       title: 'Contas a receber',
       icon: 'HandCoins',
       requiresPermission: 'receivables.list',
@@ -18,6 +19,6 @@ export const receivablesRoutes: RouteRecordRaw[] = [
     path: 'contas-a-receber/:id',
     name: routeNames.RECEIVABLE_DETAIL,
     component: ReceivableDetailPage,
-    meta: { requiresPermission: 'receivables.read' },
+    meta: { tab: { id: 'receivables', title: 'Contas a receber' }, requiresPermission: 'receivables.read'  },
   },
 ]

@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
 
 /** Um pagamento (baixa) lançado sobre um título a pagar. */
 export class PayablePayment {

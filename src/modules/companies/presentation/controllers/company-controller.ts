@@ -8,8 +8,9 @@ import type {
   CompanyFormValues,
   SedeFormValues,
 } from '@/modules/companies/presentation/schemas/company-schema'
-import type { CompanyType } from '@/enums/company-type.enum'
-import type { TaxRegime } from '@/enums/tax-regime.enum'
+import type { CompanyType } from '@/core/enums/company-type.enum'
+import type { TaxRegime } from '@/core/enums/tax-regime.enum'
+import type { TaxRegimeCode } from '@/core/enums/tax-regime-code.enum'
 import type { ListEstablishmentsUseCase } from '@/modules/establishments/application/use-cases/list-establishments.use-case'
 import type { UpdateEstablishmentUseCase } from '@/modules/establishments/application/use-cases/update-establishment.use-case'
 import { UpdateEstablishmentDto } from '@/modules/establishments/domain/dto/update-establishment-dto'
@@ -35,9 +36,13 @@ function emptySede(): SedeFormValues {
 
 /**
  * Controla a página de Empresa, que unifica a pessoa jurídica com a sua sede
- * (estabelecimento MATRIZ). Carrega e salva as duas entidades num só fluxo:
- * CNPJ e Inscrição Estadual vivem na empresa (fonte única) e são propagados
- * para a matriz ao salvar, evitando divergência entre os dois cadastros.
+ * (estabelecimento MATRIZ). Carrega e salva as duas entidades num só fluxo.
+ *
+ * CNPJ e Inscrição Estadual são editados no formulário da empresa e gravados
+ * também na matriz, para os dois cadastros não divergirem. A **fonte da
+ * verdade da IE é a matriz**: é dela que a NFC-e tira o emitente, e é dela que
+ * o formulário relê o valor — a leitura da empresa não devolve
+ * `stateRegistration`.
  */
 export class CompanyController extends BaseController {
   private readonly getCompanyUseCase: GetCompanyUseCase
@@ -57,11 +62,21 @@ export class CompanyController extends BaseController {
     stateRegistration: '',
     phone: '',
     taxRegime: '',
+    razaoSocial: '',
+    nomeFantasia: '',
+    crt: '',
+    contribuinteIcms: false,
+    inscricaoEstadual: '',
+    inscricaoMunicipal: '',
+    codigoIbgeMunicipio: '',
+    telefoneFiscal: '',
+    emailFiscal: '',
   })
 
   readonly sede = ref<SedeFormValues>(emptySede())
   readonly hasMatriz = ref(false)
   readonly loaded = ref(false)
+  readonly fiscalConfigComplete = ref(false)
 
   constructor(
     getCompanyUseCase: GetCompanyUseCase,
@@ -114,6 +129,15 @@ export class CompanyController extends BaseController {
       taxRegime: (input.company.taxRegime || undefined) as
         | TaxRegime
         | undefined,
+      razaoSocial: input.company.razaoSocial || undefined,
+      nomeFantasia: input.company.nomeFantasia || undefined,
+      crt: (input.company.crt || undefined) as TaxRegimeCode | undefined,
+      contribuinteIcms: input.company.contribuinteIcms,
+      inscricaoEstadual: input.company.inscricaoEstadual || undefined,
+      inscricaoMunicipal: input.company.inscricaoMunicipal || undefined,
+      codigoIbgeMunicipio: input.company.codigoIbgeMunicipio || undefined,
+      telefoneFiscal: input.company.telefoneFiscal || undefined,
+      emailFiscal: input.company.emailFiscal || undefined,
     })
 
     const companyResult = await this.updateCompanyUseCase.execute(
@@ -127,8 +151,9 @@ export class CompanyController extends BaseController {
     }
     this.applyCompany(companyResult.right)
 
-    // Propaga os dados da sede para a matriz. CNPJ e IE vêm da empresa para
-    // manter os dois cadastros consistentes (fonte única).
+    // Propaga os dados da sede para a matriz. CNPJ e IE vêm do formulário da
+    // empresa para manter os dois cadastros consistentes — a matriz é quem
+    // vale na emissão.
     if (this.matrizId) {
       const sedeDto = new UpdateEstablishmentDto({
         name: input.sede.name || undefined,
@@ -184,10 +209,30 @@ export class CompanyController extends BaseController {
       stateRegistration: company.stateRegistration ?? '',
       phone: company.phone ? formatPhone(company.phone) : '',
       taxRegime: company.taxRegime ?? '',
+      razaoSocial: company.razaoSocial ?? '',
+      nomeFantasia: company.nomeFantasia ?? '',
+      crt: company.crt ?? '',
+      contribuinteIcms: company.contribuinteIcms,
+      inscricaoEstadual: company.inscricaoEstadual ?? '',
+      inscricaoMunicipal: company.inscricaoMunicipal ?? '',
+      codigoIbgeMunicipio: company.codigoIbgeMunicipio ?? '',
+      telefoneFiscal: company.telefoneFiscal
+        ? formatPhone(company.telefoneFiscal)
+        : '',
+      emailFiscal: company.emailFiscal ?? '',
     }
+    this.fiscalConfigComplete.value = company.fiscalConfigComplete
   }
 
   private applySede(matriz: Establishment): void {
+    // A Inscrição Estadual é editada no formulário da empresa, mas mora no
+    // estabelecimento — é a IE da matriz que a NFC-e usa como emitente. O
+    // backend aceita gravá-la por `stateRegistration` no PATCH da empresa e
+    // não a devolve com esse nome na leitura, então quem a repõe no formulário
+    // é a matriz. Sem esta linha o campo aparece vazio a cada recarga, embora
+    // o valor esteja gravado.
+    this.values.value.stateRegistration = matriz.inscricaoEstadual ?? ''
+
     this.sede.value = {
       name: matriz.name ?? '',
       inscricaoMunicipal: matriz.inscricaoMunicipal ?? '',

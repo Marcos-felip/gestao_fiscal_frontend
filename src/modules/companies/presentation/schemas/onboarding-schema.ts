@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { TaxRegime } from '@/enums/tax-regime.enum'
-import { CompanyType } from '@/enums/company-type.enum'
+import { TaxRegime } from '@/core/enums/tax-regime.enum'
+import { CompanyType } from '@/core/enums/company-type.enum'
 import { isValidCnpj, onlyDigits } from '@/shared/ui/utils/masks'
 
 export const onboardingSchema = z.object({

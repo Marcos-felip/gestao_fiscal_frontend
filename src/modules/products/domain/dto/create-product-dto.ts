@@ -1,4 +1,4 @@
-import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 import type { TechnicalAttributes } from '@/modules/products/domain/entities/product.entity'
 
 export class CreateProductDto {
@@ -14,6 +14,13 @@ export class CreateProductDto {
   cest?: string
   cfop?: string
   origin?: number
+  csosn?: string
+  cstIcms?: string
+  cstPis?: string
+  cstCofins?: string
+  aliquotaIcms?: number
+  aliquotaPis?: number
+  aliquotaCofins?: number
   technicalAttributes?: TechnicalAttributes
 
   constructor(fields: {
@@ -29,6 +36,13 @@ export class CreateProductDto {
     cest?: string
     cfop?: string
     origin?: number
+    csosn?: string
+    cstIcms?: string
+    cstPis?: string
+    cstCofins?: string
+    aliquotaIcms?: number
+    aliquotaPis?: number
+    aliquotaCofins?: number
     technicalAttributes?: TechnicalAttributes
   }) {
     this.name = fields.name
@@ -43,6 +57,13 @@ export class CreateProductDto {
     this.cest = fields.cest
     this.cfop = fields.cfop
     this.origin = fields.origin
+    this.csosn = fields.csosn
+    this.cstIcms = fields.cstIcms
+    this.cstPis = fields.cstPis
+    this.cstCofins = fields.cstCofins
+    this.aliquotaIcms = fields.aliquotaIcms
+    this.aliquotaPis = fields.aliquotaPis
+    this.aliquotaCofins = fields.aliquotaCofins
     this.technicalAttributes = fields.technicalAttributes
   }
 }

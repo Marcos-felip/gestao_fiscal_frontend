@@ -1,6 +1,6 @@
-import type { FinancialStatus } from '@/enums/financial-status.enum'
-import type { FinancialType } from '@/enums/financial-type.enum'
-import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { FinancialStatus } from '@/core/enums/financial-status.enum'
+import type { FinancialType } from '@/core/enums/financial-type.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
 import type { PayablePayment } from '@/modules/payables/domain/entities/payable-payment.entity'
 
 /**

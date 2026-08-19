@@ -4,7 +4,7 @@ import { Icon } from '@/shared/ui'
 import {
   StockMovementType,
   stockMovementTypeLabels,
-} from '@/enums/stock-movement-type.enum'
+} from '@/core/enums/stock-movement-type.enum'
 
 const props = defineProps<{ type: StockMovementType }>()
 

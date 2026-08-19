@@ -9,6 +9,7 @@ export const partnersRoutes: RouteRecordRaw[] = [
     name: routeNames.PARTNERS,
     component: PartnersPage,
     meta: {
+      tab: { id: 'partners', title: 'Parceiros' },
       title: 'Parceiros',
       icon: 'Users',
       requiresPermission: 'partners.list',
@@ -18,13 +19,13 @@ export const partnersRoutes: RouteRecordRaw[] = [
     path: 'parceiros/novo',
     name: routeNames.PARTNER_NEW,
     component: PartnerFormPage,
-    meta: { requiresPermission: 'partners.create' },
+    meta: { tab: { id: 'partners', title: 'Parceiros' }, requiresPermission: 'partners.create'  },
   },
   {
     // Abre em somente leitura para quem tem read mas não edit.
     path: 'parceiros/:id/editar',
     name: routeNames.PARTNER_EDIT,
     component: PartnerFormPage,
-    meta: { requiresPermission: 'partners.read' },
+    meta: { tab: { id: 'partners', title: 'Parceiros' }, requiresPermission: 'partners.read'  },
   },
 ]

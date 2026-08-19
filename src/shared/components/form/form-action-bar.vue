@@ -4,12 +4,12 @@
       <div
         :class="[
           'ui-shadow-float flex items-center gap-3 rounded-xl border border-line-2 bg-background/90 px-4 py-3 backdrop-blur-md',
-          showStatus ? 'justify-between' : 'justify-end',
+          props.dirty ? 'justify-between' : 'justify-end',
         ]"
       >
         <!-- Indicador de alterações não salvas (só existe quando visível). -->
         <p
-          v-if="showStatus"
+          v-if="props.dirty"
           class="flex items-center gap-2 text-sm text-muted-foreground"
         >
           <span class="size-2 rounded-full bg-warning" />
@@ -53,11 +53,16 @@ import { Button, Icon } from '@/shared/ui'
  * Barra de ações flutuante (sticky) para formulários: botão secundário
  * (Cancelar/Descartar) + submit com estado de loading.
  *
- * - Com `show-status`: comportamento "save bar" — a barra só aparece (com
- *   transição) quando há alterações não salvas (`:dirty`). Enquanto tudo está
- *   salvo, ela some, evitando ruído visual.
- * - Sem `show-status`: sempre visível (fluxos de criar/editar, onde o submit
- *   precisa estar disponível desde o início).
+ * **A barra só aparece quando há alteração.** Entrar num formulário e já
+ * encontrar "Salvar" flutuando é ruído: não há o que salvar ainda, e a barra
+ * ocupa espaço na leitura de quem só veio conferir um cadastro. Ela entra com
+ * transição no primeiro campo alterado — é a mesma ideia da "save bar" que a
+ * configuração fiscal e a tela de conta já usavam, agora padrão para todos.
+ *
+ * Consequência conhecida: formulário que **nasce preenchido** — como o cadastro
+ * de produto a partir do XML da nota de entrada — só libera a barra depois que
+ * alguém encostar num campo. É o preço de a regra valer para todas as telas,
+ * sem exceção por chamador.
  *
  * O submit é `type="submit"`, então o `@submit` do <form> pai é quem dispara o
  * envio; o botão secundário emite o evento `secondary`.
@@ -68,21 +73,20 @@ const props = withDefaults(
     loading?: boolean
     loadingText?: string
     secondaryLabel?: string
-    showStatus?: boolean
+    /** Há alteração pendente? É o que faz a barra aparecer. */
     dirty?: boolean
   }>(),
   {
     loading: false,
     loadingText: 'Salvando…',
     secondaryLabel: 'Cancelar',
-    showStatus: false,
     dirty: false,
   },
 )
 
 const emit = defineEmits<{ secondary: [] }>()
 
-const visible = computed(() => !props.showStatus || props.dirty)
+const visible = computed(() => props.dirty)
 </script>
 
 <style scoped lang="css">

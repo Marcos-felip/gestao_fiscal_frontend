@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { Button, Icon, Input, Select } from '@/shared/ui'
 import Modal from '@/shared/components/dialog/modal.vue'
 import type { CreateSalePaymentInput } from '@/modules/sales/domain/dto/create-sale-dto'
-import { PaymentMethod, paymentMethodOptions } from '@/enums/payment-method.enum'
+import { PaymentMethod, paymentMethodOptions } from '@/core/enums/payment-method.enum'
 import { formatDecimalInput, formatMoney, parseDecimal } from '@/shared/ui/utils/masks'
 
 const props = withDefaults(

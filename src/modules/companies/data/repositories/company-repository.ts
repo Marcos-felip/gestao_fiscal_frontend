@@ -78,13 +78,9 @@ export class CompanyRepository implements ICompanyRepository {
   /** Envia apenas os campos definidos (PATCH parcial). */
   private toPayload(dto: UpdateCompanyDto): Record<string, unknown> {
     const payload: Record<string, unknown> = {}
-    if (dto.name !== undefined) payload.name = dto.name
-    if (dto.type !== undefined) payload.type = dto.type
-    if (dto.cnpj !== undefined) payload.cnpj = dto.cnpj
-    if (dto.stateRegistration !== undefined)
-      payload.stateRegistration = dto.stateRegistration
-    if (dto.phone !== undefined) payload.phone = dto.phone
-    if (dto.taxRegime !== undefined) payload.taxRegime = dto.taxRegime
+    for (const [key, value] of Object.entries(dto)) {
+      if (value !== undefined) payload[key] = value
+    }
     return payload
   }
 }

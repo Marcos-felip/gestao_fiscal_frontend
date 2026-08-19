@@ -1,4 +1,4 @@
-import type { MembershipRole } from '@/enums/membership-role.enum'
+import type { MembershipRole } from '@/core/enums/membership-role.enum'
 
 /** Altera o papel de um membro (`PATCH /memberships/:id/role`). */
 export class UpdateMemberRoleDto {

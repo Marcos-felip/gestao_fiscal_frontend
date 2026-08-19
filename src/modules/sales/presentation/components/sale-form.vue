@@ -18,10 +18,10 @@ import {
   type SaleItemRow,
   type SaleProductOption,
 } from '@/modules/sales/presentation/schemas/sale-schema'
-import { paymentMethodOptions } from '@/enums/payment-method.enum'
-import { PaymentCondition } from '@/enums/payment-condition.enum'
-import { unitOfMeasureShortLabels } from '@/enums/unit-of-measure.enum'
-import { membershipRoleLabels } from '@/enums/membership-role.enum'
+import { paymentMethodOptions } from '@/core/enums/payment-method.enum'
+import { PaymentCondition } from '@/core/enums/payment-condition.enum'
+import { unitOfMeasureShortLabels } from '@/core/enums/unit-of-measure.enum'
+import { membershipRoleLabels } from '@/core/enums/membership-role.enum'
 import {
   formatDateBr,
   formatDecimalInput,

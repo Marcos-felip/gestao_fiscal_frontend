@@ -1,4 +1,4 @@
-import type { CashMovementType } from '@/enums/cash-movement-type.enum'
+import type { CashMovementType } from '@/core/enums/cash-movement-type.enum'
 
 /** Sangria/suprimento (`POST /cash-sessions/:id/movements`). `amount` positivo. */
 export class CreateCashMovementDto {

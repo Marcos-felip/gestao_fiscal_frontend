@@ -6,9 +6,9 @@ import { CashSession } from '@/modules/cash/domain/entities/cash-session.entity'
 import { CashMovement } from '@/modules/cash/domain/entities/cash-movement.entity'
 import type { CashSessionSummary } from '@/modules/cash/domain/value-objects/cash-session-summary'
 import type { CashSessionList } from '@/modules/cash/domain/responses/cash-session-list-response'
-import type { CashSessionStatus } from '@/enums/cash-session-status.enum'
-import type { CashMovementType } from '@/enums/cash-movement-type.enum'
-import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { CashSessionStatus } from '@/core/enums/cash-session-status.enum'
+import type { CashMovementType } from '@/core/enums/cash-movement-type.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
 import { toIssueList } from '@/core/utils/zod-errors'
 
 // Decimais do topo da sessão chegam como STRING (Prisma.Decimal.toJSON);

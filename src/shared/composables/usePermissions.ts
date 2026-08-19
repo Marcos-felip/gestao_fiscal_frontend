@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/modules/auth/presentation/stores/auth-store'
 import { usePermissionsStore } from '@/modules/permissions/presentation/stores/permissions-store'
-import { MembershipRole, roleRank } from '@/enums/membership-role.enum'
+import { MembershipRole, roleRank } from '@/core/enums/membership-role.enum'
 
 /**
  * API de autorização consumida por telas, guards e sidebar.

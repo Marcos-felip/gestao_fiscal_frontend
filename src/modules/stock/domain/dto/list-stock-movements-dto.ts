@@ -1,4 +1,4 @@
-import type { StockMovementType } from '@/enums/stock-movement-type.enum'
+import type { StockMovementType } from '@/core/enums/stock-movement-type.enum'
 
 export class ListStockMovementsDto {
   page: number

@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
 
 /** Uma baixa (pagamento) lançada sobre um título a receber. */
 export class ReceivablePayment {

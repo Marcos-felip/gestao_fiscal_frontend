@@ -6,7 +6,7 @@ import ConfirmDialog from '@/shared/components/dialog/confirm-dialog.vue'
 import { makeProductsListController } from '@/modules/products/factories/products.factory'
 import type { Product } from '@/modules/products/domain/entities/product.entity'
 import { usePermissions } from '@/shared/composables/usePermissions'
-import { unitOfMeasureShortLabels } from '@/enums/unit-of-measure.enum'
+import { unitOfMeasureShortLabels } from '@/core/enums/unit-of-measure.enum'
 import { formatMoney, formatQuantity } from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'
 import { useProgress } from '@/shared/composables'
@@ -43,6 +43,17 @@ onUnmounted(() => {
 
 function goNew(): void {
   controller.router.push({ name: routeNames.PRODUCT_NEW })
+}
+
+/**
+ * Pendências fiscais têm tela própria, filtrada **no servidor**.
+ *
+ * Aqui existia um filtro de cliente que peneirava só a página carregada: com o
+ * catálogo em três páginas, ele dizia "nenhuma pendência" enquanto o produto
+ * pendente estava na página seguinte.
+ */
+function goFiscalPending(): void {
+  controller.router.push({ name: routeNames.PRODUCTS_FISCAL_PENDING })
 }
 
 function goEdit(product: Product): void {
@@ -91,26 +102,31 @@ function nextPage(): void {
       </p>
     </div>
 
-    <Button
-      v-if="canCreate"
-      variant="primary"
-      text-class="text-white"
-      @click="goNew"
-    >
-      <template #icon><Icon name="Plus" size="sm" /></template>
-      Novo produto
-    </Button>
+    <div class="flex items-center gap-2">
+      <Button variant="ghost" @click="goFiscalPending">
+        <template #icon><Icon name="CircleAlert" size="sm" /></template>
+        Pendências fiscais
+      </Button>
+
+      <Button
+        v-if="canCreate"
+        variant="primary"
+        text-class="text-white"
+        @click="goNew"
+      >
+        <template #icon><Icon name="Plus" size="sm" /></template>
+        Novo produto
+      </Button>
+    </div>
   </header>
 
   <!-- Toolbar: busca por nome -->
-  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-    <div class="sm:max-w-xs sm:flex-1">
-      <SearchInput
-        :model-value="searchTerm"
-        placeholder="Buscar por nome…"
-        @update:model-value="onSearch"
-      />
-    </div>
+  <div class="mb-4 sm:max-w-xs">
+    <SearchInput
+      :model-value="searchTerm"
+      placeholder="Buscar por nome…"
+      @update:model-value="onSearch"
+    />
   </div>
 
   <!-- Erro -->
@@ -141,7 +157,7 @@ function nextPage(): void {
     </div>
   </div>
 
-  <!-- Empty -->
+  <!-- Empty: catálogo vazio -->
   <div
     v-else-if="controller.products.value.length === 0"
     class="rounded-2xl border border-dashed border-line-3 bg-background px-6 py-16 text-center"
@@ -193,7 +209,17 @@ function nextPage(): void {
             class="transition-colors hover:bg-muted/40"
           >
             <td class="px-4 py-3">
-              <p class="font-medium text-foreground">{{ product.name }}</p>
+              <div class="flex items-center gap-2">
+                <p class="font-medium text-foreground">{{ product.name }}</p>
+                <span
+                  v-if="product.isFiscalPending"
+                  class="inline-flex items-center gap-1 rounded-full bg-warning-500/10 px-2 py-0.5 text-xs font-medium text-warning-700"
+                  title="Dados fiscais incompletos para emissão"
+                >
+                  <Icon name="CircleAlert" size="xs" />
+                  Fiscal pendente
+                </span>
+              </div>
               <p v-if="product.sku" class="text-xs text-muted-foreground">
                 SKU {{ product.sku }}
               </p>

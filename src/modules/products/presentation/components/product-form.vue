@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { motion } from 'motion-v'
 import { Icon, Input, Select } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
 import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
-import { unitOfMeasureOptions } from '@/enums/unit-of-measure.enum'
-import { productOriginOptions } from '@/enums/product-origin.enum'
-import { formatDecimalInput } from '@/shared/ui/utils/masks'
+import { unitOfMeasureOptions } from '@/core/enums/unit-of-measure.enum'
+import { productOriginOptions } from '@/core/enums/product-origin.enum'
+import {
+  csosnOptions,
+  cstIcmsOptions,
+} from '@/core/enums/fiscal-tax-situation.enum'
+import {
+  cstContribuicaoOptions,
+  exigeAliquota,
+} from '@/core/enums/cst-contribuicao.enum'
+import { formatDecimalInput, onlyDigits } from '@/shared/ui/utils/masks'
 import { toFormErrors } from '@/core/utils/zod-errors'
 import {
   productSchema,
@@ -46,11 +54,55 @@ watch(
   { deep: true },
 )
 
+const isDirty = computed(
+  () =>
+    JSON.stringify({ ...form, attributes: form.attributes }) !==
+    JSON.stringify({
+      ...props.initial,
+      attributes: props.initial.attributes,
+    }),
+)
+
 // Origem é opcional: primeira opção limpa o valor.
 const originOptions = [
   { value: '', label: 'Não informar' },
   ...productOriginOptions,
 ]
+
+// CSOSN/CST ICMS restritos aos valores aceitos pelo motor fiscal.
+const csosnSelectOptions = [
+  { value: '', label: 'Não informar' },
+  ...csosnOptions,
+]
+const cstIcmsSelectOptions = [
+  { value: '', label: 'Não informar' },
+  ...cstIcmsOptions,
+]
+
+// PIS/COFINS não têm "não informar": são obrigatórios para o produto emitir.
+const cstContribuicaoSelectOptions = cstContribuicaoOptions.map((opcao) => ({
+  value: opcao.value,
+  label: opcao.label,
+}))
+
+/** A alíquota só faz sentido quando a situação tributária é tributada. */
+const exigeAliquotaPis = computed(() => exigeAliquota(form.cstPis))
+const exigeAliquotaCofins = computed(() => exigeAliquota(form.cstCofins))
+
+// Trocar para uma situação não tributada limpa a alíquota: deixá-la para trás
+// gravaria valor num campo que o motor recusa preenchido.
+watch(
+  () => form.cstPis,
+  () => {
+    if (!exigeAliquotaPis.value) form.aliquotaPis = ''
+  },
+)
+watch(
+  () => form.cstCofins,
+  () => {
+    if (!exigeAliquotaCofins.value) form.aliquotaCofins = ''
+  },
+)
 
 function addAttribute(): void {
   form.attributes.push({ key: '', value: '' })
@@ -74,6 +126,13 @@ function handleSubmit(): void {
     cest: form.cest,
     cfop: form.cfop,
     origin: form.origin,
+    csosn: form.csosn,
+    cstIcms: form.cstIcms,
+    cstPis: form.cstPis,
+    cstCofins: form.cstCofins,
+    aliquotaIcms: form.aliquotaIcms,
+    aliquotaPis: form.aliquotaPis,
+    aliquotaCofins: form.aliquotaCofins,
   })
   if (!result.success) {
     errors.value = toFormErrors(result.error)
@@ -105,7 +164,7 @@ const item = {
   <form @submit.prevent="handleSubmit">
     <ReadOnlyNotice v-if="props.readonly" />
 
-    <fieldset :disabled="props.readonly" class="min-w-0">
+    <fieldset :disabled="props.readonly" class="@container min-w-0">
       <motion.div
         class="space-y-6"
         :variants="container"
@@ -113,9 +172,9 @@ const item = {
         animate="visible"
       >
         <!-- Linha principal: informações + preços (duas colunas no desktop) -->
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 @4xl:grid-cols-3">
           <!-- Coluna principal -->
-          <motion.div :variants="item" class="min-w-0 lg:col-span-2">
+          <motion.div :variants="item" class="min-w-0 @4xl:col-span-2">
             <FormSection
               icon="Package"
               title="Informações do produto"
@@ -131,7 +190,7 @@ const item = {
                   <template #label>Nome</template>
                 </Input>
 
-                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-5 @2xl:grid-cols-2">
                   <Input
                     v-model="form.sku"
                     maxlength="60"
@@ -144,8 +203,9 @@ const item = {
 
                   <Input
                     v-model="form.barcode"
-                    maxlength="60"
+                    maxlength="14"
                     inputmode="numeric"
+                    :sanitize="onlyDigits"
                     placeholder="EAN / GTIN"
                     :error="errors.barcode"
                   >
@@ -192,7 +252,7 @@ const item = {
           </motion.div>
 
           <!-- Coluna lateral: preços e estoque -->
-          <motion.div :variants="item" class="min-w-0 lg:col-span-1">
+          <motion.div :variants="item" class="min-w-0 @4xl:col-span-1">
             <FormSection
               icon="Tag"
               title="Preços e estoque"
@@ -204,10 +264,14 @@ const item = {
                   inputmode="decimal"
                   placeholder="0,00"
                   :error="errors.costPrice"
-                  @update:model-value="form.costPrice = formatDecimalInput($event)"
+                  @update:model-value="
+                    form.costPrice = formatDecimalInput($event)
+                  "
                 >
                   <template #prefix
-                    ><span class="text-sm text-muted-foreground">R$</span></template
+                    ><span class="text-sm text-muted-foreground"
+                      >R$</span
+                    ></template
                   >
                   <template #label>Preço de custo</template>
                 </Input>
@@ -217,10 +281,14 @@ const item = {
                   inputmode="decimal"
                   placeholder="0,00"
                   :error="errors.salePrice"
-                  @update:model-value="form.salePrice = formatDecimalInput($event)"
+                  @update:model-value="
+                    form.salePrice = formatDecimalInput($event)
+                  "
                 >
                   <template #prefix
-                    ><span class="text-sm text-muted-foreground">R$</span></template
+                    ><span class="text-sm text-muted-foreground"
+                      >R$</span
+                    ></template
                   >
                   <template #label>Preço de venda</template>
                 </Input>
@@ -230,7 +298,9 @@ const item = {
                   inputmode="decimal"
                   placeholder="0"
                   :error="errors.minStock"
-                  @update:model-value="form.minStock = formatDecimalInput($event)"
+                  @update:model-value="
+                    form.minStock = formatDecimalInput($event)
+                  "
                 >
                   <template #prefix
                     ><Icon name="TriangleAlert" size="sm"
@@ -250,49 +320,188 @@ const item = {
         <!-- Seção fiscal -->
         <motion.div :variants="item">
           <FormSection
-            icon="ReceiptText"
-            title="Fiscal"
-            description="Códigos usados na emissão de documentos fiscais (opcionais)."
+            icon="ScrollText"
+            title="Dados fiscais"
+            description="Códigos e alíquotas usados na emissão de documentos fiscais (opcionais). A unidade comercial e o GTIN ficam em “Informações do produto”."
           >
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              <Input
-                v-model="form.ncm"
-                maxlength="10"
-                inputmode="numeric"
-                placeholder="0000.00.00"
-                :error="errors.ncm"
-              >
-                <template #label>NCM</template>
-              </Input>
+            <div class="space-y-5">
+              <!-- Indicador de completude fiscal (somente leitura) -->
+              <div>
+                <span
+                  :class="[
+                    'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
+                    form.fiscalComplete
+                      ? 'bg-success-500/10 text-success-600'
+                      : 'bg-warning-500/10 text-warning-700',
+                  ]"
+                >
+                  <Icon
+                    :name="form.fiscalComplete ? 'CircleCheck' : 'CircleAlert'"
+                    size="sm"
+                  />
+                  {{
+                    form.fiscalComplete
+                      ? 'Fiscalmente completo'
+                      : 'Fiscalmente pendente'
+                  }}
+                </span>
+                <p class="mt-1.5 text-xs text-muted-foreground">
+                  Calculado automaticamente pelo sistema ao salvar.
+                </p>
+              </div>
 
-              <Input
-                v-model="form.cest"
-                maxlength="10"
-                inputmode="numeric"
-                placeholder="00.000.00"
-                :error="errors.cest"
-              >
-                <template #label>CEST</template>
-              </Input>
+              <!-- Classificação: NCM / CEST / CFOP / Origem -->
+              <div class="grid grid-cols-1 gap-5 @2xl:grid-cols-2 @4xl:grid-cols-4">
+                <Input
+                  v-model="form.ncm"
+                  maxlength="8"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="00000000"
+                  :error="errors.ncm"
+                >
+                  <template #label>NCM</template>
+                </Input>
 
-              <Input
-                v-model="form.cfop"
-                maxlength="6"
-                inputmode="numeric"
-                placeholder="5102"
-                :error="errors.cfop"
-              >
-                <template #label>CFOP</template>
-              </Input>
+                <Input
+                  v-model="form.cest"
+                  maxlength="7"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="0000000"
+                  :error="errors.cest"
+                >
+                  <template #label>CEST</template>
+                </Input>
 
-              <Select
-                v-model="form.origin"
-                :options="originOptions"
-                placeholder="Origem"
-                :error="errors.origin"
+                <Input
+                  v-model="form.cfop"
+                  maxlength="4"
+                  inputmode="numeric"
+                  :sanitize="onlyDigits"
+                  placeholder="5102"
+                  :error="errors.cfop"
+                >
+                  <template #label>CFOP</template>
+                </Input>
+
+                <Select
+                  v-model="form.origin"
+                  :options="originOptions"
+                  placeholder="Origem"
+                  :error="errors.origin"
+                >
+                  <template #label>Origem</template>
+                </Select>
+              </div>
+
+              <!-- Situação tributária: CSOSN / CST ICMS / PIS / COFINS -->
+              <div class="grid grid-cols-1 gap-5 @2xl:grid-cols-2 @4xl:grid-cols-4">
+                <Select
+                  v-model="form.csosn"
+                  :options="csosnSelectOptions"
+                  placeholder="CSOSN"
+                  :error="errors.csosn"
+                >
+                  <template #label>CSOSN</template>
+                </Select>
+
+                <Select
+                  v-model="form.cstIcms"
+                  :options="cstIcmsSelectOptions"
+                  placeholder="CST ICMS"
+                  :error="errors.cstIcms"
+                >
+                  <template #label>CST ICMS</template>
+                </Select>
+
+                <Select
+                  v-model="form.cstPis"
+                  :options="cstContribuicaoSelectOptions"
+                  placeholder="Selecione"
+                  :error="errors.cstPis"
+                >
+                  <template #label>CST PIS *</template>
+                </Select>
+
+                <Select
+                  v-model="form.cstCofins"
+                  :options="cstContribuicaoSelectOptions"
+                  placeholder="Selecione"
+                  :error="errors.cstCofins"
+                >
+                  <template #label>CST COFINS *</template>
+                </Select>
+              </div>
+
+              <div
+                v-if="!form.cstPis || !form.cstCofins"
+                class="flex items-start gap-2 rounded-lg border border-warning-500/30 bg-warning-500/10 px-3 py-2 text-xs text-warning-700"
               >
-                <template #label>Origem</template>
-              </Select>
+                <Icon name="TriangleAlert" size="sm" class="mt-0.5 shrink-0" />
+                <span>
+                  Sem CST de PIS e COFINS o produto <strong>não emite nota</strong>.
+                  O código vem do contador — bebida fria costuma ser monofásica
+                  (04) e alimento preparado costuma ser isento (07), mas confirme
+                  antes de cadastrar.
+                </span>
+              </div>
+
+              <!-- Alíquotas (%) -->
+              <div class="grid grid-cols-1 gap-5 @2xl:grid-cols-3">
+                <Input
+                  :model-value="form.aliquotaIcms"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  :error="errors.aliquotaIcms"
+                  @update:model-value="
+                    form.aliquotaIcms = formatDecimalInput($event)
+                  "
+                >
+                  <template #label>Alíquota ICMS</template>
+                  <template #suffix
+                    ><span class="text-sm text-muted-foreground"
+                      >%</span
+                    ></template
+                  >
+                </Input>
+
+                <Input
+                  v-if="exigeAliquotaPis"
+                  :model-value="form.aliquotaPis"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  :error="errors.aliquotaPis"
+                  @update:model-value="
+                    form.aliquotaPis = formatDecimalInput($event)
+                  "
+                >
+                  <template #label>Alíquota PIS</template>
+                  <template #suffix
+                    ><span class="text-sm text-muted-foreground"
+                      >%</span
+                    ></template
+                  >
+                </Input>
+
+                <Input
+                  v-if="exigeAliquotaCofins"
+                  :model-value="form.aliquotaCofins"
+                  inputmode="decimal"
+                  placeholder="0,00"
+                  :error="errors.aliquotaCofins"
+                  @update:model-value="
+                    form.aliquotaCofins = formatDecimalInput($event)
+                  "
+                >
+                  <template #label>Alíquota COFINS</template>
+                  <template #suffix
+                    ><span class="text-sm text-muted-foreground"
+                      >%</span
+                    ></template
+                  >
+                </Input>
+              </div>
             </div>
           </FormSection>
         </motion.div>
@@ -361,6 +570,7 @@ const item = {
       v-if="!props.readonly"
       :submit-label="props.submitLabel"
       :loading="props.loading"
+      :dirty="isDirty"
       @secondary="emit('cancel')"
     />
   </form>

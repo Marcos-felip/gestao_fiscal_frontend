@@ -3,11 +3,12 @@ import { computed, onMounted, ref } from 'vue'
 import { motion } from 'motion-v'
 import { Button, DatePicker, Icon, Select, Skeleton } from '@/shared/ui'
 import SaleStatusBadge from '@/modules/sales/presentation/components/sale-status-badge.vue'
+import SaleFiscalStatusBadge from '@/modules/fiscal/presentation/components/sale-fiscal-status-badge.vue'
 import { makeSalesListController } from '@/modules/sales/factories/sales.factory'
 import type { Sale } from '@/modules/sales/domain/entities/sale.entity'
 import { usePermissions } from '@/shared/composables/usePermissions'
-import type { SaleStatus } from '@/enums/sale-status.enum'
-import { saleStatusOptions } from '@/enums/sale-status.enum'
+import type { SaleStatus } from '@/core/enums/sale-status.enum'
+import { saleStatusOptions } from '@/core/enums/sale-status.enum'
 import { formatMoney } from '@/shared/ui/utils/masks'
 import { formatDate } from '@/core/utils/date'
 import { routeNames } from '@/router/route-names'
@@ -185,7 +186,7 @@ function nextPage(): void {
     :transition="{ duration: 0.25 }"
   >
     <div class="overflow-x-auto">
-      <table class="w-full min-w-[720px] text-left text-sm">
+      <table class="w-full min-w-[820px] text-left text-sm">
         <thead
           class="border-b border-line-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
         >
@@ -194,6 +195,7 @@ function nextPage(): void {
             <th class="px-4 py-3 font-medium">Cliente</th>
             <th class="px-4 py-3 font-medium">Data</th>
             <th class="px-4 py-3 font-medium">Status</th>
+            <th class="px-4 py-3 font-medium">Fiscal</th>
             <th class="px-4 py-3 text-right font-medium">Total</th>
             <th class="px-4 py-3 text-right font-medium">Ações</th>
           </tr>
@@ -216,6 +218,9 @@ function nextPage(): void {
             </td>
             <td class="px-4 py-3">
               <SaleStatusBadge :status="sale.status" />
+            </td>
+            <td class="px-4 py-3">
+              <SaleFiscalStatusBadge :status="sale.fiscalStatus" />
             </td>
             <td
               class="px-4 py-3 text-right tabular-nums font-medium text-foreground"

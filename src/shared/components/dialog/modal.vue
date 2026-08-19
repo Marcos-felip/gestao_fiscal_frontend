@@ -13,7 +13,7 @@ const props = withDefaults(
     title?: string
     description?: string
     closeOnBackdrop?: boolean
-    size?: 'sm' | 'md' | 'lg'
+    size?: 'sm' | 'md' | 'lg' | 'xl'
   }>(),
   {
     title: '',
@@ -25,7 +25,9 @@ const props = withDefaults(
 
 const maxWidthClass = computed(
   () =>
-    ({ sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-2xl' })[props.size],
+    ({ sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-2xl', xl: 'max-w-4xl' })[
+      props.size
+    ],
 )
 
 const emit = defineEmits<{
@@ -75,7 +77,7 @@ watch(
           role="dialog"
           aria-modal="true"
           :class="[
-            'ui-shadow-float relative w-full overflow-hidden rounded-3xl border border-line-2 bg-background',
+            'ui-shadow-float relative flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-3xl border border-line-2 bg-background',
             maxWidthClass,
           ]"
           :initial="{ opacity: 0, scale: 0.92, y: 16 }"
@@ -86,7 +88,7 @@ watch(
           <!-- Cabeçalho -->
           <header
             v-if="title || $slots.header"
-            class="flex items-start justify-between gap-4 border-b border-line-2 px-6 py-4"
+            class="flex shrink-0 items-start justify-between gap-4 border-b border-line-2 px-6 py-4"
           >
             <div class="min-w-0">
               <slot name="header">
@@ -111,15 +113,22 @@ watch(
             </button>
           </header>
 
-          <!-- Conteúdo -->
-          <div class="px-6 py-5">
+          <!--
+            Conteúdo rola por dentro, não pela página.
+
+            Sem isto, um formulário alto empurra o cartão além da janela: o
+            cabeçalho sai da tela, o `overflow-hidden` corta o resto e o modal
+            parece quebrado. Como o container de rolagem é este, o
+            `FormActionBar` (que é `sticky bottom`) fica sempre alcançável.
+          -->
+          <div class="flex-1 overflow-y-auto px-6 py-5">
             <slot />
           </div>
 
           <!-- Rodapé -->
           <footer
             v-if="$slots.footer"
-            class="flex items-center justify-end gap-2 border-t border-line-2 px-6 py-4"
+            class="flex shrink-0 items-center justify-end gap-2 border-t border-line-2 px-6 py-4"
           >
             <slot name="footer" />
           </footer>

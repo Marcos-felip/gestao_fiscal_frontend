@@ -5,7 +5,7 @@ import type { ListCashRegistersUseCase } from '@/modules/cash/application/use-ca
 import { ListCashSessionsDto } from '@/modules/cash/domain/dto/list-cash-sessions-dto'
 import { ListCashRegistersDto } from '@/modules/cash/domain/dto/list-cash-registers-dto'
 import type { CashSession } from '@/modules/cash/domain/entities/cash-session.entity'
-import type { CashSessionStatus } from '@/enums/cash-session-status.enum'
+import type { CashSessionStatus } from '@/core/enums/cash-session-status.enum'
 import type { SelectOption } from '@/shared/ui'
 import { dateInputToIso } from '@/core/utils/date'
 
@@ -50,7 +50,9 @@ export class CashSessionsListController extends BaseController {
       (items) => {
         this.registerOptions.value = items.map((r) => ({
           value: r.id,
-          label: r.establishmentName ? `${r.name} · ${r.establishmentName}` : r.name,
+          label: r.establishmentName
+            ? `${r.name} · ${r.establishmentName}`
+            : r.name,
         }))
       },
     )

@@ -1,4 +1,4 @@
-import type { MembershipRole } from '@/enums/membership-role.enum'
+import type { MembershipRole } from '@/core/enums/membership-role.enum'
 
 /**
  * Dados para criar um usuário e vinculá-lo à empresa ativa (`POST /users`).

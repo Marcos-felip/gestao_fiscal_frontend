@@ -4,7 +4,7 @@ import { Icon } from '@/shared/ui'
 import {
   PurchaseStatus,
   purchaseStatusLabels,
-} from '@/enums/purchase-status.enum'
+} from '@/core/enums/purchase-status.enum'
 
 const props = defineProps<{ status: PurchaseStatus }>()
 

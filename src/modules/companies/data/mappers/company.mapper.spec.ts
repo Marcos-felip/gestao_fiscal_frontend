@@ -17,6 +17,16 @@ const respostaValida = {
   taxRegime: 'SIMPLES_NACIONAL',
   businessSegment: 'GENERICO',
   isOnboarded: true,
+  razaoSocial: 'JR Sistemas Comércio LTDA',
+  nomeFantasia: 'JR Sistemas',
+  inscricaoEstadual: '123456789012',
+  inscricaoMunicipal: '7654321',
+  crt: 'SIMPLES_NACIONAL',
+  contribuinteIcms: true,
+  codigoIbgeMunicipio: '3550308',
+  telefoneFiscal: '(11) 3333-4444',
+  emailFiscal: 'fiscal@jrsistemas.net',
+  fiscalConfigComplete: true,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-02T00:00:00.000Z',
 }
@@ -34,8 +44,25 @@ describe('toCompany', () => {
     expect(company.isConfigured).toBe(true)
   })
 
+  it('lê os dados fiscais do emitente (crt, contribuinteIcms, indicador)', () => {
+    const result = toCompany(respostaValida)
+
+    expect(result.isRight).toBe(true)
+    const company = result.right
+    expect(company.crt).toBe('SIMPLES_NACIONAL')
+    expect(company.contribuinteIcms).toBe(true)
+    expect(company.codigoIbgeMunicipio).toBe('3550308')
+    expect(company.inscricaoEstadual).toBe('123456789012')
+    expect(company.emailFiscal).toBe('fiscal@jrsistemas.net')
+    expect(company.fiscalConfigComplete).toBe(true)
+  })
+
   it('aplica defaults quando os campos opcionais vêm ausentes', () => {
-    const parcial = { id: 'company-2', name: 'Empresa Nova' }
+    const parcial = {
+      id: 'company-2',
+      name: 'Empresa Nova',
+      stateRegistration: null,
+    }
 
     const result = toCompany(parcial)
 
@@ -45,6 +72,69 @@ describe('toCompany', () => {
     expect(company.cnpj).toBeNull()
     expect(company.stateRegistration).toBeNull()
     expect(company.isOnboarded).toBe(false)
+    // Dados fiscais ausentes viram default (null / false).
+    expect(company.crt).toBeNull()
+    expect(company.codigoIbgeMunicipio).toBeNull()
+    expect(company.contribuinteIcms).toBe(false)
+    expect(company.fiscalConfigComplete).toBe(false)
+  })
+
+  // `stateRegistration` é a IE do emitente, derivada da matriz pelo backend.
+  // Antes ela tinha `.default(null)` no schema: campo ausente virava `null`
+  // válido e o contrato quebrado passava sem ninguém notar.
+  it('acusa ContractError quando stateRegistration vem ausente', () => {
+    const semCampo = { ...respostaValida } as Record<string, unknown>
+    delete semCampo.stateRegistration
+
+    const result = toCompany(semCampo)
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('aceita stateRegistration explicitamente nulo', () => {
+    const result = toCompany({ ...respostaValida, stateRegistration: null })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.stateRegistration).toBeNull()
+  })
+
+  it('lê a IE da matriz devolvida pelo backend', () => {
+    const result = toCompany({
+      ...respostaValida,
+      stateRegistration: '004684530',
+    })
+
+    expect(result.right.stateRegistration).toBe('004684530')
+  })
+
+  // A listagem não faz o join da matriz — o campo simplesmente não existe lá,
+  // e exigi-lo quebraria o seletor de empresas.
+  it('a listagem não exige stateRegistration', () => {
+    const semCampo = { ...respostaValida } as Record<string, unknown>
+    delete semCampo.stateRegistration
+
+    const result = toCompanyList([semCampo])
+
+    expect(result.isRight).toBe(true)
+    expect(result.right[0].stateRegistration).toBeNull()
+  })
+
+  it('rejeita contribuinteIcms com tipo errado', () => {
+    const result = toCompany({ ...respostaValida, contribuinteIcms: 'sim' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('rejeita fiscalConfigComplete com tipo errado', () => {
+    const result = toCompany({
+      ...respostaValida,
+      fiscalConfigComplete: 'talvez',
+    })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
   })
 
   it('rejeita isOnboarded com tipo errado', () => {
@@ -119,5 +209,59 @@ describe('toCreatedCompany', () => {
 
     expect(result.isLeft).toBe(true)
     expect(result.left).toBeInstanceOf(ContractError)
+  })
+})
+
+describe('toCompany — CRT', () => {
+  it('aceita o CRT 4 (MEI) devolvido pelo backend', () => {
+    const result = toCompany({ ...respostaValida, crt: 'SIMPLES_MEI' })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.crt).toBe('SIMPLES_MEI')
+  })
+
+  it('acusa ContractError para CRT desconhecido', () => {
+    const result = toCompany({ ...respostaValida, crt: 'LUCRO_REAL' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('aceita CRT nulo: empresa ainda sem regime fiscal definido', () => {
+    const result = toCompany({ ...respostaValida, crt: null })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.crt).toBeNull()
+  })
+})
+
+describe('toCompany — enums validados, não convertidos com `as`', () => {
+  it('recusa type fora do enum', () => {
+    const result = toCompany({ ...respostaValida, type: 'SOCIEDADE_ANONIMA' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('recusa taxRegime fora do enum', () => {
+    const result = toCompany({ ...respostaValida, taxRegime: 'LUCRO_ARBITRADO' })
+
+    expect(result.isLeft).toBe(true)
+    expect(result.left).toBeInstanceOf(ContractError)
+  })
+
+  it('aceita os enums válidos e nulos', () => {
+    expect(toCompany({ ...respostaValida, type: 'MEI' }).isRight).toBe(true)
+    expect(
+      toCompany({ ...respostaValida, type: null, taxRegime: null }).isRight,
+    ).toBe(true)
+  })
+
+  // businessSegment não tem enum em src/core/enums — segue texto livre.
+  it('não valida businessSegment contra enum', () => {
+    const result = toCompany({ ...respostaValida, businessSegment: 'QUALQUER' })
+
+    expect(result.isRight).toBe(true)
+    expect(result.right.businessSegment).toBe('QUALQUER')
   })
 })

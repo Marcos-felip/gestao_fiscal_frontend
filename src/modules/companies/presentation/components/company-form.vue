@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { motion } from 'motion-v'
-import { Icon, Input, Select, Spinner, Tooltip } from '@/shared/ui'
+import { Icon, Input, Select, Spinner, Switch, Tooltip } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
 import FormActionBar from '@/shared/components/form/form-action-bar.vue'
 import ReadOnlyNotice from '@/shared/components/permission/read-only-notice.vue'
-import { companyTypeOptions } from '@/enums/company-type.enum'
-import { taxRegimeOptions } from '@/enums/tax-regime.enum'
+import { companyTypeOptions } from '@/core/enums/company-type.enum'
+import { taxRegimeOptions } from '@/core/enums/tax-regime.enum'
+import { taxRegimeCodeOptions } from '@/core/enums/tax-regime-code.enum'
 import { brazilianStateOptions } from '@/core/constants/brazilian-states'
 import {
   formatCnpj,
@@ -30,6 +31,7 @@ const props = withDefaults(
     company: CompanyFormValues
     sede: SedeFormValues
     hasSede: boolean
+    fiscalConfigComplete: boolean
     loading: boolean
     readonly?: boolean
   }>(),
@@ -216,12 +218,12 @@ const item = {
           </FormSection>
         </motion.div>
 
-        <!-- Seção 2: Dados fiscais -->
+        <!-- Seção 2: Documentos -->
         <motion.div :variants="item">
           <FormSection
             icon="FileText"
-            title="Dados fiscais"
-            description="Documentos de identificação fiscal da empresa."
+            title="Documentos"
+            description="Documentos de identificação da empresa."
           >
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <Input
@@ -270,7 +272,7 @@ const item = {
                   <span class="inline-flex items-center gap-1.5">
                     Inscrição Estadual
                     <Tooltip
-                      text="Registro estadual da empresa. Mínimo de 11 dígitos. Aplicado também à matriz."
+                      text="Inscrição Estadual do estabelecimento matriz — é esta que a NFC-e usa como emitente. Mínimo de 11 dígitos."
                     >
                       <Icon
                         name="HelpCircle"
@@ -285,7 +287,209 @@ const item = {
           </FormSection>
         </motion.div>
 
-        <!-- Seção 3: Contato -->
+        <!-- Seção 3: Dados fiscais (emitente NFC-e) -->
+        <motion.div :variants="item">
+          <FormSection
+            icon="ScrollText"
+            title="Dados fiscais"
+            description="Informações do emitente usadas na emissão de NFC-e."
+          >
+            <!-- Indicador de configuração fiscal (somente leitura). -->
+            <div
+              :class="[
+                'flex items-start gap-2.5 rounded-lg px-4 py-3 text-sm',
+                props.fiscalConfigComplete
+                  ? 'bg-success-500/10 text-success-600'
+                  : 'bg-warning-500/10 text-warning-700',
+              ]"
+            >
+              <Icon
+                :name="
+                  props.fiscalConfigComplete ? 'BadgeCheck' : 'TriangleAlert'
+                "
+                size="sm"
+                class="mt-0.5 shrink-0"
+              />
+              <div class="min-w-0">
+                <span class="font-medium">
+                  {{
+                    props.fiscalConfigComplete
+                      ? 'Configuração fiscal completa'
+                      : 'Configuração fiscal incompleta'
+                  }}
+                </span>
+                <p v-if="!props.fiscalConfigComplete" class="mt-0.5">
+                  Preencha ao menos o CRT e o código IBGE do município para
+                  habilitar a emissão fiscal.
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <Input
+                v-model="form.razaoSocial"
+                maxlength="120"
+                placeholder="Razão social do emitente"
+                :error="errors.razaoSocial"
+              >
+                <template #label>
+                  <span class="inline-flex items-center gap-1.5">
+                    Razão social
+                    <Tooltip text="Razão social usada como emitente na NFC-e.">
+                      <Icon
+                        name="HelpCircle"
+                        size="sm"
+                        class="text-foreground/40"
+                      />
+                    </Tooltip>
+                  </span>
+                </template>
+              </Input>
+
+              <Input
+                v-model="form.nomeFantasia"
+                maxlength="120"
+                placeholder="Nome fantasia"
+                :error="errors.nomeFantasia"
+              >
+                <template #label>Nome fantasia</template>
+              </Input>
+
+              <Select
+                v-model="form.crt"
+                :options="taxRegimeCodeOptions"
+                placeholder="Selecione o CRT"
+                :error="errors.crt"
+              >
+                <template #label>
+                  <span class="inline-flex items-center gap-1.5">
+                    CRT (Regime tributário fiscal)
+                    <Tooltip
+                      text="Código de Regime Tributário aceito pela SEFAZ. Obrigatório para emissão."
+                    >
+                      <Icon
+                        name="HelpCircle"
+                        size="sm"
+                        class="text-foreground/40"
+                      />
+                    </Tooltip>
+                  </span>
+                </template>
+              </Select>
+
+              <Input
+                :model-value="form.codigoIbgeMunicipio"
+                maxlength="7"
+                inputmode="numeric"
+                placeholder="0000000"
+                hint="7 dígitos (ex.: 3550308)."
+                :error="errors.codigoIbgeMunicipio"
+                @update:model-value="
+                  form.codigoIbgeMunicipio = onlyDigits($event).slice(0, 7)
+                "
+              >
+                <template #prefix><Icon name="MapPin" size="sm" /></template>
+                <template #label>
+                  <span class="inline-flex items-center gap-1.5">
+                    Código IBGE do município
+                    <Tooltip
+                      text="Código do município (7 dígitos) do emitente. Obrigatório para emissão."
+                    >
+                      <Icon
+                        name="HelpCircle"
+                        size="sm"
+                        class="text-foreground/40"
+                      />
+                    </Tooltip>
+                  </span>
+                </template>
+              </Input>
+
+              <Input
+                :model-value="form.inscricaoEstadual"
+                maxlength="14"
+                inputmode="numeric"
+                placeholder="Somente números"
+                :error="errors.inscricaoEstadual"
+                @update:model-value="
+                  form.inscricaoEstadual = onlyDigits($event)
+                "
+              >
+                <template #prefix><Icon name="Hash" size="sm" /></template>
+                <template #label>
+                  <span class="inline-flex items-center gap-1.5">
+                    Inscrição Estadual (emitente)
+                    <Tooltip
+                      text="Inscrição Estadual da empresa emitente da NFC-e."
+                    >
+                      <Icon
+                        name="HelpCircle"
+                        size="sm"
+                        class="text-foreground/40"
+                      />
+                    </Tooltip>
+                  </span>
+                </template>
+              </Input>
+
+              <Input
+                :model-value="form.inscricaoMunicipal"
+                maxlength="20"
+                inputmode="numeric"
+                placeholder="Somente números"
+                :error="errors.inscricaoMunicipal"
+                @update:model-value="
+                  form.inscricaoMunicipal = onlyDigits($event)
+                "
+              >
+                <template #prefix><Icon name="Hash" size="sm" /></template>
+                <template #label>Inscrição Municipal (emitente)</template>
+              </Input>
+
+              <Input
+                :model-value="form.telefoneFiscal"
+                maxlength="15"
+                inputmode="tel"
+                placeholder="(00) 00000-0000"
+                :error="errors.telefoneFiscal"
+                @update:model-value="form.telefoneFiscal = formatPhone($event)"
+              >
+                <template #prefix><Icon name="Phone" size="sm" /></template>
+                <template #label>Telefone fiscal</template>
+              </Input>
+
+              <Input
+                v-model="form.emailFiscal"
+                type="email"
+                maxlength="120"
+                placeholder="fiscal@empresa.com.br"
+                :error="errors.emailFiscal"
+              >
+                <template #prefix><Icon name="Mail" size="sm" /></template>
+                <template #label>E-mail fiscal</template>
+              </Input>
+            </div>
+
+            <div
+              class="mt-5 flex items-center justify-between gap-4 rounded-lg border border-line-2 bg-muted/40 px-4 py-3"
+            >
+              <div class="min-w-0">
+                <span class="text-sm font-medium text-foreground">
+                  Contribuinte de ICMS
+                </span>
+                <p class="mt-0.5 text-sm text-muted-foreground">
+                  A empresa é contribuinte do ICMS.
+                </p>
+              </div>
+              <Switch
+                v-model="form.contribuinteIcms"
+                aria-label="Contribuinte de ICMS"
+              />
+            </div>
+          </FormSection>
+        </motion.div>
+
+        <!-- Seção 4: Contato -->
         <motion.div :variants="item">
           <FormSection
             icon="Phone"
@@ -311,7 +515,7 @@ const item = {
           </FormSection>
         </motion.div>
 
-        <!-- Seção 4: Sede / Matriz -->
+        <!-- Seção 5: Sede / Matriz -->
         <motion.div :variants="item">
           <FormSection
             icon="MapPin"
@@ -444,7 +648,6 @@ const item = {
       v-if="!props.readonly"
       submit-label="Salvar alterações"
       secondary-label="Descartar"
-      show-status
       :dirty="isDirty"
       :loading="props.loading"
       @secondary="discard"

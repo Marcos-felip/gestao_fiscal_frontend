@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { MembershipRole, membershipRoleLabels } from '@/enums/membership-role.enum'
+import { MembershipRole, membershipRoleLabels } from '@/core/enums/membership-role.enum'
 
 const props = defineProps<{ role: MembershipRole }>()
 

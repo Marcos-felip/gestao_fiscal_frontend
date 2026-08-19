@@ -4,7 +4,7 @@ import type { ListPartnersUseCase } from '@/modules/partners/application/use-cas
 import type { DeletePartnerUseCase } from '@/modules/partners/application/use-cases/delete-partner.use-case'
 import { ListPartnersDto } from '@/modules/partners/domain/dto/list-partners-dto'
 import type { Partner } from '@/modules/partners/domain/entities/partner.entity'
-import type { PartnerType } from '@/enums/partner-type.enum'
+import type { PartnerType } from '@/core/enums/partner-type.enum'
 import { useToast } from '@/shared/composables'
 
 const PAGE_LIMIT = 20

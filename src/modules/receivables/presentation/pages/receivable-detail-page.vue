@@ -10,7 +10,7 @@ import PayReceivableDialog from '@/modules/receivables/presentation/components/p
 import { makeReceivableDetailController } from '@/modules/receivables/factories/receivables.factory'
 import type { PayReceivableDto } from '@/modules/receivables/domain/dto/pay-receivable-dto'
 import { usePermissions } from '@/shared/composables/usePermissions'
-import { paymentMethodLabels } from '@/enums/payment-method.enum'
+import { paymentMethodLabels } from '@/core/enums/payment-method.enum'
 import { formatMoney } from '@/shared/ui/utils/masks'
 import { formatDate, formatDateTime } from '@/core/utils/date'
 import { routeNames } from '@/router/route-names'

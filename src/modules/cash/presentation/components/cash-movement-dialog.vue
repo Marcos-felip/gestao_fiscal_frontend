@@ -10,7 +10,7 @@ import { CreateCashMovementDto } from '@/modules/cash/domain/dto/create-cash-mov
 import {
   CashMovementType,
   cashMovementTypeLabels,
-} from '@/enums/cash-movement-type.enum'
+} from '@/core/enums/cash-movement-type.enum'
 import { formatMoneyInput, parseDecimal } from '@/shared/ui/utils/masks'
 
 const props = withDefaults(

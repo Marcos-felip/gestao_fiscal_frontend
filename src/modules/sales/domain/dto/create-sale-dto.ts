@@ -1,5 +1,5 @@
-import type { PaymentMethod } from '@/enums/payment-method.enum'
-import type { PaymentCondition } from '@/enums/payment-condition.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
+import type { PaymentCondition } from '@/core/enums/payment-condition.enum'
 
 export interface CreateSaleItemInput {
   productId: string

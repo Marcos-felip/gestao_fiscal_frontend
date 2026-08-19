@@ -5,7 +5,7 @@ import type { CreateStockMovementUseCase } from '@/modules/stock/application/use
 import { ListStockMovementsDto } from '@/modules/stock/domain/dto/list-stock-movements-dto'
 import { CreateStockMovementDto } from '@/modules/stock/domain/dto/create-stock-movement-dto'
 import type { StockMovement } from '@/modules/stock/domain/entities/stock-movement.entity'
-import type { StockMovementType } from '@/enums/stock-movement-type.enum'
+import type { StockMovementType } from '@/core/enums/stock-movement-type.enum'
 import type { ListProductsUseCase } from '@/modules/products/application/use-cases/list-products.use-case'
 import { ListProductsDto } from '@/modules/products/domain/dto/list-products-dto'
 import type { Product } from '@/modules/products/domain/entities/product.entity'

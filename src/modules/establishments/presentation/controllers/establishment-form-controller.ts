@@ -7,7 +7,7 @@ import { CreateEstablishmentDto } from '@/modules/establishments/domain/dto/crea
 import { UpdateEstablishmentDto } from '@/modules/establishments/domain/dto/update-establishment-dto'
 import type { Establishment } from '@/modules/establishments/domain/entities/establishment.entity'
 import type { EstablishmentFormValues } from '@/modules/establishments/presentation/schemas/establishment-schema'
-import type { EstablishmentType } from '@/enums/establishment-type.enum'
+import type { EstablishmentType } from '@/core/enums/establishment-type.enum'
 import { useToast } from '@/shared/composables'
 import { formatCnpj, formatCep } from '@/shared/ui/utils/masks'
 import { routeNames } from '@/router/route-names'

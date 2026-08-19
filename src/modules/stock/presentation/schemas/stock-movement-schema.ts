@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { StockMovementType } from '@/enums/stock-movement-type.enum'
+import { StockMovementType } from '@/core/enums/stock-movement-type.enum'
 import { parseDecimal } from '@/shared/ui/utils/masks'
 
 export const stockMovementSchema = z.object({

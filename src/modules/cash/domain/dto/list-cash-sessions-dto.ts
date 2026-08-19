@@ -1,4 +1,4 @@
-import type { CashSessionStatus } from '@/enums/cash-session-status.enum'
+import type { CashSessionStatus } from '@/core/enums/cash-session-status.enum'
 
 /** Filtros do histórico de sessões (`GET /cash-sessions`), paginado. */
 export class ListCashSessionsDto {

@@ -1,4 +1,4 @@
-import { CashSessionStatus } from '@/enums/cash-session-status.enum'
+import { CashSessionStatus } from '@/core/enums/cash-session-status.enum'
 import type { CashMovement } from '@/modules/cash/domain/entities/cash-movement.entity'
 import type { CashSessionSummary } from '@/modules/cash/domain/value-objects/cash-session-summary'
 

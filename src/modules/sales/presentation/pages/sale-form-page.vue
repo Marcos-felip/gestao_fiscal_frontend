@@ -10,7 +10,7 @@ import { makeCashSessionController } from '@/modules/cash/factories/cash.factory
 import type { OpenCashSessionDto } from '@/modules/cash/domain/dto/open-cash-session-dto'
 import type { CreateCashMovementDto } from '@/modules/cash/domain/dto/create-cash-movement-dto'
 import type { CloseCashSessionDto } from '@/modules/cash/domain/dto/close-cash-session-dto'
-import { CashMovementType } from '@/enums/cash-movement-type.enum'
+import { CashMovementType } from '@/core/enums/cash-movement-type.enum'
 import type { SaleFormValues } from '@/modules/sales/presentation/schemas/sale-schema'
 import type { CreateSalePaymentInput } from '@/modules/sales/domain/dto/create-sale-dto'
 import { routeNames } from '@/router/route-names'

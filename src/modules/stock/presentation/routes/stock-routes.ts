@@ -8,6 +8,7 @@ export const stockRoutes: RouteRecordRaw[] = [
     name: routeNames.STOCK,
     component: StockPage,
     meta: {
+      tab: { id: 'stock', title: 'Estoque' },
       title: 'Estoque',
       icon: 'Layers',
       requiresPermission: 'stock.list',

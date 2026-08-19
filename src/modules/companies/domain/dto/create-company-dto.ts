@@ -1,4 +1,4 @@
-import type { CompanyType } from '@/enums/company-type.enum'
+import type { CompanyType } from '@/core/enums/company-type.enum'
 
 export class CreateCompanyDto {
   name: string

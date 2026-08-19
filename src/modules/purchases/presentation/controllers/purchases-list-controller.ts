@@ -4,7 +4,7 @@ import type { ListPurchasesUseCase } from '@/modules/purchases/application/use-c
 import type { DeletePurchaseUseCase } from '@/modules/purchases/application/use-cases/delete-purchase.use-case'
 import { ListPurchasesDto } from '@/modules/purchases/domain/dto/list-purchases-dto'
 import type { Purchase } from '@/modules/purchases/domain/entities/purchase.entity'
-import type { PurchaseStatus } from '@/enums/purchase-status.enum'
+import type { PurchaseStatus } from '@/core/enums/purchase-status.enum'
 import { dateInputToIso } from '@/core/utils/date'
 import { useToast } from '@/shared/composables'
 

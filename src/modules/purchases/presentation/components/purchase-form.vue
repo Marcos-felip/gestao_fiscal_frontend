@@ -12,7 +12,7 @@ import {
   type PurchaseItemRow,
   type PurchaseFormValues,
 } from '@/modules/purchases/presentation/schemas/purchase-schema'
-import { PaymentCondition } from '@/enums/payment-condition.enum'
+import { PaymentCondition } from '@/core/enums/payment-condition.enum'
 import {
   formatDateBr,
   formatDecimalInput,
@@ -49,6 +49,16 @@ const form = reactive<PurchaseFormValues>({
   notes: '',
   items: [emptyRow()],
 })
+
+/**
+ * Estado inicial congelado, para saber o que é alteração.
+ *
+ * A compra nasce em branco (não recebe `initial` como os outros formulários),
+ * então o marco zero é o próprio objeto do primeiro render.
+ */
+const inicial = JSON.stringify(form)
+
+const isDirty = computed(() => JSON.stringify(form) !== inicial)
 
 // ---- Condição de pagamento (à vista / a prazo) ----
 const onCredit = computed(
@@ -371,6 +381,7 @@ const item = {
     <FormActionBar
       submit-label="Criar compra"
       :loading="props.loading"
+      :dirty="isDirty"
       @secondary="emit('cancel')"
     />
   </form>

@@ -1,5 +1,6 @@
-import type { CompanyType } from '@/enums/company-type.enum'
-import type { TaxRegime } from '@/enums/tax-regime.enum'
+import type { CompanyType } from '@/core/enums/company-type.enum'
+import type { TaxRegime } from '@/core/enums/tax-regime.enum'
+import type { TaxRegimeCode } from '@/core/enums/tax-regime-code.enum'
 
 export class Company {
   readonly id: string
@@ -11,6 +12,16 @@ export class Company {
   readonly taxRegime: TaxRegime | null
   readonly businessSegment: string | null
   readonly isOnboarded: boolean
+  readonly razaoSocial: string | null
+  readonly nomeFantasia: string | null
+  readonly inscricaoEstadual: string | null
+  readonly inscricaoMunicipal: string | null
+  readonly crt: TaxRegimeCode | null
+  readonly contribuinteIcms: boolean
+  readonly codigoIbgeMunicipio: string | null
+  readonly telefoneFiscal: string | null
+  readonly emailFiscal: string | null
+  readonly fiscalConfigComplete: boolean
   readonly createdAt: string | null
   readonly updatedAt: string | null
 
@@ -24,6 +35,16 @@ export class Company {
     taxRegime: TaxRegime | null,
     businessSegment: string | null,
     isOnboarded: boolean,
+    razaoSocial: string | null,
+    nomeFantasia: string | null,
+    inscricaoEstadual: string | null,
+    inscricaoMunicipal: string | null,
+    crt: TaxRegimeCode | null,
+    contribuinteIcms: boolean,
+    codigoIbgeMunicipio: string | null,
+    telefoneFiscal: string | null,
+    emailFiscal: string | null,
+    fiscalConfigComplete: boolean,
     createdAt: string | null,
     updatedAt: string | null,
   ) {
@@ -36,6 +57,16 @@ export class Company {
     this.taxRegime = taxRegime
     this.businessSegment = businessSegment
     this.isOnboarded = isOnboarded
+    this.razaoSocial = razaoSocial
+    this.nomeFantasia = nomeFantasia
+    this.inscricaoEstadual = inscricaoEstadual
+    this.inscricaoMunicipal = inscricaoMunicipal
+    this.crt = crt
+    this.contribuinteIcms = contribuinteIcms
+    this.codigoIbgeMunicipio = codigoIbgeMunicipio
+    this.telefoneFiscal = telefoneFiscal
+    this.emailFiscal = emailFiscal
+    this.fiscalConfigComplete = fiscalConfigComplete
     this.createdAt = createdAt
     this.updatedAt = updatedAt
   }

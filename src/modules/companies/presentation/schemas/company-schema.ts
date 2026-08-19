@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import { CompanyType } from '@/enums/company-type.enum'
-import { TaxRegime } from '@/enums/tax-regime.enum'
+import { CompanyType } from '@/core/enums/company-type.enum'
+import { TaxRegime } from '@/core/enums/tax-regime.enum'
+import { TaxRegimeCode } from '@/core/enums/tax-regime-code.enum'
 import { isValidCnpj, onlyDigits } from '@/shared/ui/utils/masks'
 
 export const companySchema = z.object({
@@ -16,20 +17,51 @@ export const companySchema = z.object({
   stateRegistration: z
     .string()
     .optional()
-    .refine(
-      (v) => !v || onlyDigits(v).length >= 11,
-      'Mínimo 11 dígitos',
-    ),
+    .refine((v) => !v || onlyDigits(v).length >= 11, 'Mínimo 11 dígitos'),
   phone: z
     .string()
     .optional()
     .refine((v) => !v || onlyDigits(v).length >= 10, 'Telefone inválido'),
   taxRegime: z.union([z.nativeEnum(TaxRegime), z.literal('')]).optional(),
+  // Dados fiscais do emitente (NFC-e). Todos opcionais; validações leves.
+  razaoSocial: z.string().optional(),
+  nomeFantasia: z.string().optional(),
+  crt: z.union([z.nativeEnum(TaxRegimeCode), z.literal('')]).optional(),
+  contribuinteIcms: z.boolean(),
+  inscricaoEstadual: z
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || /^\d+$/.test(v),
+      'Inscrição Estadual deve conter apenas dígitos',
+    ),
+  inscricaoMunicipal: z
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || /^\d+$/.test(v),
+      'Inscrição Municipal deve conter apenas dígitos',
+    ),
+  codigoIbgeMunicipio: z
+    .string()
+    .optional()
+    .refine((v) => !v || /^\d{7}$/.test(v), 'Código IBGE deve ter 7 dígitos'),
+  telefoneFiscal: z
+    .string()
+    .optional()
+    .refine((v) => !v || onlyDigits(v).length >= 10, 'Telefone inválido'),
+  emailFiscal: z
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || z.string().email().safeParse(v).success,
+      'E-mail inválido',
+    ),
 })
 
 export type CompanyFormData = z.infer<typeof companySchema>
 
-/** Valores do formulário como strings (o que os campos realmente controlam). */
+/** Valores do formulário (o que os campos realmente controlam). */
 export interface CompanyFormValues {
   name: string
   type: string
@@ -37,6 +69,15 @@ export interface CompanyFormValues {
   stateRegistration: string
   phone: string
   taxRegime: string
+  razaoSocial: string
+  nomeFantasia: string
+  crt: string
+  contribuinteIcms: boolean
+  inscricaoEstadual: string
+  inscricaoMunicipal: string
+  codigoIbgeMunicipio: string
+  telefoneFiscal: string
+  emailFiscal: string
 }
 
 /**

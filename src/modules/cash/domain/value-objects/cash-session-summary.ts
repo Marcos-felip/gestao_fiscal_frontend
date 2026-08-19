@@ -1,4 +1,4 @@
-import type { PaymentMethod } from '@/enums/payment-method.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
 
 export interface PaymentBreakdownItem {
   method: PaymentMethod

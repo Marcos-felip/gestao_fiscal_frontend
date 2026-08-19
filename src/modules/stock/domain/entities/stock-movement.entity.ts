@@ -1,5 +1,5 @@
-import type { StockMovementType } from '@/enums/stock-movement-type.enum'
-import type { UnitOfMeasure } from '@/enums/unit-of-measure.enum'
+import type { StockMovementType } from '@/core/enums/stock-movement-type.enum'
+import type { UnitOfMeasure } from '@/core/enums/unit-of-measure.enum'
 
 export class StockMovement {
   readonly id: string

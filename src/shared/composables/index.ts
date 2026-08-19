@@ -13,6 +13,8 @@ export { useProgress } from './useProgress'
 export { useFullscreen } from './useFullscreen'
 export { useToast } from './useToast'
 export { useTabs, type AppTab } from './useTabs'
+export { useFavorites, type Favorite } from './useFavorites'
+export { useViewRefresh } from './useViewRefresh'
 export { usePermissions } from './usePermissions'
 export {
   useOnboardingContext,

@@ -1,4 +1,4 @@
-import { MembershipRole } from '@/enums/membership-role.enum'
+import { MembershipRole } from '@/core/enums/membership-role.enum'
 
 /** Perfil de permissão vinculado ao membro (apenas id e nome). */
 export interface MembershipProfile {

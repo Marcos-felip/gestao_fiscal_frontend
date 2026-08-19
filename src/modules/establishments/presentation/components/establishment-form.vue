@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { motion } from 'motion-v'
 import { Icon, Input, Select, Spinner, Tooltip } from '@/shared/ui'
 import FormSection from '@/shared/components/form/form-section.vue'
@@ -31,6 +31,18 @@ const emit = defineEmits<{
 }>()
 
 const form = reactive<EstablishmentFormValues>({ ...props.initial })
+
+/**
+ * Há alteração em relação ao que o formulário recebeu?
+ *
+ * Comparação por conteúdo, não por referência: `initial` é recriado a cada
+ * renderização do pai, e comparar identidade acusaria alteração sem ninguém ter
+ * digitado nada — que é justamente o ruído que a barra deveria evitar.
+ */
+const isDirty = computed(
+  () => JSON.stringify(form) !== JSON.stringify(props.initial),
+)
+
 const errors = ref<Partial<Record<keyof EstablishmentFormData, string>>>({})
 const cepLoading = ref(false)
 
@@ -256,6 +268,7 @@ const item = {
       v-if="!props.readonly"
       :submit-label="props.submitLabel"
       :loading="props.loading"
+      :dirty="isDirty"
       @secondary="emit('cancel')"
     />
   </form>

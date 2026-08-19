@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import { PartnerType } from '@/enums/partner-type.enum'
-import { PersonType } from '@/enums/person-type.enum'
+import { PartnerType } from '@/core/enums/partner-type.enum'
+import { PersonType } from '@/core/enums/person-type.enum'
+import { IndIeDest } from '@/core/enums/ind-ie-dest.enum'
 import { onlyDigits } from '@/shared/ui/utils/masks'
 
 export const partnerSchema = z.object({
@@ -38,7 +39,28 @@ export const partnerSchema = z.object({
     .string()
     .optional()
     .refine((v) => !v || v.length === 2, 'UF inválida'),
+  ibgeCode: z
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || onlyDigits(v).length === 7,
+      'Código IBGE deve ter 7 dígitos',
+    ),
+  indIeDest: z
+    .union([z.literal(1), z.literal(2), z.literal(9)])
+    .nullable()
+    .optional(),
 })
+  .refine(
+    (data) =>
+      data.indIeDest !== IndIeDest.CONTRIBUINTE ||
+      onlyDigits(data.rgIe ?? '').length > 0,
+    {
+      message:
+        'Contribuinte de ICMS precisa de inscrição estadual — preencha "RG / Inscrição estadual"',
+      path: ['rgIe'],
+    },
+  )
 
 export type PartnerFormData = z.infer<typeof partnerSchema>
 
@@ -58,4 +80,6 @@ export interface PartnerFormValues {
   neighborhood: string
   city: string
   state: string
+  ibgeCode: string
+  indIeDest: string
 }

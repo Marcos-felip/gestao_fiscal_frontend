@@ -5,7 +5,7 @@ import type { CreatePayableUseCase } from '@/modules/payables/application/use-ca
 import { ListPayablesDto } from '@/modules/payables/domain/dto/list-payables-dto'
 import type { CreatePayableDto } from '@/modules/payables/domain/dto/create-payable-dto'
 import type { Payable } from '@/modules/payables/domain/entities/payable.entity'
-import type { FinancialStatus } from '@/enums/financial-status.enum'
+import type { FinancialStatus } from '@/core/enums/financial-status.enum'
 import { dateInputToIso } from '@/core/utils/date'
 import { useToast } from '@/shared/composables'
 

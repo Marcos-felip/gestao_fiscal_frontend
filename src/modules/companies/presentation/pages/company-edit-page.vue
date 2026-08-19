@@ -30,7 +30,6 @@ async function handleSubmit(values: {
 </script>
 
 <template>
-
   <div
     v-if="controller.hasError"
     class="mb-4 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
@@ -65,6 +64,7 @@ async function handleSubmit(values: {
     :company="controller.values.value"
     :sede="controller.sede.value"
     :has-sede="controller.hasMatriz.value"
+    :fiscal-config-complete="controller.fiscalConfigComplete.value"
     :loading="controller.isLoading"
     :readonly="readonly"
     @submit="handleSubmit"

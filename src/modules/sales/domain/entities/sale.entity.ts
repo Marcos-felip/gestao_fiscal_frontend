@@ -1,8 +1,8 @@
-import type { SaleStatus } from '@/enums/sale-status.enum'
-import type { PaymentStatus } from '@/enums/payment-status.enum'
-import type { FiscalStatus } from '@/enums/fiscal-status.enum'
-import type { PaymentMethod } from '@/enums/payment-method.enum'
-import type { PaymentCondition } from '@/enums/payment-condition.enum'
+import { SaleStatus } from '@/core/enums/sale-status.enum'
+import type { PaymentStatus } from '@/core/enums/payment-status.enum'
+import { FiscalStatus } from '@/core/enums/fiscal-status.enum'
+import type { PaymentMethod } from '@/core/enums/payment-method.enum'
+import type { PaymentCondition } from '@/core/enums/payment-condition.enum'
 import type { SaleItem } from '@/modules/sales/domain/entities/sale-item.entity'
 import type { SalePayment } from '@/modules/sales/domain/entities/sale-payment.entity'
 
@@ -28,6 +28,8 @@ export class Sale {
   readonly items: SaleItem[]
   readonly payments: SalePayment[]
   readonly paymentCondition: PaymentCondition
+  /** Id do documento fiscal vinculado, quando a resposta traz a relação. */
+  readonly fiscalDocumentId: string | null
 
   constructor(
     id: string,
@@ -51,6 +53,7 @@ export class Sale {
     items: SaleItem[],
     payments: SalePayment[],
     paymentCondition: PaymentCondition,
+    fiscalDocumentId: string | null = null,
   ) {
     this.id = id
     this.companyId = companyId
@@ -73,9 +76,18 @@ export class Sale {
     this.items = items
     this.payments = payments
     this.paymentCondition = paymentCondition
+    this.fiscalDocumentId = fiscalDocumentId
   }
 
   get itemsCount(): number {
     return this.items.length
+  }
+
+  /** Venda concluída cuja NFC-e ainda não foi emitida (fallback manual). */
+  get canEmitFiscal(): boolean {
+    return (
+      this.status === SaleStatus.CONCLUIDA &&
+      this.fiscalStatus === FiscalStatus.NAO_EMITIDO
+    )
   }
 }
