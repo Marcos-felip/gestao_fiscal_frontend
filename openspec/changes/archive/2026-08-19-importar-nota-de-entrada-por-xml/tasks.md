@@ -27,8 +27,9 @@
 ## 4. Resolver item
 
 - [x] 4.1 Buscar produto do catálogo e apontar
-- [ ] 4.2 Criar produto abre o formulário do módulo de produtos, preenchido, e
-  volta — **não feito**, o item pendente hoje só aceita produto já cadastrado
+- [x] 4.2 Criar produto abre o `ProductForm` do módulo de produtos, preenchido com
+  o que a nota traz (inclusive o quadro tributário), em painel lateral — não em
+  modal, que ficou pequeno para o formulário inteiro
 - [x] 4.3 Escolha grava o de-para do fornecedor (backend), refletida na tela
 
 ## 5. Conclusão
