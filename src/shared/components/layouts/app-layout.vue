@@ -14,7 +14,7 @@
           'flex min-h-svh flex-1 flex-col pt-[80px] lg:ml-64',
         ]"
       >
-        <div class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+        <div class="w-full flex-1 px-4 py-8 sm:px-6 lg:px-8">
           <RouterView :key="`${route.path}#${refreshKey}`" />
         </div>
         <AppFooter />

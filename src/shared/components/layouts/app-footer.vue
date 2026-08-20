@@ -6,7 +6,7 @@ const year = new Date().getFullYear()
 <template>
   <footer class="app-footer border-t border-line-2">
     <div
-      class="mx-auto flex max-w-7xl items-center justify-center gap-2 px-4 py-4 sm:px-6 lg:px-8"
+      class="flex items-center justify-center gap-2 px-4 py-4 sm:px-6 lg:px-8"
     >
       <p class="flex items-center gap-1 text-sm text-muted-foreground">
         <img
