@@ -44,6 +44,7 @@ const checklistItemSchema = z.object({
 })
 
 const productionChecklistSchema = z.object({
+  configurada: z.boolean().default(true),
   liberada: z.boolean(),
   liberadaEm: z.string().nullable().default(null),
   itens: z.array(checklistItemSchema),
@@ -62,6 +63,7 @@ export function toProductionChecklist(
 
   const v = parsed.data
   return Either.right({
+    configurada: v.configurada,
     liberada: v.liberada,
     liberadaEm: v.liberadaEm,
     itens: v.itens.map(

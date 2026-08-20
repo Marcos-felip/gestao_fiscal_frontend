@@ -1403,7 +1403,16 @@ ganhou a coluna **Cartas de correção**.
 
 `GET /fiscal/settings/:establishmentId/producao/checklist` devolve os itens já
 filtrados pelos modelos que o estabelecimento emite (`modelosEmitidos` da
-configuração). Cada item pode trazer:
+configuração).
+
+**`configurada: false` não é erro** — é o estabelecimento que ainda só tem
+homologação, com `itens: []`. A resposta é `200`; a tela mostra o convite para
+criar a configuração de produção e **não** exibe alerta. `404` nesta rota
+significa apenas estabelecimento inexistente. O campo pode faltar em backend
+anterior a ele: o mapper assume `true`, porque naquele backend a resposta só
+chegava quando a configuração existia.
+
+Cada item pode trazer:
 
 | Campo | Significado |
 |---|---|

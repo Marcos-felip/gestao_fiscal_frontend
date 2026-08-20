@@ -126,10 +126,14 @@ function sectionStatus(id: string): string {
         ? 'Motor fiscal online'
         : 'Motor fiscal indisponível'
 
-    case 'producao':
-      return controller.checklist.value?.liberada
+    case 'producao': {
+      const checklist = controller.checklist.value
+      if (!checklist) return ''
+      if (!checklist.configurada) return 'Não configurada'
+      return checklist.liberada
         ? 'Liberada'
         : 'Bloqueada até o checklist ser concluído'
+    }
 
     default:
       return ''
@@ -188,8 +192,10 @@ const navItems = computed(() => {
       label: 'Produção',
       icon: 'Rocket',
       // A liberação vem do checklist, não da configuração: enquanto ele não
-      // carregou, o item não finge saber e fica sem marca.
-      pendencia: controller.checklist.value
+      // carregou, o item não finge saber e fica sem marca. Sem produção
+      // configurada também não há pendência — ficar em homologação é uma
+      // escolha válida, e marcar aviso permanente só ensina a ignorar avisos.
+      pendencia: controller.checklist.value?.configurada
         ? controller.checklist.value.liberada
           ? null
           : ('atencao' as const)
@@ -1440,6 +1446,46 @@ const item = {
                 <Icon name="LoaderCircle" size="sm" class="animate-spin" />
                 Carregando checklist…
               </p>
+
+              <div
+                v-else-if="
+                  controller.checklist.value &&
+                  !controller.checklist.value.configurada
+                "
+                class="rounded-xl border border-dashed border-line-3 bg-muted/20 px-4 py-6"
+              >
+                <div class="flex flex-col items-center gap-3 text-center">
+                  <span
+                    class="flex size-11 items-center justify-center rounded-2xl bg-muted text-muted-foreground"
+                  >
+                    <Icon name="Rocket" size="md" />
+                  </span>
+
+                  <div class="space-y-1">
+                    <p class="text-sm font-medium text-foreground">
+                      Produção ainda não configurada
+                    </p>
+                    <p
+                      class="mx-auto max-w-md text-sm text-muted-foreground"
+                    >
+                      Este estabelecimento emite só em homologação. A produção
+                      tem configuração própria — certificado, CSC e numeração
+                      separados — e o checklist aparece assim que ela existir.
+                    </p>
+                  </div>
+
+                  <Button
+                    v-if="canEdit"
+                    variant="ghost"
+                    @click="goToSection('numeracao')"
+                  >
+                    <template #icon
+                      ><Icon name="ListOrdered" size="sm"
+                    /></template>
+                    Configurar ambiente de produção
+                  </Button>
+                </div>
+              </div>
 
               <template v-else-if="controller.checklist.value">
                 <div

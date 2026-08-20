@@ -25,6 +25,7 @@ export interface ProductionChecklistItem {
 }
 
 export interface ProductionChecklist {
+  configurada: boolean
   liberada: boolean
   liberadaEm: string | null
   itens: ProductionChecklistItem[]

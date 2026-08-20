@@ -97,4 +97,22 @@ describe('toProductionChecklist', () => {
   it('aceita checklist vazio', () => {
     expect(toProductionChecklist(checklist([])).right.itens).toEqual([])
   })
+
+  // Estabelecimento só com homologação: o backend descreve o estado em vez de
+  // recusar, e a tela precisa distinguir isso de uma falha.
+  it('preserva configurada: false, que é quem só tem homologação', () => {
+    const result = toProductionChecklist({
+      configurada: false,
+      liberada: false,
+      liberadaEm: null,
+      itens: [],
+    })
+
+    expect(result.right.configurada).toBe(false)
+    expect(result.right.itens).toEqual([])
+  })
+
+  it('assume configurada quando o campo não vem — backend anterior', () => {
+    expect(toProductionChecklist(checklist([])).right.configurada).toBe(true)
+  })
 })
